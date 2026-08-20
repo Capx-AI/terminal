@@ -1,0 +1,540 @@
+{
+  "title": "Capx Terminal — terminal.capx.ai",
+  "subtitle": "Public market + honesty surface. Launchpad for price, Casa for progress. Demo visual. Grok plans and implements after founder Q&A freeze.",
+  "updatedAt": "2026-08-20 ~12:10 IST - Codex key loaded from ~/.capx/codex-api-key",
+  "timezone": "Asia/Kolkata",
+  "referenceUi": "/docs/TERMINAL-V1-CONTRACT.md",
+  "referenceLabel": "TERMINAL-V1-CONTRACT.md",
+  "api": "https://api.launchpad.capx.ai",
+  "safety": {
+    "note": "No private keys, mnemonics, or .env secrets in git. Do not copy capx-onchain /api/attest/*. Do not migrate Neon attest tables. Do not call Casa from the browser. Do not ship sample companies as production truth. No revenue/yield/profit/equity language near Agent tokens. No em-dashes or emojis in product copy."
+  },
+  "calibration": {
+    "note": "Only this Grok session's completed engineering tasks feed the ratio: calibration = sum(actual) / sum(first estimate). That factor scales remaining engineering first-estimates. Founder waits and Casa/Launchpad work by other agents are shown unscaled."
+  },
+  "current": {
+    "label": "Candle renderer kept. CAPX stand-in removed from Agent pages",
+    "detail": "Agent token charts fetch that mint from Codex. Empty if no pool. Connect Casa is Launchpad, not Terminal. Waiting on Launchpad bind + Casa 8787 for live progress panels."
+  },
+  "phases": [
+    {
+      "id": "A",
+      "title": "Q&A / contract",
+      "owner": "Grok + founder Q&A",
+      "status": "done",
+      "items": [
+        {
+          "id": "A1",
+          "text": "Read Casa spec v1.1, OpenAPI, demo HTML/CSS, Launchpad public API, old terminal notes. Do not traverse _archive/",
+          "owner": "Grok",
+          "kind": "engineering",
+          "status": "done",
+          "firstEstimateMinutes": 45,
+          "actualMinutes": 25,
+          "notes": "Casa store moved off Terminal 2026-08-20. Launchpad live with XY fundraising. Demo is the visual spec. capx-onchain registry is out of scope."
+        },
+        {
+          "id": "A2",
+          "text": "Founder Q&A rounds of 6 until v1 freeze",
+          "owner": "Grok + 0xhbx",
+          "kind": "engineering",
+          "status": "done",
+          "firstEstimateMinutes": 60,
+          "actualMinutes": 40,
+          "notes": "Four rounds. All recommended options taken except tiles=Other (hide now, bring deferred back later). Frozen round 4."
+        },
+        {
+          "id": "A3",
+          "text": "Write docs/TERMINAL-V1-CONTRACT.md from the freeze",
+          "owner": "Grok",
+          "kind": "engineering",
+          "status": "done",
+          "firstEstimateMinutes": 40,
+          "actualMinutes": 20
+        }
+      ]
+    },
+    {
+      "id": "B",
+      "title": "Operator board",
+      "owner": "Grok",
+      "status": "done",
+      "items": [
+        {
+          "id": "B1",
+          "text": "Clone launchpad 4188 / Casa 4174 board onto 127.0.0.1:4199 (clocks, calibration, now-panel, founder asks)",
+          "owner": "Grok",
+          "kind": "engineering",
+          "status": "done",
+          "firstEstimateMinutes": 25,
+          "actualMinutes": 15
+        },
+        {
+          "id": "B2",
+          "text": "Board live: cache-control no-store, 30s refresh, at least one in_progress item while working",
+          "owner": "Grok",
+          "kind": "engineering",
+          "status": "done",
+          "firstEstimateMinutes": 10,
+          "actualMinutes": 5
+        }
+      ]
+    },
+    {
+      "id": "C",
+      "title": "Demo parity shell",
+      "owner": "Grok",
+      "status": "done",
+      "items": [
+        {
+          "id": "C1",
+          "text": "Copy demo index.html, token.html, app.css, brand, favicons into web/. Keep starfield, bento, lime vs market",
+          "owner": "Grok",
+          "kind": "engineering",
+          "status": "done",
+          "firstEstimateMinutes": 40,
+          "actualMinutes": 25
+        },
+        {
+          "id": "C2",
+          "text": "Token route /t/{mint}. Strip data.js as production truth. Sample pill only when SAMPLE=1",
+          "owner": "Grok",
+          "kind": "engineering",
+          "status": "done",
+          "firstEstimateMinutes": 35,
+          "actualMinutes": 15
+        },
+        {
+          "id": "C3",
+          "text": "Hide deferred tiles (heatmap, chart, ledger, claims vitals, north star, judgment, dept board). Keep identity, market, work, constraint, provenance, ladder, planes",
+          "owner": "Grok",
+          "kind": "engineering",
+          "status": "done",
+          "firstEstimateMinutes": 40,
+          "actualMinutes": 20
+        }
+      ]
+    },
+    {
+      "id": "D",
+      "title": "Launchpad directory + price",
+      "owner": "Grok",
+      "status": "done",
+      "items": [
+        {
+          "id": "D1",
+          "text": "Backend proxy: drain GET /v1/projects?filter=all, GET /v1/market-data/capx, GET /v1/projects/:id nested project",
+          "owner": "Grok",
+          "kind": "engineering",
+          "status": "done",
+          "firstEstimateMinutes": 50,
+          "actualMinutes": 25
+        },
+        {
+          "id": "D2",
+          "text": "Market table + token page: name/symbol/logo/state, raise facts, price from mcap/1e9, hide roiMultiple, stale marks, 5xx error state",
+          "owner": "Grok",
+          "kind": "engineering",
+          "status": "done",
+          "firstEstimateMinutes": 50,
+          "actualMinutes": 30
+        }
+      ]
+    },
+    {
+      "id": "E",
+      "title": "Casa client + panel",
+      "owner": "Grok",
+      "status": "done",
+      "items": [
+        {
+          "id": "E1",
+          "text": "mock-casa on 127.0.0.1:4201: 200 live, unobserved, released, continuity_break, 404 default, 400 invalid mint",
+          "owner": "Grok",
+          "kind": "engineering",
+          "status": "done",
+          "firstEstimateMinutes": 40,
+          "actualMinutes": 20,
+          "notes": "Released fixture mint renamed FixRefunded* because base58 forbids lowercase L"
+        },
+        {
+          "id": "E2",
+          "text": "Terminal backend GET Casa, 5 minute cache, never from the browser. Origin env mock / 8787 / production",
+          "owner": "Grok",
+          "kind": "engineering",
+          "status": "done",
+          "firstEstimateMinutes": 35,
+          "actualMinutes": 15
+        },
+        {
+          "id": "E3",
+          "text": "Lime panel states + podium/chips over fetched docs only. Hide panel on 404. No fake zeros",
+          "owner": "Grok",
+          "kind": "engineering",
+          "status": "done",
+          "firstEstimateMinutes": 45,
+          "actualMinutes": 25
+        }
+      ]
+    },
+    {
+      "id": "F",
+      "title": "Honesty / copy pass",
+      "owner": "Grok",
+      "status": "done",
+      "items": [
+        {
+          "id": "F1",
+          "text": "attested reserved word, provenance grammar, no verified copy, no MRR/spend/yield, no em-dashes or emojis in product copy",
+          "owner": "Grok",
+          "kind": "engineering",
+          "status": "done",
+          "firstEstimateMinutes": 30,
+          "actualMinutes": 15
+        },
+        {
+          "id": "F2",
+          "text": "Whitelist-only Casa render. Forbidden fields never in the DOM. Supply 1,000,000,000",
+          "owner": "Grok",
+          "kind": "engineering",
+          "status": "done",
+          "firstEstimateMinutes": 25,
+          "actualMinutes": 10
+        }
+      ]
+    },
+    {
+      "id": "G",
+      "title": "Localhost e2e",
+      "owner": "Grok",
+      "status": "done",
+      "items": [
+        {
+          "id": "G1",
+          "text": "4199 + 4200 + 4201 up on 127.0.0.1. Live mint: raise/price, no Casa panel. Fixture mint: lime panel. Released and continuity_break visible",
+          "owner": "Grok",
+          "kind": "engineering",
+          "status": "done",
+          "firstEstimateMinutes": 40,
+          "actualMinutes": 20,
+          "notes": "node web/e2e.mjs passed against live Launchpad + mock Casa"
+        }
+      ]
+    },
+    {
+      "id": "S",
+      "title": "Casa terminal surface (demo bento)",
+      "owner": "Grok",
+      "status": "done",
+      "items": [
+        {
+          "id": "S1",
+          "text": "Read TERMINAL-AGENT-SURFACE.md, CASA-TERMINAL-SURFACE-PLAN.md, demo token.html, live 8787 (down)",
+          "owner": "Grok",
+          "kind": "engineering",
+          "status": "done",
+          "firstEstimateMinutes": 25,
+          "actualMinutes": 20,
+          "notes": "8787 down. OpenAPI in docs still thin; TERMINAL-AGENT-SURFACE.md + prompt JSON win."
+        },
+        {
+          "id": "S2",
+          "text": "Widen mock-casa fixtures to the full GET (calendar 180d, ledger, reproduced, claimed north star, no note/spend)",
+          "owner": "Grok",
+          "kind": "engineering",
+          "status": "done",
+          "firstEstimateMinutes": 50,
+          "actualMinutes": 35
+        },
+        {
+          "id": "S3",
+          "text": "Token page: every demo company tile wired to GET, planes, continuity break, released, unobserved",
+          "owner": "Grok",
+          "kind": "engineering",
+          "status": "done",
+          "firstEstimateMinutes": 90,
+          "actualMinutes": 70
+        },
+        {
+          "id": "S4",
+          "text": "Market table Casa columns: health, tasks 7d, heatmap, build map, coverage, chain, attested ago. 404 stays empty not zero",
+          "owner": "Grok",
+          "kind": "engineering",
+          "status": "done",
+          "firstEstimateMinutes": 50,
+          "actualMinutes": 40
+        },
+        {
+          "id": "S5",
+          "text": "Backend Casa client: 5 min cache, timeout fail-closed as empty panel",
+          "owner": "Grok",
+          "kind": "engineering",
+          "status": "done",
+          "firstEstimateMinutes": 20,
+          "actualMinutes": 8,
+          "notes": "Casa timeout/unavailable mapped to 404-equivalent empty document"
+        },
+        {
+          "id": "S6",
+          "text": "e2e + copy pass + dated contract amendment (GET + TERMINAL-AGENT-SURFACE win)",
+          "owner": "Grok",
+          "kind": "engineering",
+          "status": "done",
+          "firstEstimateMinutes": 35,
+          "actualMinutes": 20,
+          "notes": "node web/e2e.mjs passed. D10 superseded for tiles the GET now fills."
+        }
+      ]
+    },
+    {
+      "id": "P",
+      "title": "Codex / Defined.fi price chart",
+      "owner": "Grok",
+      "status": "in_progress",
+      "items": [
+        {
+          "id": "P1",
+          "text": "Backend Codex client: getTokenBars daily USD closes, tokenSparklines for market 7d. Key from env, never git",
+          "owner": "Grok",
+          "kind": "engineering",
+          "status": "done",
+          "firstEstimateMinutes": 45,
+          "actualMinutes": 30
+        },
+        {
+          "id": "P2",
+          "text": "Token chart overlays Codex closes on Casa work bars. Label source. Chart shows even when Casa 404",
+          "owner": "Grok",
+          "kind": "engineering",
+          "status": "done",
+          "firstEstimateMinutes": 40,
+          "actualMinutes": 25
+        },
+        {
+          "id": "P3",
+          "text": "Market Price 7d spark from Codex sparklines. Skip sample fixture mints",
+          "owner": "Grok",
+          "kind": "engineering",
+          "status": "done",
+          "firstEstimateMinutes": 25,
+          "actualMinutes": 15
+        },
+        {
+          "id": "P4",
+          "text": "Founder: export CODEX_API_KEY for localhost (and later Vercel). Do not commit it",
+          "owner": "0xhbx",
+          "kind": "founder",
+          "status": "done",
+          "firstEstimateMinutes": 10,
+          "actualMinutes": 5,
+          "notes": "Loaded from ~/.capx/codex-api-key into the :4200 process env. File is outside git. SOL/CAPX bars ok. Agent mints still CODEX_NO_BARS."
+        },
+        {
+          "id": "P5",
+          "text": "Adaptive heatmap: 1h / 4h / 1d from project age; Codex resolution matches; no 180 empty days on new tokens",
+          "owner": "Grok",
+          "kind": "engineering",
+          "status": "done",
+          "firstEstimateMinutes": 50,
+          "actualMinutes": 40
+        }
+      ]
+    },
+    {
+      "id": "H",
+      "title": "Deploy (founder-gated)",
+      "owner": "0xhbx + Grok",
+      "status": "open",
+      "items": [
+        {
+          "id": "H1",
+          "text": "Create github.com/Capx-AI/terminal when the founder wants it public",
+          "owner": "0xhbx",
+          "kind": "founder",
+          "status": "open",
+          "firstEstimateMinutes": 20
+        },
+        {
+          "id": "H2",
+          "text": "Vercel project + terminal.capx.ai DNS + CASA_API production URL",
+          "owner": "0xhbx",
+          "kind": "founder",
+          "status": "open",
+          "firstEstimateMinutes": 40
+        },
+        {
+          "id": "H3",
+          "text": "Freeze or take down old Terminal /api/attest/* on Vercel+Neon. Do not migrate tables here",
+          "owner": "0xhbx",
+          "kind": "founder",
+          "status": "open",
+          "firstEstimateMinutes": 30
+        }
+      ]
+    }
+  ],
+  "timeLog": [
+    {
+      "task": "P5 adaptive heatmap by project age",
+      "kind": "engineering",
+      "firstEstimateMinutes": 50,
+      "actualMinutes": 40,
+      "lesson": "Age from Launchpad fundingFinalizedAt, not Casa created_at. Daily Casa counts must not be split across hours.",
+      "completedAt": "Aug 20 ~12:00"
+    },
+    {
+      "task": "P1-P3 Codex price series (defined.fi)",
+      "kind": "engineering",
+      "firstEstimateMinutes": 110,
+      "actualMinutes": 70,
+      "lesson": "getTokenBars daily USD is the right join with Casa calendar days. Browser must never see the Codex key. Fundraising mints will often have no bars; that is a real empty, not a bug.",
+      "completedAt": "Aug 20 ~11:45"
+    },
+    {
+      "task": "S1-S6 Casa terminal surface (demo bento)",
+      "kind": "engineering",
+      "firstEstimateMinutes": 270,
+      "actualMinutes": 193,
+      "lesson": "8787 down so mock had to emit the full GET first. OpenAPI in docs still lags; paint from TERMINAL-AGENT-SURFACE.md. Ledger must omit note even if a future Casa build leaks it.",
+      "completedAt": "Aug 20 ~11:25"
+    },
+    {
+      "task": "G1 localhost e2e",
+      "kind": "engineering",
+      "firstEstimateMinutes": 40,
+      "actualMinutes": 20,
+      "lesson": "Fixture mints must be valid base58; lowercase L in Released dropped the released row from the table",
+      "completedAt": "Aug 20 ~09:50"
+    },
+    {
+      "task": "C-F demo shell, Launchpad proxy, mock Casa, honesty",
+      "kind": "engineering",
+      "firstEstimateMinutes": 390,
+      "actualMinutes": 200,
+      "lesson": "Keep app.css intact and add v1.css for missing tiles. Proxy both Launchpad and Casa so the browser never needs CORS",
+      "completedAt": "Aug 20 ~09:48"
+    },
+    {
+      "task": "B1-B2 operator board on 4199",
+      "kind": "engineering",
+      "firstEstimateMinutes": 35,
+      "actualMinutes": 20,
+      "lesson": "Copy Casa tracker CSS/JS and swap copy; do not restyle. Serve docs/ so the contract link works.",
+      "completedAt": "Aug 20 ~09:42"
+    },
+    {
+      "task": "A3 write TERMINAL-V1-CONTRACT.md",
+      "kind": "engineering",
+      "firstEstimateMinutes": 40,
+      "actualMinutes": 20,
+      "lesson": "Four Q&A rounds produced a freeze that could be copied almost verbatim into the contract",
+      "completedAt": "Aug 20 ~09:38"
+    },
+    {
+      "task": "A2 founder Q&A rounds 1-4",
+      "kind": "engineering",
+      "firstEstimateMinutes": 60,
+      "actualMinutes": 40,
+      "lesson": "Recommended-first options were accepted; the only Other was tiles, resolved as hide-now / deferred-later",
+      "completedAt": "Aug 20 ~09:33"
+    },
+    {
+      "task": "A1 read Casa / demo / Launchpad / old Terminal",
+      "kind": "engineering",
+      "firstEstimateMinutes": 45,
+      "actualMinutes": 25,
+      "lesson": "Launchpad already has /v1/market-data/capx and nested GET-by-id; Terminal should proxy both rather than scrape",
+      "completedAt": "Aug 20 ~09:10"
+    }
+  ],
+  "founderAsks": [
+    {
+      "status": "open",
+      "text": "Create github.com/Capx-AI/terminal when you want the repo public. Do not ask Grok to push until you say so.",
+      "blocks": "H1"
+    },
+    {
+      "status": "open",
+      "text": "Create the Vercel project and point terminal.capx.ai. Localhost v1 does not need this.",
+      "blocks": "H2"
+    },
+    {
+      "status": "open",
+      "text": "When casa.capx.ai DNS is live, tell Terminal the production CASA_API. Until then mock :4201 then local :8787.",
+      "blocks": "H2, E2"
+    },
+    {
+      "status": "open",
+      "text": "Freeze or take down the old Terminal Vercel+Neon /api/attest/* registry. Do not migrate those tables into this folder. Disposition is freeze.",
+      "blocks": "H3"
+    },
+    {
+      "status": "open",
+      "text": "Confirm Vercel serverless can GET https://api.launchpad.capx.ai. If it cannot, you supply a proxy. Localhost Grok will fetch it from this machine.",
+      "blocks": "H2"
+    },
+    {
+      "status": "open",
+      "text": "Connect Casa stays Launchpad-only. Do not ask Terminal to build a bind UI. Sample companies must not ship as production truth.",
+      "blocks": "listing policy"
+    },
+    {
+      "status": "open",
+      "text": "Export CODEX_API_KEY in the shell that runs web/server.mjs (Codex / defined.fi subscription). Do not put it in git. Restart :4200 after. Same key later on Vercel as an env var, not a file.",
+      "blocks": "P4, token price chart, market Price 7d spark",
+      "status": "done"
+    }
+  ],
+  "doneCriteria": [
+    "http://127.0.0.1:4199/ operator board live, clocks honest, now-panel current",
+    "http://127.0.0.1:4200/ market table looks like the July demo (dark bento, starfield, lime vs market)",
+    "Token page /t/{mint} with Launchpad name/symbol/price or raise facts",
+    "Live Launchpad mint with Casa 404: no Casa panel, still a valid token page",
+    "Fixture mint with mock 200: lime panel, attested reserved, health/freshness as returned, no MRR/spend",
+    "continuity_break and released states have UI",
+    "No /api/attest registry, no Neon, no browser calls to Casa",
+    "Founder has the written human-task list"
+  ],
+  "live": [
+    {
+      "label": "Contract",
+      "value": "docs/TERMINAL-V1-CONTRACT.md frozen 2026-08-20"
+    },
+    {
+      "label": "Casa spec",
+      "value": "../casa-deployment/docs/CASA-AUTH-SPEC.md v1.1"
+    },
+    {
+      "label": "Visual north star",
+      "value": "~/Documents/july/capx/capx-terminal-demo/"
+    },
+    {
+      "label": "Launchpad API",
+      "value": "https://api.launchpad.capx.ai"
+    },
+    {
+      "label": "Launchpad web",
+      "value": "https://launchpad.capx.ai"
+    },
+    {
+      "label": "Local board",
+      "value": "http://127.0.0.1:4199/"
+    },
+    {
+      "label": "Product",
+      "value": "http://127.0.0.1:4200/  SAMPLE=1"
+    },
+    {
+      "label": "Mock Casa",
+      "value": "http://127.0.0.1:4201/"
+    },
+    {
+      "label": "Old registry",
+      "value": "not copied; Neon freeze"
+    },
+    {
+      "label": "Connect Casa",
+      "value": "Launchpad-only, not built yet"
+    }
+  ]
+}

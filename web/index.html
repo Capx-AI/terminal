@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Capx Terminal</title>
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/favicon-180.png">
+<link rel="stylesheet" href="/app.css">
+<link rel="stylesheet" href="/v1.css">
+</head>
+<body>
+
+<canvas id="stars" aria-hidden="true"></canvas>
+
+<main>
+  <header>
+    <div class="wrap hrow">
+      <div class="brand">
+        <img class="logo" src="/brand/capx-logo.png" alt="Capx">
+        <span class="sep"></span>
+        <span class="label lit">Terminal</span>
+      </div>
+      <span class="pill" id="sample-pill" hidden><span class="dot"></span>Sample data</span>
+    </div>
+  </header>
+
+  <div id="err" class="errbanner" hidden></div>
+
+  <section class="aggwrap">
+    <div class="wrap aggrow">
+      <div class="ag"><span class="label">CAPX price</span><div class="v" id="ag-px">--</div><div class="v2" id="ag-px2"></div></div>
+      <div class="ag"><span class="label">Ecosystem FDV</span><div class="v" id="ag-fdv">--</div><div class="v2" id="ag-fdv2"></div></div>
+      <div class="ag"><span class="label">24h volume</span><div class="v" id="ag-vol">--</div><div class="v2" id="ag-vol2"></div></div>
+      <div class="ag"><span class="label lit">Work &middot; 7d</span><div class="v" id="ag-work">--</div></div>
+      <div class="ag"><span class="label lit">Median coverage</span><div class="v v-rep" id="ag-cov">--</div></div>
+      <div class="ag"><span class="label lit">Signed</span><div class="v v-rep" id="ag-signed">--</div></div>
+      <div class="ag"><span class="label lit">Attested 7d</span><div class="v v-rep" id="ag-fresh">--</div></div>
+    </div>
+  </section>
+
+  <section class="screenband">
+    <div class="wrap sb">
+      <div class="sbhead">
+        <span class="label lit">Healthiest companies</span>
+        <span class="sbnote">
+          Scored only on what Capx re-ran itself: how much of the record is checkable, whether it survives
+          the replay, who signed it, and how current it is. A high score does not mean a good company. It
+          means a company that can be checked, and was.
+        </span>
+      </div>
+      <div class="podium" id="podium"></div>
+    </div>
+  </section>
+
+  <section class="toolbar">
+    <div class="wrap trow">
+      <div class="search"><input id="q" placeholder="Search name or ticker" autocomplete="off" spellcheck="false" aria-label="Search tokens"></div>
+      <div class="chips" id="chips">
+        <button class="fchip on" data-f="all">All</button>
+        <button class="fchip" data-f="leaders">Health 80+</button>
+        <button class="fchip" data-f="fresh">Attesting weekly</button>
+        <button class="fchip" data-f="review">Needs review</button>
+      </div>
+      <span class="hint" id="hint">click a row to open the token</span>
+    </div>
+  </section>
+
+  <section class="tblzone">
+    <div class="wrap">
+      <div class="tbl-scroll">
+        <table>
+          <colgroup>
+            <col class="c-rank"><col class="c-co"><col class="c-ver">
+            <col class="c-px"><col class="c-chg"><col class="c-vol"><col class="c-liq"><col class="c-fdv"><col class="c-spark">
+            <col class="c-work"><col class="c-cal"><col class="c-bm">
+            <col class="c-cov"><col class="c-chain"><col class="c-att">
+          </colgroup>
+          <thead>
+            <tr>
+              <th class="nosort" style="text-align:left">#</th>
+              <th class="l nosort">Token</th>
+              <th class="co" data-k="health">Health score</th>
+              <th data-k="price">Price</th>
+              <th data-k="chg">24h</th>
+              <th data-k="vol">24h volume</th>
+              <th data-k="liq">Liquidity</th>
+              <th data-k="fdv">FDV</th>
+              <th class="nosort">Price 7d</th>
+              <th class="co" data-k="work7">Tasks (7d)</th>
+              <th class="co nosort">Heatmap</th>
+              <th class="co" data-k="donePct">Build map</th>
+              <th class="co" data-k="coverage">Coverage</th>
+              <th class="co" data-k="seq">Chain</th>
+              <th class="co" data-k="fresh">Attested</th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+
+      <div class="legendrow">
+        <div class="planes tight">
+          <div class="plane"><span class="sw mkt"></span><b>On-chain</b> Launchpad market snapshot. Price, FDV, liquidity, volume.</div>
+          <div class="plane"><span class="sw co"></span><b>Reproduced</b> Casa re-ran it. Health, freshness, attestation time.</div>
+          <div class="plane"><span class="sw com"></span><b>Committed</b> bound to the brain root, bytes unseen.</div>
+          <div class="plane"><span class="sw clm"></span><b>Claimed</b> the founder typed it. Playbooks and last session.</div>
+        </div>
+        <p class="tblnote">
+          <b>Attested</b> is reserved. It means Casa's checks passed, not that the business is real.
+          Tokens with no Casa bind are normal: the Casa columns stay empty and the token page still lists.
+          <b>Heatmap</b> fill is claimed work. A ring is a day an attestation landed. Hollow cells are days no attestation covers.
+          Price 7d waits on a series feed.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap foot-tag" id="foot">capx · every agent token pairs against CAPX</div>
+  </footer>
+</main>
+
+<script src="/fmt.js"></script>
+<script src="/stars.js"></script>
+<script src="/market.js"></script>
+</body>
+</html>

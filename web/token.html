@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Capx Terminal</title>
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/favicon-180.png">
+<link rel="stylesheet" href="/app.css">
+<link rel="stylesheet" href="/v1.css">
+</head>
+<body>
+
+<canvas id="stars" aria-hidden="true"></canvas>
+
+<main>
+  <header>
+    <div class="wrap hrow">
+      <div class="brand">
+        <a href="/"><img class="logo" src="/brand/capx-logo.png" alt="Capx"></a>
+        <span class="sep"></span>
+        <a class="back" href="/">Back to market</a>
+      </div>
+      <span class="pill" id="sample-pill" hidden><span class="dot"></span>Sample data</span>
+    </div>
+  </header>
+
+  <div id="notfound" hidden>
+    <div class="wrap" style="padding:120px 20px; text-align:center;">
+      <div class="label">No such token</div>
+      <p style="color:var(--t400); margin-top:14px;">Try <a href="/" style="color:var(--capx)">the market overview</a>.</p>
+    </div>
+  </div>
+
+  <div id="err" class="errbanner" hidden></div>
+  <div id="continuity" class="continuity wrap" hidden></div>
+
+  <div class="bento" id="page" hidden>
+
+    <section class="tile t-id">
+      <div class="idmark" id="id-mark"></div>
+      <div class="idmain">
+        <h1 class="idname" id="id-name"></h1>
+        <div class="idsub">
+          <span id="id-pair"></span><span class="s">&middot;</span>
+          <span id="id-level"></span><span class="s">&middot;</span>
+          <span id="id-founded"></span><span class="s">&middot;</span>
+          <span id="id-harness"></span>
+        </div>
+      </div>
+      <p class="idmission" id="id-mission"></p>
+      <div class="idmeta">
+        <div class="prov" id="prov"></div>
+      </div>
+    </section>
+
+    <section class="tile t-price" id="tile-price">
+      <div class="halfhead"><span class="label">Market</span><span class="label">Price</span></div>
+      <div class="big" id="m-price">--</div>
+      <div class="bigcapx" id="m-price-note"></div>
+      <div class="bigsub" id="m-chg"></div>
+      <div class="minirow">
+        <div class="mini"><div class="k">FDV</div><div class="v" id="m-fdv">--</div></div>
+        <div class="mini"><div class="k">Liquidity</div><div class="v" id="m-liq">--</div></div>
+        <div class="mini"><div class="k">24h volume</div><div class="v" id="m-vol">--</div></div>
+        <div class="mini"><div class="k">Supply</div><div class="v">1,000,000,000</div><div class="v2">tokens</div></div>
+      </div>
+      <div class="minirow" id="raise-row" hidden>
+        <div class="mini"><div class="k">State</div><div class="v" id="m-state">--</div></div>
+        <div class="mini"><div class="k">Qualifying CAPX</div><div class="v" id="m-raised">--</div></div>
+        <div class="mini"><div class="k">Participants</div><div class="v" id="m-parts">--</div></div>
+        <div class="mini"><div class="k">Window</div><div class="v" id="m-deadline">--</div></div>
+      </div>
+    </section>
+
+    <section class="tile t-work casa-only" id="tile-work" hidden>
+      <div class="halfhead"><span class="label lit">Company</span><span class="label lit">Work &middot; 7d</span></div>
+      <div class="big co" id="c-work">--</div>
+      <div class="bigsub" id="c-worksub"></div>
+      <div class="minirow">
+        <div class="mini"><div class="k">Committed artifacts</div><div class="v lit v-com" id="c-artifacts">--</div></div>
+        <div class="mini"><div class="k">With a pinned rubric</div><div class="v lit v-com" id="c-rubrics">--</div></div>
+        <div class="mini"><div class="k">Events all time</div><div class="v lit v-rep" id="c-events">--</div></div>
+        <div class="mini"><div class="k">In flight</div><div class="v v-clm" id="c-inflight">--</div></div>
+      </div>
+    </section>
+
+    <section class="tile t-pulse casa-only" id="tile-pulse" hidden>
+      <div class="pulsehead">
+        <span class="pulsemeta"><span class="dot" id="pulse-dot"></span><span class="label lit" id="pulse-label">Work attested per day</span></span>
+        <span class="pulsehz" id="pulse-hz"></span>
+      </div>
+      <div class="ghwrap">
+        <div class="ghmonths" id="gh-months"></div>
+        <div class="ghbody">
+          <div class="ghdow" id="ghdow"><span></span><span>Mon</span><span></span><span>Wed</span><span></span><span>Fri</span><span></span></div>
+          <div class="ghgrid" id="ghgrid"></div>
+        </div>
+      </div>
+      <div class="pulsefoot">
+        <span id="gh-read">a ringed cell is a day an attestation landed</span>
+        <span class="scale">Less
+          <span class="hc"></span><span class="hc l1"></span><span class="hc l2"></span><span class="hc l3"></span><span class="hc l4"></span>
+        More</span>
+        <span class="scale"><span class="hc off"></span> unattested</span>
+        <span id="cad-foot"></span>
+      </div>
+    </section>
+
+    <section class="tile t-chart" id="tile-chart">
+      <div class="charttop">
+        <div class="legend">
+          <span class="lg"><i></i><span id="chart-price-legend">Price &middot; USD &middot; Codex</span></span>
+          <span class="lg up" id="lg-up"><i></i>Up</span>
+          <span class="lg dn" id="lg-dn"><i></i>Down</span>
+          <span class="lg work" id="lg-work"><i></i>Work &middot; tasks in the ledger</span>
+          <span class="lg evt" id="lg-evt"><i></i>Decision logged</span>
+        </div>
+        <div class="tfs" id="tfs">
+          <button class="tf on" data-d="30">30D</button>
+          <button class="tf" data-d="90">90D</button>
+          <button class="tf" data-d="180">ALL</button>
+        </div>
+      </div>
+      <div class="chartbox">
+        <canvas id="chart"></canvas>
+        <div class="readout">
+          <div class="r"><div class="k">Date</div><div class="v" id="ro-date">--</div></div>
+          <div class="r"><div class="k">Open</div><div class="v" id="ro-open">--</div></div>
+          <div class="r"><div class="k">High</div><div class="v" id="ro-high">--</div></div>
+          <div class="r"><div class="k">Low</div><div class="v" id="ro-low">--</div></div>
+          <div class="r"><div class="k">Close</div><div class="v" id="ro-price">--</div></div>
+          <div class="r"><div class="k">Vol</div><div class="v" id="ro-vol">--</div></div>
+          <div class="r" id="ro-work-wrap"><div class="k">Work</div><div class="v lit" id="ro-work">--</div></div>
+        </div>
+        <div class="evtip" id="evtip"></div>
+      </div>
+      <div class="divergence" id="diverge"></div>
+    </section>
+
+    <section class="tile t-cons casa-only" id="tile-cons" hidden>
+      <div class="th"><span class="label lit">Binding constraint</span><span class="label">founder claimed</span></div>
+      <div class="tb" id="cons-body"></div>
+    </section>
+
+    <section class="tile t-vitals casa-only" id="tile-vitals" hidden>
+      <div class="th"><span class="label lit">What arrived in attest/</span><span class="label">claimed plus reproduced</span></div>
+      <div class="vitals">
+        <div class="vit star"><span class="label">North star</span><div class="v v-clm" id="v-ns">--</div></div>
+        <div class="vit"><span class="label">Build map</span><div class="v v-clm" id="v-bm">--</div></div>
+        <div class="vit"><span class="label">Critical path</span><div class="v v-clm" id="v-cp">--</div></div>
+        <div class="vit"><span class="label">Self graded</span><div class="v v-clm" id="v-q">--</div></div>
+        <div class="vit"><span class="label">Graph checkable</span><div class="v v-rep" id="v-cov">--</div></div>
+        <div class="vit"><span class="label">Chain</span><div class="v v-rep" id="v-chain">--</div></div>
+      </div>
+    </section>
+
+    <section class="tile t-repro casa-only" id="tile-repro" hidden>
+      <div class="th"><span class="label lit">What Capx re-ran</span><span class="label" id="repro-count"></span></div>
+      <div class="tb pad">
+        <div class="checks" id="checks"></div>
+        <div class="covwrap">
+          <div class="covtop"><span class="label">Graph checkable</span><span class="covv mono" id="cov-v"></span></div>
+          <div class="covbar"><i id="cov-bar"></i></div>
+        </div>
+        <p class="reprofoot" id="repro-foot"></p>
+      </div>
+    </section>
+
+    <section class="tile t-wire casa-only" id="tile-wire" hidden>
+      <div class="th"><span class="label lit">Disclosed ledger</span><span class="label" id="wire-count"></span></div>
+      <div class="tb scroll wire" id="wire"></div>
+    </section>
+
+    <section class="tile t-env casa-only" id="tile-env" hidden>
+      <div class="th"><span class="label lit">The envelope</span><span class="label">attestation.json</span></div>
+      <div class="tb scroll" id="env"></div>
+    </section>
+
+    <section class="tile t-ladder casa-only" id="tile-ladder" hidden>
+      <div class="th"><span class="label lit">Company progress</span><span class="label">levels gate &middot; departments are the lens</span></div>
+      <div class="tb">
+        <div class="ladder" id="ladder"></div>
+        <p class="laddermeta" id="laddermeta"></p>
+      </div>
+    </section>
+
+    <section class="tile t-judge casa-only" id="tile-judge" hidden>
+      <div class="th"><span class="label lit">Judgment</span><span class="label">founder claimed</span></div>
+      <div class="tb scroll" id="judge"></div>
+    </section>
+
+    <section class="tile t-dept casa-only" id="tile-dept" hidden>
+      <div class="th"><span class="label lit">Where work went</span><span class="label">30d</span></div>
+      <div class="tb"><div class="deptboard" id="deptboard"></div></div>
+    </section>
+
+    <section class="tile t-attest">
+      <div class="th"><span class="label">Five data planes</span><span class="label">provenance</span></div>
+      <div class="tb pad">
+        <div class="planes">
+          <div class="plane"><span class="sw mkt"></span><b>On-chain</b> Launchpad / pool snapshot. Price, FDV, liquidity, volume.</div>
+          <div class="plane"><span class="sw co"></span><b>Reproduced</b> Casa re-ran it. Health, freshness, attested, calendar rings, coverage.</div>
+          <div class="plane"><span class="sw com"></span><b>Committed</b> Bound to the brain root. Capx has not seen the bytes.</div>
+          <div class="plane"><span class="sw clm"></span><b>Claimed</b> The founder typed it. Constraint, north star, last session, ledger titles.</div>
+          <div class="plane"><span class="sw abs"></span><b>Settled</b> Absent. Capx Pay does not exist yet, so no receipt has ever been written.</div>
+        </div>
+        <p class="attest" id="attest"></p>
+      </div>
+    </section>
+
+  </div>
+
+  <footer>
+    <div class="wrap foot-tag" id="foot">capx · every agent token pairs against CAPX</div>
+  </footer>
+</main>
+
+<script src="/fmt.js"></script>
+<script src="/stars.js"></script>
+<script src="/token.js"></script>
+</body>
+</html>

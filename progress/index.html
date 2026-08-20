@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Capx Terminal — terminal.capx.ai</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <header class="top">
+    <div>
+      <p class="kicker">Terminal deployment</p>
+      <h1>Capx Terminal — terminal.capx.ai</h1>
+      <p class="sub" id="subtitle"></p>
+    </div>
+    <div class="meta">
+      <p>Updated <time id="updated"></time></p>
+      <p>Page refreshes every 30s</p>
+      <p><a id="reference" href="#" target="_blank" rel="noreferrer">v1 contract</a>
+        · <a id="api" href="#" target="_blank" rel="noreferrer">launchpad api</a></p>
+    </div>
+  </header>
+
+  <section class="clocks">
+    <article class="hero">
+      <span>Total remaining until localhost Terminal is done (calibrated)</span>
+      <strong id="total-clock">—</strong>
+      <p id="total-eta"></p>
+    </article>
+    <article>
+      <span>Engineering remaining (calibrated)</span>
+      <strong id="eng-clock">—</strong>
+      <p id="eng-note"></p>
+    </article>
+    <article>
+      <span>Founder / external wait (unscaled)</span>
+      <strong id="wait-clock">—</strong>
+      <p id="wait-note"></p>
+    </article>
+  </section>
+
+  <section class="nowpanel">
+    <h2>Being worked on right now</h2>
+    <ul class="nowlist" id="now-items"></ul>
+    <h2 class="blocked-h">Waiting / blocked</h2>
+    <ul class="nowlist" id="blocked-items"></ul>
+  </section>
+
+  <section class="learn" id="learn"></section>
+  <section class="safety" id="safety"></section>
+
+  <section class="score">
+    <article>
+      <strong id="task-count">—</strong>
+      <span>tasks done</span>
+    </article>
+    <article>
+      <strong id="blocked-count">—</strong>
+      <span>tasks blocked</span>
+    </article>
+    <article>
+      <strong id="spent-count">—</strong>
+      <span>spent vs first estimate</span>
+    </article>
+    <article class="now">
+      <span>In progress</span>
+      <strong id="now-label"></strong>
+      <p id="now-detail"></p>
+    </article>
+  </section>
+
+  <section>
+    <h2>Phases and tasks</h2>
+    <ol class="steps" id="phases"></ol>
+  </section>
+
+  <section>
+    <h2>Estimate vs actual log (this Grok session only)</h2>
+    <p class="sub">Completed engineering tasks feed the calibration factor. Founder
+      waits and Casa/Launchpad work by other agents are never scaled.</p>
+    <table class="log" id="log"></table>
+  </section>
+
+  <section class="split">
+    <div>
+      <h2>Blocked on the founder</h2>
+      <ol class="founder" id="founder"></ol>
+    </div>
+    <div>
+      <h2>Done means (summary)</h2>
+      <ul class="criteria" id="criteria"></ul>
+    </div>
+  </section>
+
+  <section>
+    <h2>Last verified live facts</h2>
+    <dl class="live" id="live"></dl>
+  </section>
+
+  <footer>
+    Local operator board for Terminal deployment. It is not authorization to publish
+    github.com/Capx-AI/terminal, point DNS at terminal.capx.ai, or rebuild
+    /api/attest/*. Contract: docs/TERMINAL-V1-CONTRACT.md.
+  </footer>
+  <script src="./app.js"></script>
+</body>
+</html>

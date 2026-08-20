@@ -1,0 +1,26 @@
+/* v1 layout only. Do not restyle the demo. Hidden deferred tiles leave a tighter bento. */
+.t-price.wide{grid-column:span 6;}
+.t-work.wide{grid-column:span 6;}
+.t-cons.wide{grid-column:span 6;}
+.t-repro.wide{grid-column:span 6;}
+.t-ladder{grid-column:span 12;}
+.casa-only[hidden], .tile[hidden]{display:none !important;}
+.stale-mark{
+  font-family:var(--mono); font-size:9px; letter-spacing:.06em; text-transform:uppercase;
+  color:var(--t500); border:1px solid var(--line2); border-radius:2px; padding:1px 5px; margin-left:6px;
+}
+.errbanner{
+  margin:var(--gut); padding:10px 14px; border:1px solid rgba(239,68,68,.35);
+  background:rgba(239,68,68,.08); color:#f87171; font-family:var(--mono); font-size:12px;
+}
+.continuity{
+  margin-top:8px; font-family:var(--mono); font-size:11px; color:#eab308;
+  border:1px solid rgba(234,179,8,.35); border-radius:var(--radius); padding:8px 10px;
+}
+.released-note{
+  margin-top:8px; font-family:var(--mono); font-size:11px; color:var(--t400);
+  border:1px solid var(--line2); border-radius:var(--radius); padding:8px 10px;
+}
+.nopush{color:var(--t400); font-family:var(--mono); font-size:13px; padding:8px 0;}
+.logo-img{width:27px; height:27px; border-radius:var(--radius); object-fit:cover; flex:none; border:1px solid var(--line2);}
+.idmark img{width:38px; height:38px; border-radius:var(--radius); object-fit:cover; display:block;}
