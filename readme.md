@@ -52,6 +52,10 @@ node web/e2e.mjs
 - **2026-08-21 (CT-01)** - Freeze token-optional directory and register
   contract in `docs/TERMINAL-V1-CONTRACT.md` section 16. Shared schemas
   live in `ORCHESTRATOR/casa-terminal-plan-01/contracts/`. Current
-  `/api/market` remains `tokens[]` only until TR-01.
+  `/api/market` emits typed `rows[]` (company+token, company-only, token-only)
+  and keeps `tokens[]` as the Launchpad-shaped projection.
 - **2026-08-21** - CT-02 adversarial composite goldens in `web/test/`.
   Shared contracts stay in ORCHESTRATOR; this tree only adds tests.
+- **2026-08-22** - TR-01: `/api/market` joins Casa companies with Launchpad
+  tokens into typed `rows[]`. Directory path does not per-mint Casa GET
+  or use the 5-minute negative cache. `tokens[]` stays for old clients.

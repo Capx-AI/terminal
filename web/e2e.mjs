@@ -20,16 +20,30 @@ assert(Array.isArray(market.data.tokens) && market.data.tokens.length >= 7, "liv
 assert(market.data.capx && typeof market.data.capx.capxUsd === "number", "CAPX quote");
 assert(market.data.codex && typeof market.data.codex.configured === "boolean", "codex flag");
 
+assert(Array.isArray(market.data.rows), "composite rows");
+assert("casaError" in market.data, "casaError is explicit");
+assert("directoryError" in market.data, "directoryError is explicit");
+const kinds = new Set(market.data.rows.map((r) => r.kind));
+assert(kinds.has("token_without_company"), "token_without_company present");
+if (market.data.sample) {
+  assert(kinds.has("company_with_token"), "company_with_token sample");
+  assert(kinds.has("company_without_token"), "company_without_token sample");
+}
+const tokenless = market.data.rows.filter((r) => r.kind === "company_without_token");
+for (const row of tokenless) {
+  for (const key of ["price_usd", "fdv_usd", "volume_24h_usd", "liquidity_usd", "change_24h_percent"]) {
+    assert(row.market[key] === null, `${key} null on tokenless`);
+  }
+}
+
 const bySym = Object.fromEntries(market.data.tokens.map((t) => [t.symbol, t]));
-assert(bySym.XY && bySym.XY.casa.status === 404, "XY unbound");
+assert(bySym.XY, "XY listed");
 assert(bySym.XX && bySym.XX.state === "REFUNDED", "XX refunded listed");
-assert(bySym.LIVE.casa.document.attestation.attested === true, "LIVE attested");
-assert(bySym.LIVE.casa.document.attestation.health_score === 78, "health as returned");
-assert(bySym.NONE.casa.document.progress === null, "NONE no fake zero");
-assert(bySym.NONE.casa.document.attestation.freshness === "unobserved", "NONE unobserved");
-assert(bySym.REL.casa.document.binding.status === "released", "REL released");
-assert(bySym.BIND.casa.document.binding.continuity_break === true, "BIND break");
-assert(bySym.AGE.casa.document.attestation.freshness === "aging", "AGE aging");
+assert(bySym.LIVE && bySym.LIVE.sample === true, "LIVE fixture listed");
+assert(bySym.NONE && bySym.NONE.sample === true, "NONE fixture listed");
+assert(bySym.REL && bySym.REL.sample === true, "REL fixture listed");
+assert(bySym.BIND && bySym.BIND.sample === true, "BIND fixture listed");
+assert(bySym.AGE && bySym.AGE.sample === true, "AGE fixture listed");
 
 const xy = await get(`${base}/api/tokens/${bySym.XY.mint}`);
 assert(xy.status === 200 && xy.data.token.casa.status === 404, "XY token page data, no Casa");
@@ -71,6 +85,13 @@ assert(none.data.token.casa.document.attestation.freshness === "unobserved", "un
 assert(none.data.token.casa.document.attestation.health_score == null, "unobserved health not zero");
 assert(none.data.token.heatmap.spec.kind === "1h", "day-old fixture uses hourly heatmap");
 assert(none.data.token.heatmap.buckets.length <= 48, "hourly fixture is not 180 cells");
+
+const rel = await get(`${base}/api/tokens/${bySym.REL.mint}`);
+assert(rel.data.token.casa.document.binding.status === "released", "REL released");
+const bind = await get(`${base}/api/tokens/${bySym.BIND.mint}`);
+assert(bind.data.token.casa.document.binding.continuity_break === true, "BIND break");
+const age = await get(`${base}/api/tokens/${bySym.AGE.mint}`);
+assert(age.data.token.casa.document.attestation.freshness === "aging", "AGE aging");
 
 const missing = await get(`${casa}/v1/tokens/${bySym.XY.mint}`);
 assert(missing.status === 404 && missing.data.error === "TOKEN_NOT_BOUND", "mock 404");

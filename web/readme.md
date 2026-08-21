@@ -26,5 +26,7 @@ intact). `v1.css` only covers missing-tile layout.
 - **2026-08-21** - CT-02 adversarial composite goldens. `web/test/` loads
   shared passing and rejecting fixtures from
   `ORCHESTRATOR/casa-terminal-plan-01/contracts` over the relative path.
-  Token-later pair keeps company_id, slug, and canonical_url. Expected-red
-  market payload stays token-only until TR-01.
+  Token-later pair keeps company_id, slug, and canonical_url. TR-01 joins
+  Casa `GET /v1/companies` with Launchpad tokens into typed `rows[]` and
+  keeps `tokens[]` for existing clients. Directory assembly does not
+  per-mint `GET /v1/tokens/{mint}` or use the 5-minute Casa cache.

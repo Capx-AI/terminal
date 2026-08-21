@@ -4,6 +4,7 @@ import { extname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { codexConfigured, fetchCloses, fetchSparklines, fetchCapxSolChart, fetchOhlcv, rangeForResolution, SOLANA_NETWORK_ID } from "./codex.mjs";
 import { buildHeatmap } from "./timegrid.mjs";
+import { isMint, joinDirectory, publicRow } from "./join.mjs";
 
 const root = fileURLToPath(new URL(".", import.meta.url));
 const port = Number(process.env.PORT ?? 4200);
@@ -21,17 +22,6 @@ const types = {
   ".ico": "image/x-icon",
 };
 
-const BASE58 = /^[1-9A-HJ-NP-Za-km-z]+$/;
-function isMint(mint) {
-  return (
-    typeof mint === "string" &&
-    mint.length >= 32 &&
-    mint.length <= 44 &&
-    BASE58.test(mint) &&
-    mint.endsWith("capx")
-  );
-}
-
 const casaCache = new Map();
 const CASA_TTL_MS = 300_000;
 const barsCache = new Map();
@@ -39,6 +29,7 @@ const BARS_TTL_MS = 120_000;
 let sparkCache = { at: 0, key: "", value: { error: null, byMint: {} } };
 const capxChartCache = new Map();
 let listCache = { at: 0, value: null, error: null };
+let companiesCache = { at: 0, value: null, error: null };
 const LIST_TTL_MS = 60_000;
 let capxCache = { at: 0, value: null, error: null };
 
@@ -174,29 +165,64 @@ const SAMPLE_ROWS = [
     links: {},
     sample: true,
   },
+  {
+    id: "11111111-1111-4111-8111-111111111111",
+    agentMint: "2CasaCoMint11111111111111111capx",
+    name: "InboxPilot",
+    symbol: "INBOX",
+    logoUrl: "/brand/capx-logo.png",
+    description: "Localhost fixture. Casa company with a Launchpad token.",
+    state: "COMPLETED",
+    fundraisingDeadlineAt: null,
+    qualifyingNetCapxBase: "0",
+    participantCount: 0,
+    poolAddress: "FixturePool444444444444444444444444444",
+    marketPerformance: {
+      launchValuationUsd: 200000,
+      currentMarketCapUsd: 240000,
+      volume24hUsd: 12000,
+      liquidityUsd: 80000,
+      priceChange24hPercent: 4.2,
+      asOf: "2026-08-20T03:00:00Z",
+      stale: false,
+    },
+    links: {},
+    sample: true,
+  },
 ];
 
-function publicRow(item) {
-  const mint = item.agentMint;
-  if (!mint || !isMint(mint)) return null;
-  return {
-    id: item.id,
-    mint,
-    name: item.name,
-    symbol: item.symbol,
-    logoUrl: item.logoUrl,
-    description: item.description ?? "",
-    state: item.state,
-    fundraisingDeadlineAt: item.fundraisingDeadlineAt ?? null,
-    fundingFinalizedAt: item.fundingFinalizedAt ?? null,
-    qualifyingNetCapxBase: item.qualifyingNetCapxBase ?? null,
-    participantCount: item.participantCount ?? 0,
-    poolAddress: item.poolAddress ?? null,
-    marketPerformance: item.marketPerformance ?? null,
-    links: item.links ?? {},
-    sample: item.sample === true,
-  };
-}
+const SAMPLE_COMPANIES = [
+  {
+    company_id: "8f3c1a2e-4b5d-4c6a-9e1f-0a1b2c3d4e5f",
+    slug: "inboxpilot",
+    name: "InboxPilot",
+    description: "Turns a founder inbox into a triage queue so nothing important sits unread.",
+    logo: "https://inboxpilot.casa.capx.ai/logo.png",
+    category: "developer-tools",
+    visibility: "public",
+    published_at: "2026-08-21T10:00:00Z",
+    agent_mint: "2CasaCoMint11111111111111111capx",
+    canonical_url: "https://inboxpilot.casa.capx.ai",
+    readiness_ready: true,
+    health_score: 78,
+    freshness: "fresh",
+  },
+  {
+    company_id: "1a2b3c4d-5e6f-4789-8abc-def012345678",
+    slug: "northstar-labs",
+    name: "Northstar Labs",
+    description: "A research notebook that keeps one north star in front of the founder.",
+    logo: "https://northstar-labs.casa.capx.ai/logo.png",
+    category: "productivity",
+    visibility: "public",
+    published_at: "2026-08-21T11:00:00Z",
+    agent_mint: null,
+    canonical_url: "https://northstar-labs.casa.capx.ai",
+    readiness_ready: true,
+    health_score: 64,
+    freshness: "aging",
+  },
+];
 
 async function loadDirectory() {
   const now = Date.now();
@@ -223,6 +249,33 @@ async function loadDirectory() {
   }
   listCache = { at: now, value: items, error };
   return listCache;
+}
+
+async function loadCompanies() {
+  const now = Date.now();
+  if (companiesCache.value && now - companiesCache.at < LIST_TTL_MS) return companiesCache;
+  const items = [];
+  let cursor = null;
+  let error = null;
+  try {
+    for (let i = 0; i < 20; i++) {
+      const qs = new URLSearchParams({ limit: "100" });
+      if (cursor) qs.set("cursor", cursor);
+      const res = await fetchJson(`${casaApi}/v1/companies?${qs}`);
+      if (!res.ok) {
+        error = (res.data && (res.data.message || res.data.error)) || `Casa companies HTTP ${res.status}`;
+        break;
+      }
+      const page = Array.isArray(res.data?.companies) ? res.data.companies : [];
+      items.push(...page);
+      cursor = res.data?.next_cursor ?? res.data?.nextCursor ?? null;
+      if (!cursor) break;
+    }
+  } catch (err) {
+    error = err.name === "AbortError" ? "Casa companies timed out" : String(err.message || err);
+  }
+  companiesCache = { at: now, value: items, error };
+  return companiesCache;
 }
 
 async function loadCapx() {
@@ -407,18 +460,19 @@ function attachCasa(row, casa) {
 }
 
 async function marketPayload() {
-  const [dir, quote] = await Promise.all([loadDirectory(), loadCapx()]);
+  const [dir, casaDir, quote] = await Promise.all([
+    loadDirectory(),
+    loadCompanies(),
+    loadCapx(),
+  ]);
   const live = (dir.value || []).map(publicRow).filter(Boolean);
-  const rows = sample ? live.concat(SAMPLE_ROWS.map(publicRow).filter(Boolean)) : live;
-  const withCasa = await Promise.all(
-    rows.map(async (row) => attachCasa(row, await loadCasa(row.mint))),
-  );
-  const withHeat = withCasa.map((row) => ({
-    ...row,
-    heatmap: buildHeatmap(row, row.casa && row.casa.document),
-  }));
-  const sparks = await loadSparks(withHeat);
-  const tokens = withHeat.map((row) => ({
+  const launchpad = sample ? live.concat(SAMPLE_ROWS.map(publicRow).filter(Boolean)) : live;
+  const companies = sample
+    ? [...(casaDir.value || []), ...SAMPLE_COMPANIES]
+    : (casaDir.value || []);
+  const rows = joinDirectory(companies, launchpad);
+  const sparks = await loadSparks(launchpad);
+  const tokens = launchpad.map((row) => ({
     ...row,
     sparkline: row.sample ? null : sparks.byMint[row.mint] || null,
   }));
@@ -428,12 +482,14 @@ async function marketPayload() {
     capx: quote.value,
     capxError: quote.error,
     directoryError: dir.error,
+    casaError: casaDir.error,
     casaOrigin: casaApi,
     codex: {
       configured: codexConfigured(),
       sparkError: sparks.error || null,
     },
     tokens,
+    rows,
   };
 }
 
@@ -446,7 +502,7 @@ async function tokenPayload(mint) {
   if (!row) {
     return { status: 404, body: { error: "TOKEN_NOT_LISTED", message: "No public Launchpad row for this mint" } };
   }
-  const detail = await loadDetail(row.id);
+  const [detail, casa] = await Promise.all([loadDetail(row.id), loadCasa(mint)]);
   if (detail) {
     row = {
       ...row,
@@ -458,7 +514,8 @@ async function tokenPayload(mint) {
       capxDecimals: detail.capxDecimals,
     };
   }
-  if (!row.heatmap) row.heatmap = buildHeatmap(row, row.casa && row.casa.document);
+  row = attachCasa(row, casa);
+  row.heatmap = buildHeatmap(row, casa && casa.document);
   let priceSeries = row.sample
     ? { source: "codex", candles: [], points: [], error: "SAMPLE_MINT" }
     : await loadMintChart(row.mint, "60");
@@ -573,7 +630,9 @@ const server = createServer(async (request, response) => {
 
 const host = process.env.HOST ?? "127.0.0.1";
 server.listen(port, host, () => {
+  const addr = server.address();
+  const bound = typeof addr === "object" && addr ? addr.port : port;
   process.stdout.write(
-    `capx terminal http://${host}:${port}/  casa=${casaApi}  sample=${sample ? "on" : "off"}\n`,
+    `capx terminal http://${host}:${bound}/  casa=${casaApi}  sample=${sample ? "on" : "off"}\n`,
   );
 });

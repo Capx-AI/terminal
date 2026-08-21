@@ -29,6 +29,60 @@ var CAL_FILL = [
   "rgba(197,220,107,.85)",
 ];
 
+function tokenByMint(mint) {
+  if (!DATA || !DATA.tokens || !mint) return null;
+  for (var i = 0; i < DATA.tokens.length; i++) {
+    if (DATA.tokens[i].mint === mint) return DATA.tokens[i];
+  }
+  return null;
+}
+
+function fromComposite(row) {
+  var company = row && row.company ? row.company : null;
+  var token = row && row.token ? row.token : null;
+  var market = row && row.market ? row.market : null;
+  var mint = token && token.mint ? token.mint : null;
+  var src = tokenByMint(mint);
+  var fdv = market ? market.fdv_usd : null;
+  var vol = market ? market.volume_24h_usd : null;
+  var liq = market ? market.liquidity_usd : null;
+  var chg = market ? market.change_24h_percent : null;
+  var px = market ? market.price_usd : null;
+  var hasMarket = fdv != null || vol != null || liq != null || chg != null || px != null;
+  return {
+    kind: row.kind,
+    mint: mint,
+    id: token ? token.project_id : (company ? company.company_id : ""),
+    name: company ? company.name : (token ? token.name : ""),
+    symbol: token ? token.symbol : "",
+    logoUrl: (token && (token.logo_url || token.logoUrl)) || (company && company.logo) || (src && src.logoUrl) || null,
+    state: token ? token.state : null,
+    slug: company ? company.slug : "",
+    company: company,
+    sample: !!(src && src.sample),
+    marketPerformance: hasMarket ? {
+      currentMarketCapUsd: fdv,
+      volume24hUsd: vol,
+      liquidityUsd: liq,
+      priceChange24hPercent: chg,
+      stale: !!(src && src.marketPerformance && src.marketPerformance.stale),
+    } : null,
+    sparkline: src ? src.sparkline : null,
+    casa: src ? src.casa : null,
+    healthScore: company && typeof company.health_score === "number" ? company.health_score : null,
+    freshness: company ? company.freshness : null,
+    description: company ? company.description : (src ? src.description : ""),
+    category: company ? company.category : "",
+  };
+}
+
+function listed() {
+  if (DATA && Array.isArray(DATA.rows) && DATA.rows.length) {
+    return DATA.rows.map(fromComposite);
+  }
+  return (DATA && DATA.tokens) || [];
+}
+
 function casaDoc(row) {
   return row && row.casa && row.casa.status === 200 && row.casa.document
     ? row.casa.document
@@ -41,11 +95,13 @@ function liveCasa(row) {
 function healthOf(row) {
   var d = casaDoc(row);
   var h = d && d.attestation ? d.attestation.health_score : null;
-  return typeof h === "number" ? h : null;
+  if (typeof h === "number") return h;
+  return typeof row.healthScore === "number" ? row.healthScore : null;
 }
 function freshnessOf(row) {
   var d = casaDoc(row);
-  return d && d.attestation ? d.attestation.freshness : null;
+  if (d && d.attestation && d.attestation.freshness) return d.attestation.freshness;
+  return row && row.freshness ? row.freshness : null;
 }
 function hoursSinceOf(row) {
   var d = casaDoc(row);
@@ -161,7 +217,11 @@ function freshDot(band) {
 
 function attestedCell(row) {
   var d = casaDoc(row);
-  if (!d || !d.attestation) return dash();
+  if (!d || !d.attestation) {
+    var band = freshnessOf(row);
+    if (!band) return dash();
+    return "<span class='fdot " + freshDot(band) + "'></span>" + F.esc(band);
+  }
   var a = d.attestation;
   var time = typeof a.hours_since === "number" ? F.hoursAgo(a.hours_since)
     : (a.observed_at ? F.ago(a.observed_at) : "");
@@ -176,6 +236,7 @@ function attestedCell(row) {
 }
 
 function calCell(row) {
+  if (!row || !row.mint) return dash();
   var days = calDays(row);
   if (!days || !days.length) return dash();
   return "<canvas class='cal' data-mint='" + F.esc(row.mint) + "' width='" + CAL_W + "' height='" + CAL_H + "'></canvas>";
@@ -191,12 +252,7 @@ function lastAttestedIndex(days) {
 
 function drawCal(c) {
   var mint = c.getAttribute("data-mint");
-  var row = null;
-  if (DATA && DATA.tokens) {
-    for (var t = 0; t < DATA.tokens.length; t++) {
-      if (DATA.tokens[t].mint === mint) { row = DATA.tokens[t]; break; }
-    }
-  }
+  var row = tokenByMint(mint);
   var days = calDays(row);
   if (!days || !days.length) return;
   var spec = row && row.heatmap && row.heatmap.spec ? row.heatmap.spec : { kind: "1d", layout: "weeks", cols: 7 };
@@ -267,6 +323,7 @@ function drawCals() {
 }
 
 function sparkCell(row) {
+  if (!row || !row.mint) return dash();
   var s = row && row.sparkline;
   if (!s || s.length < 2) return dash();
   return "<canvas class='spark' data-mint='" + F.esc(row.mint) + "' width='84' height='26'></canvas>";
@@ -274,12 +331,7 @@ function sparkCell(row) {
 
 function drawSpark(c) {
   var mint = c.getAttribute("data-mint");
-  var row = null;
-  if (DATA && DATA.tokens) {
-    for (var t = 0; t < DATA.tokens.length; t++) {
-      if (DATA.tokens[t].mint === mint) { row = DATA.tokens[t]; break; }
-    }
-  }
+  var row = tokenByMint(mint);
   var s = row && row.sparkline;
   if (!s || s.length < 2) return;
   var vals = s.map(function (p) { return Number(p.usd); }).filter(function (v) { return isFinite(v); });
@@ -311,11 +363,12 @@ function drawSpark(c) {
 }
 
 function tokenCell(row) {
+  var mark = (row.symbol || (row.slug || "?")).slice(0, 2);
   var logo = row.logoUrl
     ? "<img class='logo-img' src='" + F.esc(row.logoUrl) + "' alt=''>"
-    : "<div class='mono2'>" + F.esc((row.symbol || "?").slice(0, 2)) + "</div>";
+    : "<div class='mono2'>" + F.esc(mark) + "</div>";
   var casa = casaDoc(row);
-  var slug = casa && casa.company && casa.company.slug ? casa.company.slug : "";
+  var slug = row.slug || (casa && casa.company && casa.company.slug ? casa.company.slug : "");
   var tells = "";
   if (row.casa && row.casa.status === 200 && row.casa.document && row.casa.document.binding) {
     var b = row.casa.document.binding;
@@ -324,8 +377,11 @@ function tokenCell(row) {
   }
   if (row.sample) tells += "<span class='tell'>sample</span>";
   if (row.state && row.state !== "COMPLETED") tells += "<span class='tell'>" + F.esc(row.state.toLowerCase().replace(/_/g, " ")) + "</span>";
+  var ticker = row.symbol
+    ? "$" + F.esc(row.symbol) + (slug ? " · <b>" + F.esc(slug) + "</b>" : "")
+    : (slug ? "<b>" + F.esc(slug) + "</b>" : "");
   return "<div class='tok'>" + logo + "<span><div class='nm'>" + F.esc(row.name) + "</div>"
-    + "<div class='tk'>$" + F.esc(row.symbol) + (slug ? " · <b>" + F.esc(slug) + "</b>" : "") + "</div>"
+    + "<div class='tk'>" + ticker + "</div>"
     + (tells ? "<div class='tells'>" + tells + "</div>" : "")
     + "</span></div>";
 }
@@ -357,7 +413,10 @@ function sortVal(row, k) {
 function matches(row) {
   if (QUERY) {
     var q = QUERY.toLowerCase();
-    var blob = (row.name + " " + row.symbol + " " + row.mint).toLowerCase();
+    var blob = [row.name, row.symbol, row.mint, row.slug, row.description, row.category]
+      .map(function (v) { return v || ""; })
+      .join(" ")
+      .toLowerCase();
     var d = casaDoc(row);
     if (d && d.company) blob += " " + (d.company.slug || "") + " " + (d.company.name || "");
     if (blob.indexOf(q) < 0) return false;
@@ -367,17 +426,18 @@ function matches(row) {
     return h != null && h >= 80;
   }
   if (FILTER === "fresh") {
+    if (freshnessOf(row) === "fresh") return true;
     var doc = casaDoc(row);
     if (!doc || !doc.attestation) return false;
-    if (doc.attestation.freshness === "fresh") return true;
     var hs = hoursSinceOf(row);
     return hs != null && hs <= 168;
   }
   if (FILTER === "review") {
+    var band = freshnessOf(row);
+    if (band === "stale" || band === "aging") return true;
     var r = casaDoc(row);
     if (!r) return false;
     if (r.attestation && r.attestation.attested === false) return true;
-    if (r.attestation && (r.attestation.freshness === "stale" || r.attestation.freshness === "aging")) return true;
     if (r.binding && r.binding.continuity_break) return true;
     return false;
   }
@@ -434,7 +494,7 @@ function paintAggr(tokens) {
 
 function paintPodium(tokens) {
   var ranked = tokens.filter(function (row) {
-    return liveCasa(row) && healthOf(row) != null;
+    return healthOf(row) != null && (liveCasa(row) || row.kind === "company_with_token" || row.kind === "company_without_token");
   }).sort(function (a, b) {
     var dh = healthOf(b) - healthOf(a);
     if (dh) return dh;
@@ -448,26 +508,36 @@ function paintPodium(tokens) {
   $("podium").innerHTML = ranked.map(function (row, i) {
     var h = healthOf(row);
     var d = liveCasa(row);
-    var level = d.progress && d.progress.level_name ? d.progress.level_name : (d.progress ? LEVEL_NAMES[d.progress.level] : "");
+    var level = "";
+    if (d && d.progress && d.progress.level_name) level = d.progress.level_name;
+    else if (d && d.progress && LEVEL_NAMES[d.progress.level]) level = LEVEL_NAMES[d.progress.level];
     var bits = [];
     var cov = coverageOf(row);
     if (cov != null) bits.push(F.bp(cov) + " checkable");
-    if (d.attestation && d.attestation.attested === true) bits.push("attested");
-    else if (d.attestation && d.attestation.freshness) bits.push(d.attestation.freshness);
-    return "<a class='pod' href='/t/" + encodeURIComponent(row.mint) + "'>"
+    if (d && d.attestation && d.attestation.attested === true) bits.push("attested");
+    else if (d && d.attestation && d.attestation.freshness) bits.push(d.attestation.freshness);
+    else if (row.freshness) bits.push(row.freshness);
+    var mark = (row.symbol || row.slug || "?").slice(0, 3);
+    var sub = row.symbol ? "$" + F.esc(row.symbol) : (row.slug ? F.esc(row.slug) : "");
+    var open = row.mint
+      ? "<a class='pod' href='/t/" + encodeURIComponent(row.mint) + "'>"
+      : "<div class='pod'>";
+    var close = row.mint ? "</a>" : "</div>";
+    return open
       + "<div class='podrank'>" + (i + 1) + "</div>"
-      + "<div class='podmark'>" + F.esc((row.symbol || "?").slice(0, 3)) + "</div>"
+      + "<div class='podmark'>" + F.esc(mark) + "</div>"
       + "<div class='podmain'><div class='podname'>" + F.esc(row.name) + "</div>"
-      + "<div class='podsub'>$" + F.esc(row.symbol) + (level ? " · <b>" + F.esc(level) + "</b>" : "") + "</div>"
+      + "<div class='podsub'>" + sub + (level ? " · <b>" + F.esc(level) + "</b>" : "") + "</div>"
       + "<div class='podbits'>" + F.esc(bits.join(" · ")) + "</div></div>"
       + "<div class='podscore'><em>" + h + "</em><span class='u'>health</span>"
-      + "<span class='podbar'><i style='width:" + h + "%'></i></span></div></a>";
+      + "<span class='podbar'><i style='width:" + h + "%'></i></span></div>" + close;
   }).join("");
 }
 
 function render() {
   if (!DATA) return;
-  var list = DATA.tokens.filter(matches);
+  var all = listed();
+  var list = all.filter(matches);
   list.sort(function (a, b) {
     var va = sortVal(a, SORTK), vb = sortVal(b, SORTK);
     if (va == null && vb == null) return 0;
@@ -483,7 +553,7 @@ function render() {
     var d = casaDoc(x);
     if (d && d.binding && d.binding.status === "released") faded = " faded";
     var t7 = tasks7dOf(x);
-    html += "<tr class='" + faded + "' data-mint='" + F.esc(x.mint) + "'>"
+    html += "<tr class='" + faded + "'" + (x.mint ? " data-mint='" + F.esc(x.mint) + "'" : "") + ">"
       + "<td class='l'><span class='rk'>" + (i + 1) + "</span></td>"
       + "<td class='l'>" + tokenCell(x) + "</td>"
       + "<td>" + scoreCell(healthOf(x)) + "</td>"
@@ -501,10 +571,10 @@ function render() {
       + "<td>" + attestedCell(x) + "</td>"
       + "</tr>";
   }
-  $("rows").innerHTML = html || "<tr><td colspan='15' style='text-align:center; color:var(--t500); padding:36px'>no tokens match</td></tr>";
-  $("hint").textContent = list.length === DATA.tokens.length
-    ? "click a row to open the token"
-    : list.length + " of " + DATA.tokens.length + " tokens";
+  $("rows").innerHTML = html || "<tr><td colspan='15' style='text-align:center; color:var(--t500); padding:36px'>no rows match</td></tr>";
+  $("hint").textContent = list.length === all.length
+    ? "click a token to open"
+    : list.length + " of " + all.length + " rows";
   document.querySelectorAll("thead th[data-k]").forEach(function (th) {
     var base = th.textContent.replace(/[↑↓]/g, "").trim();
     th.innerHTML = base + (th.getAttribute("data-k") === SORTK ? "<span class='arr'>" + (DIR < 0 ? "↓" : "↑") + "</span>" : "");
@@ -520,6 +590,7 @@ function boot(data) {
   }
   var err = [];
   if (data.directoryError) err.push("Launchpad directory: " + data.directoryError);
+  if (data.casaError) err.push("Casa companies: " + data.casaError);
   if (data.capxError) err.push("CAPX quote: " + data.capxError);
   if (data.codex && data.codex.configured === false) {
     err.push("Codex key unset: Price 7d and the token chart have no series until CODEX_API_KEY is exported");
@@ -530,8 +601,9 @@ function boot(data) {
     $("err").hidden = false;
     $("err").textContent = err.join(" · ");
   }
-  paintAggr(data.tokens);
-  paintPodium(data.tokens);
+  var rows = listed();
+  paintAggr(rows);
+  paintPodium(rows);
   render();
 }
 

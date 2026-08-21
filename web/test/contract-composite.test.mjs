@@ -53,10 +53,6 @@ test("company-only market fields are null, never zero", () => {
   }
 });
 
-/**
- * Documents current HEAD: GET /api/market is still token-only.
- * Expected-red until TR-01 emits companies[] / typed categories.
- */
 export function marketPayloadReturnKeys(src) {
   const fn = src.indexOf("async function marketPayload");
   if (fn < 0) throw new Error("marketPayload not found");
@@ -73,14 +69,17 @@ export function marketPayloadReturnKeys(src) {
   return { keys, block };
 }
 
-test("current /api/market payload has tokens[] and no companies/categories (expected-red until TR-01)", () => {
+test("/api/market payload keeps tokens[] and emits typed rows plus explicit source errors", () => {
   const src = readFileSync(join(webRoot, "server.mjs"), "utf8");
   const { keys } = marketPayloadReturnKeys(src);
   assert.ok(keys.includes("tokens"), `marketPayload keys: ${keys.join(",")}`);
-  assert.ok(!keys.includes("companies"), "companies[] is not on current marketPayload");
-  assert.ok(!keys.includes("categories"), "categories is not on current marketPayload");
+  assert.ok(keys.includes("rows"), "rows[] typed composites");
+  assert.ok(keys.includes("casaError"), "casaError is explicit");
+  assert.ok(keys.includes("directoryError"), "directoryError is explicit");
+  assert.ok(!keys.includes("categories"), "categories is not a marketPayload key");
   assert.match(src, /CASA_TTL_MS = 300_000/);
   assert.match(src, /\/v1\/tokens\/\$\{encodeURIComponent\(mint\)\}/);
+  assert.match(src, /\/v1\/companies/);
 });
 
 test("docs/casa-openapi.yaml is a pointer to Casa OpenAPI 1.4.0", () => {
