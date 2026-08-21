@@ -44,3 +44,7 @@ intact). `v1.css` only covers missing-tile layout.
   iframe previews fall back to copy plus the full-site link. Keyboard
   labels, skip links, and Vercel `includeFiles` cover register and
   `/c/{slug}`.
+- **2026-08-22 (IN-02)** - Vercel `includeFiles` in `web/vercel.json` is
+  the Terminal static-asset fingerprint (html, css, js, favicons,
+  brand). Names in that glob are the packaged set. Do not restyle the
+  glob. Hashes of those files are release evidence; no secret values.
