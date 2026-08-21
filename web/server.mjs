@@ -612,7 +612,7 @@ const server = createServer(async (request, response) => {
 
   let relative = url.pathname === "/" ? "index.html" : url.pathname.slice(1);
   if (/^t\/[^/]+$/.test(relative)) relative = "token.html";
-  if (relative === "server.mjs" || relative === "codex.mjs" || relative === "timegrid.mjs" || relative.endsWith(".md")) {
+  if (relative === "server.mjs" || relative === "codex.mjs" || relative === "timegrid.mjs" || relative === "join.mjs" || relative.endsWith(".md")) {
     response.writeHead(404).end("not found");
     return;
   }

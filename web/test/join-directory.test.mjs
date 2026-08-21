@@ -10,6 +10,7 @@ import {
   loadJson,
 } from "../../../../ORCHESTRATOR/casa-terminal-plan-01/contracts/validate.mjs";
 import {
+  isPublicCompany,
   joinDirectory,
   kindCounts,
   marketFromLaunchpad,
@@ -113,6 +114,15 @@ test("join emits company+token, company-only, and token-only from directory gold
   const { companyIds, mints } = identities(rows);
   assertUnique(companyIds, "company_id");
   assertUnique(mints, "mint");
+});
+
+test("isPublicCompany requires visibility public and ready", () => {
+  const northstar = loadJson(join(GOLDEN, "directory.json")).companies.find((c) => c.slug === "northstar-labs");
+  assert.equal(isPublicCompany(northstar), true);
+  assert.equal(isPublicCompany({ ...northstar, visibility: undefined }), false);
+  assert.equal(isPublicCompany({ ...northstar, visibility: "private" }), false);
+  assert.equal(isPublicCompany({ ...northstar, readiness_ready: false }), false);
+  assert.equal(isPublicCompany({ ...northstar, readiness_ready: undefined, readiness: undefined }), false);
 });
 
 test("company-only golden joins with null market, never zero", () => {

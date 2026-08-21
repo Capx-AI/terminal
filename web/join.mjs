@@ -101,10 +101,10 @@ export function isPublicCompany(company) {
   if (!company || typeof company !== "object") return false;
   if (typeof company.company_id !== "string" || !company.company_id) return false;
   if (typeof company.slug !== "string" || !company.slug) return false;
-  if (company.visibility != null && company.visibility !== "public") return false;
-  if (company.readiness_ready === false) return false;
-  if (company.readiness && company.readiness.ready === false) return false;
-  return true;
+  if (company.visibility !== "public") return false;
+  const ready = company.readiness_ready === true
+    || (company.readiness && company.readiness.ready === true);
+  return ready === true;
 }
 
 /**
