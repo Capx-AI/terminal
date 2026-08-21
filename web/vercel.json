@@ -1,4 +1,8 @@
 {
-  "framework": null,
-  "$schema": "https://openapi.vercel.sh/vercel.json"
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "functions": {
+    "server.mjs": {
+      "includeFiles": "{index.html,token.html,app.css,v1.css,market.js,token.js,fmt.js,stars.js,favicon-32.png,favicon-180.png,brand/**,brand/**/*}"
+    }
+  }
 }
