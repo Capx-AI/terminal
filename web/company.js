@@ -269,6 +269,21 @@ function paintPreview(kind, artifact, slug, canonical) {
   frame.onerror = function () { applyPreviewFallback(kind); };
   frame.removeAttribute("src");
   var art = publicArtifact(artifact, slug);
+  if (art && art.preview_ok === false) {
+    if (kind === "site" && open && canonical && isCasaUrl(canonical, slug)) {
+      open.href = canonical;
+      open.target = "_blank";
+      open.rel = "noopener noreferrer";
+      open.hidden = false;
+    } else if (open) {
+      open.href = art.url;
+      open.target = "_blank";
+      open.rel = "noopener noreferrer";
+      open.hidden = false;
+    }
+    applyPreviewFallback(kind);
+    return;
+  }
   if (kind === "site" && open && canonical && isCasaUrl(canonical, slug)) {
     open.href = canonical;
     open.target = "_blank";

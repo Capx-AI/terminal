@@ -74,6 +74,30 @@ export function sanitizeArtifacts(artifacts, visibility, slug) {
   return out;
 }
 
+export async function probeArtifact(art, fetchImpl = fetch, timeoutMs = 800) {
+  if (!art || typeof art.url !== "string") return art;
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const res = await fetchImpl(art.url, { method: "GET", redirect: "manual", signal: ctrl.signal });
+    const ok = res.status >= 200 && res.status < 400;
+    return { ...art, preview_ok: ok };
+  } catch {
+    return { ...art, preview_ok: false };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+export async function probeArtifacts(artifacts, fetchImpl = fetch) {
+  const src = artifacts && typeof artifacts === "object" ? artifacts : {};
+  const out = { ...src };
+  await Promise.all(ARTIFACT_TYPES.map(async (type) => {
+    if (out[type]) out[type] = await probeArtifact(out[type], fetchImpl);
+  }));
+  return out;
+}
+
 export function sanitizeVersions(versions, artifacts) {
   const src = versions && typeof versions === "object" ? versions : {};
   const out = {};

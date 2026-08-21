@@ -60,6 +60,7 @@ async function startTerminal(env) {
       SAMPLE: "0",
       HOST: "127.0.0.1",
       PORT: "0",
+      PROBE_ARTIFACTS: "0",
       ...env,
     },
     stdio: ["ignore", "pipe", "pipe"],
@@ -289,12 +290,30 @@ test("Launchpad outage on /api/market still lists Casa companies", async (t) => 
   for (const key of MARKET_KEYS) assert.equal(api.data.market[key], null);
 });
 
+test("probeArtifact marks HTTP 404 as preview_ok false", async () => {
+  const { probeArtifact } = await import("../company.mjs");
+  const art = { url: "https://northstar-labs.casa.capx.ai/", visibility: "public" };
+  const bad = await probeArtifact(art, async () => ({ status: 404 }));
+  assert.equal(bad.preview_ok, false);
+  assert.equal(bad.url, art.url);
+  const good = await probeArtifact(art, async () => ({ status: 200 }));
+  assert.equal(good.preview_ok, true);
+});
+
+test("company.js falls back when preview_ok is false and keeps Open full site", () => {
+  const src = readFileSync(join(webRoot, "company.js"), "utf8");
+  assert.match(src, /preview_ok === false/);
+  assert.match(src, /applyPreviewFallback\(kind\)/);
+  assert.match(src, /Open the full site/);
+  assert.doesNotMatch(src, /allow-same-origin|allow-top-navigation|allow-popups/);
+});
+
 test("broken artifact preview falls back and keeps the open-full link", () => {
   const src = readFileSync(join(webRoot, "company.js"), "utf8");
   const html = readFileSync(join(webRoot, "company.html"), "utf8");
   assert.match(src, /function previewFallbackCopy\(kind\)/);
   assert.match(src, /function applyPreviewFallback\(kind\)/);
-  assert.match(src, /frame\.onerror/);
+  assert.match(src, /preview_ok === false/);
   assert.match(src, /Preview failed\. Open the full site\./);
   assert.match(src, /tabIndex = -1/);
   assert.doesNotMatch(src, /allow-same-origin|allow-top-navigation|allow-popups/);

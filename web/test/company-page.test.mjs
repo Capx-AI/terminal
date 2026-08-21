@@ -88,6 +88,7 @@ async function startTerminal(env) {
       SAMPLE: "0",
       HOST: "127.0.0.1",
       PORT: "0",
+      PROBE_ARTIFACTS: "0",
       ...env,
     },
     stdio: ["ignore", "pipe", "pipe"],

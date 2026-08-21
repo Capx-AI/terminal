@@ -19,6 +19,7 @@ import {
   isValidSlug,
   joinCompanyToken,
   mapCasaCompanyError,
+  probeArtifacts,
   publicCompanyView,
 } from "./company.mjs";
 
@@ -622,6 +623,9 @@ async function companyPayload(slug) {
   if (!view) {
     const fail = companyErrorResponse("NOT_FOUND");
     return { status: fail.status, body: fail.body };
+  }
+  if (process.env.PROBE_ARTIFACTS !== "0") {
+    view.artifacts = await probeArtifacts(view.artifacts);
   }
   const rows = await launchpadRows();
   const joined = joinCompanyToken(view, rows);
