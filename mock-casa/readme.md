@@ -21,6 +21,10 @@ Binds `127.0.0.1:4201`. Documents follow the Casa **terminal surface**
 | any other well-formed `*capx` mint | 404 TOKEN_NOT_BOUND |
 | invalid mint | 400 INVALID_MINT |
 
+Also serves `GET /v1/companies` and `GET /v1/companies/{slug}` for the
+sample public companies `inboxpilot` and `northstar-labs`. Private and
+unready slugs 404 with `PRIVATE` / `NOT_READY` and no artifact URLs.
+
 Live Launchpad mints such as XY 404 on purpose. Connect Casa is not built.
 
 ## Log

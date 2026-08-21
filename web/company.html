@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Capx Terminal</title>
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/favicon-180.png">
+<link rel="stylesheet" href="/app.css">
+<link rel="stylesheet" href="/v1.css">
+</head>
+<body>
+
+<canvas id="stars" aria-hidden="true"></canvas>
+
+<main>
+  <header>
+    <div class="wrap hrow">
+      <div class="brand">
+        <a href="/"><img class="logo" src="/brand/capx-logo.png" alt="Capx"></a>
+        <span class="sep"></span>
+        <a class="back" href="/">Back to market</a>
+        <a class="back" id="token-link" hidden>Token page</a>
+      </div>
+      <span class="pill" id="sample-pill" hidden><span class="dot"></span>Sample data</span>
+    </div>
+  </header>
+
+  <div id="notfound" hidden>
+    <div class="wrap" style="padding:120px 20px; text-align:center;">
+      <div class="label" id="nf-code">No such company</div>
+      <p style="color:var(--t400); margin-top:14px;">Try <a href="/" style="color:var(--capx)">the market overview</a>.</p>
+    </div>
+  </div>
+
+  <div id="err" class="errbanner" hidden></div>
+
+  <div class="bento" id="page" hidden>
+
+    <section class="tile t-id">
+      <div class="idmark" id="id-mark"></div>
+      <div class="idmain">
+        <h1 class="idname" id="id-name"></h1>
+        <div class="idsub">
+          <span id="id-category"></span><span class="s">&middot;</span>
+          <span id="id-level"></span><span class="s">&middot;</span>
+          <span id="id-founded"></span>
+        </div>
+      </div>
+      <p class="idmission" id="id-mission"></p>
+      <div class="idmeta">
+        <div class="prov" id="prov"></div>
+      </div>
+    </section>
+
+    <section class="tile t-price" id="tile-price">
+      <div class="halfhead"><span class="label">Market</span><span class="label">Price</span></div>
+      <div class="big" id="m-price">--</div>
+      <div class="bigcapx" id="m-price-note"></div>
+      <div class="bigsub" id="m-chg"></div>
+      <div class="minirow">
+        <div class="mini"><div class="k">FDV</div><div class="v" id="m-fdv">--</div></div>
+        <div class="mini"><div class="k">Liquidity</div><div class="v" id="m-liq">--</div></div>
+        <div class="mini"><div class="k">24h volume</div><div class="v" id="m-vol">--</div></div>
+        <div class="mini"><div class="k">Change 24h</div><div class="v" id="m-chg2">--</div></div>
+      </div>
+    </section>
+
+    <section class="tile t-work" id="tile-work">
+      <div class="halfhead"><span class="label lit">Company</span><span class="label lit">Progress</span></div>
+      <div class="big co" id="c-health">--</div>
+      <div class="bigsub" id="c-healthsub"></div>
+      <div class="minirow">
+        <div class="mini"><div class="k">Level</div><div class="v lit v-clm" id="c-level">--</div></div>
+        <div class="mini"><div class="k">Playbooks done</div><div class="v lit v-clm" id="c-done">--</div></div>
+        <div class="mini"><div class="k">Ready</div><div class="v lit v-clm" id="c-ready">--</div></div>
+        <div class="mini"><div class="k">Freshness</div><div class="v lit v-rep" id="c-fresh">--</div></div>
+      </div>
+    </section>
+
+    <section class="tile t-pulse" id="tile-pulse" hidden>
+      <div class="pulsehead">
+        <span class="pulsemeta"><span class="dot" id="pulse-dot"></span><span class="label lit" id="pulse-label">Work attested per day</span></span>
+        <span class="pulsehz" id="pulse-hz"></span>
+      </div>
+      <div class="ghwrap">
+        <div class="ghmonths" id="gh-months"></div>
+        <div class="ghbody">
+          <div class="ghdow" id="ghdow"><span></span><span>Mon</span><span></span><span>Wed</span><span></span><span>Fri</span><span></span></div>
+          <div class="ghgrid" id="ghgrid"></div>
+        </div>
+      </div>
+      <div class="pulsefoot">
+        <span id="gh-read">a ringed cell is a day an attestation landed</span>
+        <span class="scale">Less
+          <span class="hc"></span><span class="hc l1"></span><span class="hc l2"></span><span class="hc l3"></span><span class="hc l4"></span>
+        More</span>
+      </div>
+    </section>
+
+    <section class="tile t-chart" id="tile-chart">
+      <div class="charttop">
+        <div class="legend">
+          <span class="lg"><i></i><span id="chart-price-legend">Price &middot; USD</span></span>
+        </div>
+      </div>
+      <div class="chartbox">
+        <canvas id="chart"></canvas>
+        <div class="chart-empty" id="chart-empty">No token yet. Market chart appears when a token is attached.</div>
+      </div>
+    </section>
+
+    <section class="tile t-site" id="tile-site">
+      <div class="th">
+        <span class="label lit">Website</span>
+        <a class="open-full" id="site-open" target="_blank" rel="noopener noreferrer" hidden>Open full site</a>
+      </div>
+      <div class="preview">
+        <iframe id="site-frame" title="Website preview" loading="lazy" sandbox="allow-scripts" referrerpolicy="no-referrer" hidden></iframe>
+        <div class="preview-empty" id="site-empty">No public website.</div>
+      </div>
+    </section>
+
+    <section class="tile t-pager" id="tile-pager">
+      <div class="th">
+        <span class="label lit">One-pager</span>
+        <a class="open-full" id="one_pager-open" target="_blank" rel="noopener noreferrer" hidden>Open one-pager</a>
+      </div>
+      <div class="preview">
+        <iframe id="one_pager-frame" title="One-pager preview" loading="lazy" sandbox="allow-scripts" referrerpolicy="no-referrer" hidden></iframe>
+        <div class="preview-empty" id="one_pager-empty">No public one-pager.</div>
+      </div>
+    </section>
+
+    <section class="tile t-deck" id="tile-deck">
+      <div class="th">
+        <span class="label lit">Deck</span>
+        <a class="open-full" id="deck-open" target="_blank" rel="noopener noreferrer" hidden>Open deck</a>
+      </div>
+      <div class="preview">
+        <iframe id="deck-frame" title="Deck preview" loading="lazy" sandbox="allow-scripts" referrerpolicy="no-referrer" hidden></iframe>
+        <div class="preview-empty" id="deck-empty">No public deck.</div>
+      </div>
+    </section>
+
+    <section class="tile t-ladder" id="tile-ladder">
+      <div class="th"><span class="label lit">Company progress</span><span class="label">levels gate &middot; departments are the lens</span></div>
+      <div class="tb">
+        <div class="ladder" id="ladder"></div>
+        <p class="laddermeta" id="laddermeta"></p>
+      </div>
+    </section>
+
+    <section class="tile t-attest">
+      <div class="th"><span class="label">Five data planes</span><span class="label">provenance</span></div>
+      <div class="tb pad">
+        <div class="planes">
+          <div class="plane"><span class="sw mkt"></span><b>On-chain</b> Launchpad / pool snapshot. Price, FDV, liquidity, volume. Only when a token exists.</div>
+          <div class="plane"><span class="sw co"></span><b>Reproduced</b> Casa re-ran it. Health, freshness, attested, calendar rings, coverage.</div>
+          <div class="plane"><span class="sw com"></span><b>Committed</b> Bound to the brain root. Capx has not seen the bytes.</div>
+          <div class="plane"><span class="sw clm"></span><b>Claimed</b> The founder typed it. Constraint, north star, last session, ledger titles.</div>
+          <div class="plane"><span class="sw abs"></span><b>Settled</b> Absent. Capx Pay does not exist yet, so no receipt has ever been written.</div>
+        </div>
+        <p class="attest" id="attest"></p>
+      </div>
+    </section>
+
+  </div>
+
+  <footer>
+    <div class="wrap foot-tag" id="foot">capx · company page · token attach keeps this URL</div>
+  </footer>
+</main>
+
+<script src="/fmt.js"></script>
+<script src="/stars.js"></script>
+<script src="/company.js"></script>
+</body>
+</html>

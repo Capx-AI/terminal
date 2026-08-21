@@ -530,7 +530,7 @@ footer{border-top:1px solid var(--line); padding:16px 0 26px;}
 @media (max-width:880px){
   .bento{grid-template-columns:repeat(6,1fr);}
   .t-id,.t-chart,.t-cons,.t-vitals,.t-repro,.t-wire,.t-env,.t-judge,.t-ladder,
-  .t-dept,.t-attest{grid-column:span 6;}
+  .t-dept,.t-attest,.t-site,.t-pager,.t-deck{grid-column:span 6;}
   .t-price{grid-column:span 3;}
   .t-work{grid-column:span 3;}
   .t-pulse{grid-column:span 6;}

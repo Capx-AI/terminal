@@ -65,3 +65,7 @@ node web/e2e.mjs
 - **2026-08-22** - TR-03: `/register` (one code field) and `POST /api/register`
   proxy Casa redeem. No-store. Success invalidates the companies snapshot
   and redirects to `/c/{slug}`. Deterministic Casa error copy. No account DB.
+- **2026-08-22** - TR-04: `/c/{slug}` company page. Casa progress/health,
+  sandboxed artifact previews, separate full-site links. Market content
+  only when a joined token exists. Token-later keeps the URL. `/t/{mint}`
+  links to the company page when one exists.

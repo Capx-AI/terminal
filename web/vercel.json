@@ -2,7 +2,7 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "functions": {
     "server.mjs": {
-      "includeFiles": "{index.html,token.html,register.html,app.css,v1.css,market.js,token.js,register.js,fmt.js,stars.js,favicon-32.png,favicon-180.png,brand/**,brand/**/*}"
+      "includeFiles": "{index.html,token.html,register.html,company.html,app.css,v1.css,market.js,token.js,register.js,company.js,fmt.js,stars.js,favicon-32.png,favicon-180.png,brand/**,brand/**/*}"
     }
   }
 }

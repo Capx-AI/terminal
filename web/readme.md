@@ -35,3 +35,8 @@ intact). `v1.css` only covers missing-tile layout.
   TR-03 adds `/register` and `POST /api/register`, a no-store proxy to
   Casa `POST /v1/companies/redeem`. Success drops the companies snapshot
   and redirects to `/c/{slug}`.
+  TR-04 adds `/c/{slug}` and `GET /api/companies/{slug}`. Casa progress
+  and health, sandboxed website/one-pager/deck previews, full-site links
+  on `{slug}.casa.capx.ai`. Market chart only when a joined token exists.
+  Token-later keeps the same company URL. `/t/{mint}` links to `/c/{slug}`
+  when a public company is joined.

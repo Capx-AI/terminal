@@ -1586,6 +1586,13 @@ function boot(payload) {
   paintIdentity(payload.token, DOC);
   paintMarket(payload.token, payload.capx);
   paintCasa(payload.token, DOC);
+  if (payload.company_href) {
+    var clink = $("company-link");
+    if (clink) {
+      clink.href = payload.company_href;
+      clink.hidden = false;
+    }
+  }
 }
 
 var mint = mintFromPath();

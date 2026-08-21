@@ -11,6 +11,16 @@ import {
   redeemErrorResponse,
   redeemSuccessResponse,
 } from "./register.mjs";
+import {
+  SAMPLE_COMPANY_DOCS,
+  companyErrorResponse,
+  companyGateError,
+  companyHref,
+  isValidSlug,
+  joinCompanyToken,
+  mapCasaCompanyError,
+  publicCompanyView,
+} from "./company.mjs";
 
 const root = fileURLToPath(new URL(".", import.meta.url));
 const port = Number(process.env.PORT ?? 4200);
@@ -375,6 +385,24 @@ async function loadCapx() {
   return capxCache;
 }
 
+async function loadCompanyBySlug(slug) {
+  try {
+    const res = await fetchJson(`${casaApi}/v1/companies/${encodeURIComponent(slug)}`);
+    if (res.ok && res.data && typeof res.data === "object") {
+      return { status: 200, document: res.data, error: null };
+    }
+    const mapped = mapCasaCompanyError(res.status, res.data);
+    return { status: mapped.status, document: null, error: mapped.body.error };
+  } catch (err) {
+    return {
+      status: 503,
+      document: null,
+      error: "CASA_UNAVAILABLE",
+      message: err.name === "AbortError" ? "Casa timed out" : String(err.message || err),
+    };
+  }
+}
+
 async function loadCasa(mint) {
   const now = Date.now();
   const hit = casaCache.get(mint);
@@ -566,6 +594,64 @@ async function marketPayload() {
   };
 }
 
+async function launchpadRows() {
+  const dir = await loadDirectory();
+  const live = Array.isArray(dir.value) ? dir.value : [];
+  return sample ? live.concat(SAMPLE_ROWS) : live;
+}
+
+async function companyPayload(slug) {
+  if (!isValidSlug(slug)) {
+    return { status: 404, body: companyErrorResponse("NOT_FOUND").body };
+  }
+  const casa = await loadCompanyBySlug(slug);
+  let doc = casa.document;
+  if (!doc && sample && SAMPLE_COMPANY_DOCS[slug] && (casa.error === "NOT_FOUND" || casa.error === "CASA_UNAVAILABLE")) {
+    doc = SAMPLE_COMPANY_DOCS[slug];
+  }
+  if (!doc) {
+    const fail = companyErrorResponse(casa.error || "NOT_FOUND");
+    return { status: fail.status, body: fail.body };
+  }
+  const gated = companyGateError(doc);
+  if (gated) {
+    const fail = companyErrorResponse(gated);
+    return { status: fail.status, body: fail.body };
+  }
+  const view = publicCompanyView(doc);
+  if (!view) {
+    const fail = companyErrorResponse("NOT_FOUND");
+    return { status: fail.status, body: fail.body };
+  }
+  const rows = await launchpadRows();
+  const joined = joinCompanyToken(view, rows);
+  let priceSeries = null;
+  let heatmap = null;
+  if (joined.row) {
+    heatmap = buildHeatmap(joined.row, view);
+    priceSeries = joined.row.sample
+      ? { source: "codex", candles: [], points: [], error: "SAMPLE_MINT" }
+      : await loadMintChart(joined.row.mint, "60");
+  } else if (view.calendar) {
+    heatmap = buildHeatmap(null, view);
+  }
+  return {
+    status: 200,
+    body: {
+      sample,
+      generatedAt: new Date().toISOString(),
+      casaOrigin: casaApi,
+      kind: joined.kind,
+      company: view,
+      token: joined.token,
+      market: joined.market,
+      token_href: joined.token_href,
+      heatmap,
+      priceSeries,
+    },
+  };
+}
+
 async function tokenPayload(mint) {
   if (!isMint(mint)) {
     return { status: 400, body: { error: "INVALID_MINT", message: "Mint must be Solana base58 ending in capx" } };
@@ -592,6 +678,8 @@ async function tokenPayload(mint) {
   let priceSeries = row.sample
     ? { source: "codex", candles: [], points: [], error: "SAMPLE_MINT" }
     : await loadMintChart(row.mint, "60");
+  const joined = (market.rows || []).find((r) => r.token && r.token.mint === mint && r.company && r.company.slug);
+  const company_slug = joined && joined.company.slug ? joined.company.slug : null;
   return {
     status: 200,
     body: {
@@ -600,6 +688,8 @@ async function tokenPayload(mint) {
       capx: market.capx,
       capxError: market.capxError,
       casaOrigin: market.casaOrigin,
+      company_slug,
+      company_href: companyHref(company_slug),
       codex: {
         configured: codexConfigured(),
         error: priceSeries.error || null,
@@ -685,6 +775,25 @@ const server = createServer(async (request, response) => {
     return;
   }
 
+  const companyApi = url.pathname.match(/^\/api\/companies\/([^/]+)$/);
+  if (request.method === "GET" && companyApi) {
+    let slug;
+    try {
+      slug = decodeURIComponent(companyApi[1]);
+    } catch {
+      sendJson(response, 404, companyErrorResponse("NOT_FOUND").body, 5);
+      return;
+    }
+    try {
+      const result = await companyPayload(slug);
+      const maxAge = result.status === 200 ? 60 : 5;
+      sendJson(response, result.status, result.body, result.status === 200 ? maxAge : "no-store");
+    } catch (err) {
+      sendJson(response, 500, { error: "COMPANY_FAILED", message: String(err.message || err) }, 5);
+    }
+    return;
+  }
+
   if (request.method === "GET" && url.pathname === "/health") {
     sendJson(response, 200, {
       status: "ok",
@@ -698,8 +807,9 @@ const server = createServer(async (request, response) => {
 
   let relative = url.pathname === "/" ? "index.html" : url.pathname.slice(1);
   if (/^t\/[^/]+$/.test(relative)) relative = "token.html";
+  if (/^c\/[a-z0-9-]{1,32}$/.test(relative)) relative = "company.html";
   if (relative === "register" || relative === "register/") relative = "register.html";
-  if (relative === "server.mjs" || relative === "codex.mjs" || relative === "timegrid.mjs" || relative === "join.mjs" || relative === "register.mjs" || relative.endsWith(".md")) {
+  if (relative === "server.mjs" || relative === "codex.mjs" || relative === "timegrid.mjs" || relative === "join.mjs" || relative === "register.mjs" || relative === "company.mjs" || relative.endsWith(".md")) {
     response.writeHead(404).end("not found");
     return;
   }
