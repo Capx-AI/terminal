@@ -32,3 +32,6 @@ intact). `v1.css` only covers missing-tile layout.
   per-mint `GET /v1/tokens/{mint}` or use the 5-minute Casa cache.
   TR-02 adds company+token / company-only / token-only chips, search
   across both sources, and dash/null market columns on tokenless rows.
+  TR-03 adds `/register` and `POST /api/register`, a no-store proxy to
+  Casa `POST /v1/companies/redeem`. Success drops the companies snapshot
+  and redirects to `/c/{slug}`.

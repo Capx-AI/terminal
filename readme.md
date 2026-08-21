@@ -62,3 +62,6 @@ node web/e2e.mjs
 - **2026-08-22** - TR-02: market chips filter company+token, company-only
   and token-only rows. Search covers company name/slug/description/category
   and token name/symbol/mint. Tokenless market columns stay dash/null.
+- **2026-08-22** - TR-03: `/register` (one code field) and `POST /api/register`
+  proxy Casa redeem. No-store. Success invalidates the companies snapshot
+  and redirects to `/c/{slug}`. Deterministic Casa error copy. No account DB.

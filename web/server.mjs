@@ -5,6 +5,12 @@ import { fileURLToPath } from "node:url";
 import { codexConfigured, fetchCloses, fetchSparklines, fetchCapxSolChart, fetchOhlcv, rangeForResolution, SOLANA_NETWORK_ID } from "./codex.mjs";
 import { buildHeatmap } from "./timegrid.mjs";
 import { isMint, joinDirectory, publicRow } from "./join.mjs";
+import {
+  codeFromBody,
+  parseRegisterBody,
+  redeemErrorResponse,
+  redeemSuccessResponse,
+} from "./register.mjs";
 
 const root = fileURLToPath(new URL(".", import.meta.url));
 const port = Number(process.env.PORT ?? 4200);
@@ -36,16 +42,41 @@ let capxCache = { at: 0, value: null, error: null };
 function sendJson(response, status, body, maxAge) {
   response.writeHead(status, {
     "content-type": "application/json; charset=utf-8",
-    "cache-control": `public, max-age=${maxAge}`,
+    "cache-control": maxAge === "no-store" ? "no-store" : `public, max-age=${maxAge}`,
   });
   response.end(JSON.stringify(body));
 }
 
-async function fetchJson(url, timeoutMs = 8000) {
+function invalidateCompaniesSnapshot() {
+  companiesCache = { at: 0, value: null, error: null };
+}
+
+function readRequestBody(request, limit = 4096) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    let n = 0;
+    request.on("data", (c) => {
+      n += c.length;
+      if (n > limit) {
+        const err = new Error("payload too large");
+        err.code = "PAYLOAD_TOO_LARGE";
+        request.destroy();
+        reject(err);
+      } else {
+        chunks.push(c);
+      }
+    });
+    request.on("end", () => resolve(Buffer.concat(chunks).toString("utf8")));
+    request.on("error", reject);
+  });
+}
+
+async function fetchJson(url, timeoutMs = 8000, init = {}) {
   const ac = new AbortController();
   const t = setTimeout(() => ac.abort(), timeoutMs);
   try {
-    const res = await fetch(url, { signal: ac.signal, headers: { accept: "application/json" } });
+    const headers = { accept: "application/json", ...(init.headers || {}) };
+    const res = await fetch(url, { ...init, headers, signal: ac.signal });
     const text = await res.text();
     let data = null;
     try {
@@ -57,6 +88,48 @@ async function fetchJson(url, timeoutMs = 8000) {
   } finally {
     clearTimeout(t);
   }
+}
+
+async function handleRegister(request, response) {
+  let raw;
+  try {
+    raw = await readRequestBody(request);
+  } catch {
+    const fail = redeemErrorResponse("CODE_INVALID");
+    sendJson(response, fail.status, fail.body, "no-store");
+    return;
+  }
+  const parsed = parseRegisterBody(raw, request.headers["content-type"]);
+  const code = parsed.invalid ? "" : codeFromBody(parsed);
+  if (!code) {
+    const fail = redeemErrorResponse("CODE_INVALID");
+    sendJson(response, fail.status, fail.body, "no-store");
+    return;
+  }
+
+  let res;
+  try {
+    res = await fetchJson(`${casaApi}/v1/companies/redeem`, 8000, {
+      method: "POST",
+      headers: { "content-type": "application/json", accept: "application/json" },
+      body: JSON.stringify({ code }),
+    });
+  } catch {
+    const fail = redeemErrorResponse("CASA_UNAVAILABLE");
+    sendJson(response, fail.status, fail.body, "no-store");
+    return;
+  }
+
+  if (res.ok) {
+    const ok = redeemSuccessResponse(res.data);
+    if (ok.status === 200) invalidateCompaniesSnapshot();
+    sendJson(response, ok.status, ok.body, "no-store");
+    return;
+  }
+
+  const casaError = res.data && typeof res.data.error === "string" ? res.data.error : "CASA_UNAVAILABLE";
+  const fail = redeemErrorResponse(casaError);
+  sendJson(response, fail.status, fail.body, "no-store");
 }
 
 const SAMPLE_ROWS = [
@@ -546,6 +619,19 @@ const server = createServer(async (request, response) => {
     return;
   }
 
+  if (url.pathname === "/api/register") {
+    if (request.method !== "POST") {
+      sendJson(response, 405, { error: "METHOD_NOT_ALLOWED", message: "Use POST" }, "no-store");
+      return;
+    }
+    try {
+      await handleRegister(request, response);
+    } catch {
+      sendJson(response, 503, redeemErrorResponse("CASA_UNAVAILABLE").body, "no-store");
+    }
+    return;
+  }
+
   if (request.method === "GET" && url.pathname === "/api/market") {
     try {
       sendJson(response, 200, await marketPayload(), 60);
@@ -612,7 +698,8 @@ const server = createServer(async (request, response) => {
 
   let relative = url.pathname === "/" ? "index.html" : url.pathname.slice(1);
   if (/^t\/[^/]+$/.test(relative)) relative = "token.html";
-  if (relative === "server.mjs" || relative === "codex.mjs" || relative === "timegrid.mjs" || relative === "join.mjs" || relative.endsWith(".md")) {
+  if (relative === "register" || relative === "register/") relative = "register.html";
+  if (relative === "server.mjs" || relative === "codex.mjs" || relative === "timegrid.mjs" || relative === "join.mjs" || relative === "register.mjs" || relative.endsWith(".md")) {
     response.writeHead(404).end("not found");
     return;
   }

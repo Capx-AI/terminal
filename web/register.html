@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Register · Capx Terminal</title>
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/favicon-180.png">
+<link rel="stylesheet" href="/app.css">
+<link rel="stylesheet" href="/v1.css">
+</head>
+<body>
+
+<canvas id="stars" aria-hidden="true"></canvas>
+
+<main>
+  <header>
+    <div class="wrap hrow">
+      <div class="brand">
+        <a href="/"><img class="logo" src="/brand/capx-logo.png" alt="Capx"></a>
+        <span class="sep"></span>
+        <a class="back" href="/">Back to market</a>
+      </div>
+      <span class="label lit">Register</span>
+    </div>
+  </header>
+
+  <section class="regwrap">
+    <div class="wrap">
+      <form id="reg" class="regform" action="/api/register" method="post" autocomplete="off">
+        <span class="label lit">Company code</span>
+        <h1>Register</h1>
+        <p class="regnote">Paste the single-use code Casa printed. Terminal does not keep an account.</p>
+        <label class="label" for="code">Code</label>
+        <input id="code" name="code" required spellcheck="false" autocomplete="off" autocapitalize="characters" placeholder="CASA-...." aria-label="Company registration code">
+        <button type="submit" class="regbtn" id="go">Register</button>
+        <div id="err" class="errbanner" hidden></div>
+        <div id="ok" class="regok" hidden></div>
+      </form>
+    </div>
+  </section>
+</main>
+
+<script src="/stars.js"></script>
+<script src="/register.js"></script>
+</body>
+</html>
