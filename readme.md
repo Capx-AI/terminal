@@ -45,7 +45,7 @@ node web/e2e.mjs
 
 - **2026-08-20 (evening)** — Terminal agent update prompt: GROK-TERMINAL-SURFACE-UPDATE.md (paint demo from new Casa GET).
 - **2026-08-20 (github)** — Public repo https://github.com/Capx-AI/terminal created from this tree. Author HBx <0xhbx@users.noreply.github.com>.
-- **2026-08-21** — Carry production Vercel `includeFiles` so the Node
+- **2026-08-21** - Carry production Vercel `includeFiles` so the Node
   function can read sibling HTML/CSS/JS. Without this, production `GET /`
   404s. Local SAMPLE fixture and live-deploy logs stay in the dirty
   `terminal-deployment` checkout and are not part of this baseline.
@@ -53,3 +53,5 @@ node web/e2e.mjs
   contract in `docs/TERMINAL-V1-CONTRACT.md` section 16. Shared schemas
   live in `ORCHESTRATOR/casa-terminal-plan-01/contracts/`. Current
   `/api/market` remains `tokens[]` only until TR-01.
+- **2026-08-21** - CT-02 adversarial composite goldens in `web/test/`.
+  Shared contracts stay in ORCHESTRATOR; this tree only adds tests.

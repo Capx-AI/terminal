@@ -23,3 +23,8 @@ intact). `v1.css` only covers missing-tile layout.
   Localhost: `SAMPLE=1` on :4200, mock Casa on :4201.
 - **2026-08-20 (surface)** - Token bento and market Casa columns read the
   terminal-surface GET (calendar, ledger, reproduced, claimed north star).
+- **2026-08-21** - CT-02 adversarial composite goldens. `web/test/` loads
+  shared passing and rejecting fixtures from
+  `ORCHESTRATOR/casa-terminal-plan-01/contracts` over the relative path.
+  Token-later pair keeps company_id, slug, and canonical_url. Expected-red
+  market payload stays token-only until TR-01.
