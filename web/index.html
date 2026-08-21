@@ -55,14 +55,18 @@
 
   <section class="toolbar">
     <div class="wrap trow">
-      <div class="search"><input id="q" placeholder="Search name or ticker" autocomplete="off" spellcheck="false" aria-label="Search tokens"></div>
+      <div class="search"><input id="q" placeholder="Search name, ticker, or slug" autocomplete="off" spellcheck="false" aria-label="Search companies and tokens"></div>
       <div class="chips" id="chips">
         <button class="fchip on" data-f="all">All</button>
         <button class="fchip" data-f="leaders">Health 80+</button>
         <button class="fchip" data-f="fresh">Attesting weekly</button>
         <button class="fchip" data-f="review">Needs review</button>
+        <span class="chip-gap" aria-hidden="true"></span>
+        <button class="fchip" data-kind="company_with_token">Company + token</button>
+        <button class="fchip" data-kind="company_without_token">Company only</button>
+        <button class="fchip" data-kind="token_without_company">Token only</button>
       </div>
-      <span class="hint" id="hint">click a row to open the token</span>
+      <span class="hint" id="hint">click a row to open</span>
     </div>
   </section>
 

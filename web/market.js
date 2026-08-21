@@ -3,9 +3,11 @@ var F = window.CAPX_FMT;
 var $ = function (id) { return document.getElementById(id); };
 var QUERY = "";
 var FILTER = "all";
+var KIND = "all";
 var SORTK = "fdv";
 var DIR = -1;
 var DATA = null;
+var MARKET_KEYS = ["price_usd", "fdv_usd", "volume_24h_usd", "liquidity_usd", "change_24h_percent"];
 
 var LEVEL_NAMES = [
   "Ideation and validation",
@@ -37,18 +39,38 @@ function tokenByMint(mint) {
   return null;
 }
 
+function honestMarket(row) {
+  var empty = {
+    price_usd: null,
+    fdv_usd: null,
+    volume_24h_usd: null,
+    liquidity_usd: null,
+    change_24h_percent: null,
+  };
+  if (!row || row.kind === "company_without_token") return empty;
+  var m = row.market;
+  if (!m) return empty;
+  var out = {}, i, v;
+  for (i = 0; i < MARKET_KEYS.length; i++) {
+    v = m[MARKET_KEYS[i]];
+    out[MARKET_KEYS[i]] = typeof v === "number" && isFinite(v) ? v : null;
+  }
+  return out;
+}
+
 function fromComposite(row) {
   var company = row && row.company ? row.company : null;
   var token = row && row.token ? row.token : null;
-  var market = row && row.market ? row.market : null;
+  var market = honestMarket(row);
   var mint = token && token.mint ? token.mint : null;
   var src = tokenByMint(mint);
-  var fdv = market ? market.fdv_usd : null;
-  var vol = market ? market.volume_24h_usd : null;
-  var liq = market ? market.liquidity_usd : null;
-  var chg = market ? market.change_24h_percent : null;
-  var px = market ? market.price_usd : null;
-  var hasMarket = fdv != null || vol != null || liq != null || chg != null || px != null;
+  var fdv = market.fdv_usd;
+  var vol = market.volume_24h_usd;
+  var liq = market.liquidity_usd;
+  var chg = market.change_24h_percent;
+  var px = market.price_usd;
+  var hasMarket = row && row.kind !== "company_without_token"
+    && (fdv != null || vol != null || liq != null || chg != null || px != null);
   return {
     kind: row.kind,
     mint: mint,
@@ -59,6 +81,7 @@ function fromComposite(row) {
     state: token ? token.state : null,
     slug: company ? company.slug : "",
     company: company,
+    token: token,
     sample: !!(src && src.sample),
     marketPerformance: hasMarket ? {
       currentMarketCapUsd: fdv,
@@ -77,7 +100,7 @@ function fromComposite(row) {
 }
 
 function listed() {
-  if (DATA && Array.isArray(DATA.rows) && DATA.rows.length) {
+  if (DATA && Array.isArray(DATA.rows)) {
     return DATA.rows.map(fromComposite);
   }
   return (DATA && DATA.tokens) || [];
@@ -96,12 +119,16 @@ function healthOf(row) {
   var d = casaDoc(row);
   var h = d && d.attestation ? d.attestation.health_score : null;
   if (typeof h === "number") return h;
-  return typeof row.healthScore === "number" ? row.healthScore : null;
+  if (typeof row.healthScore === "number") return row.healthScore;
+  if (row && row.company && typeof row.company.health_score === "number") return row.company.health_score;
+  return null;
 }
 function freshnessOf(row) {
   var d = casaDoc(row);
   if (d && d.attestation && d.attestation.freshness) return d.attestation.freshness;
-  return row && row.freshness ? row.freshness : null;
+  if (row && row.freshness) return row.freshness;
+  if (row && row.company && row.company.freshness) return row.company.freshness;
+  return null;
 }
 function hoursSinceOf(row) {
   var d = casaDoc(row);
@@ -410,29 +437,45 @@ function sortVal(row, k) {
   return null;
 }
 
-function matches(row) {
-  if (QUERY) {
-    var q = QUERY.toLowerCase();
-    var blob = [row.name, row.symbol, row.mint, row.slug, row.description, row.category]
-      .map(function (v) { return v || ""; })
-      .join(" ")
-      .toLowerCase();
-    var d = casaDoc(row);
-    if (d && d.company) blob += " " + (d.company.slug || "") + " " + (d.company.name || "");
-    if (blob.indexOf(q) < 0) return false;
-  }
-  if (FILTER === "leaders") {
+function searchBlob(row) {
+  var company = row && row.company ? row.company : {};
+  var token = row && row.token ? row.token : {};
+  var casaCo = {};
+  var d = casaDoc(row);
+  if (d && d.company) casaCo = d.company;
+  return [
+    company.name, company.slug, company.description, company.category,
+    token.name, token.symbol, token.mint,
+    row && row.name, row && row.symbol, row && row.mint, row && row.slug, row && row.description, row && row.category,
+    casaCo.name, casaCo.slug,
+  ].map(function (v) { return v || ""; }).join(" ").toLowerCase();
+}
+
+function matchesQuery(row, query) {
+  var q = String(query || "").trim().toLowerCase();
+  if (!q) return true;
+  return searchBlob(row).indexOf(q) >= 0;
+}
+
+function matchesKind(row, kind) {
+  if (!kind || kind === "all") return true;
+  return !!(row && row.kind === kind);
+}
+
+function matchesHealth(row, filter) {
+  if (!filter || filter === "all") return true;
+  if (filter === "leaders") {
     var h = healthOf(row);
     return h != null && h >= 80;
   }
-  if (FILTER === "fresh") {
+  if (filter === "fresh") {
     if (freshnessOf(row) === "fresh") return true;
     var doc = casaDoc(row);
     if (!doc || !doc.attestation) return false;
     var hs = hoursSinceOf(row);
     return hs != null && hs <= 168;
   }
-  if (FILTER === "review") {
+  if (filter === "review") {
     var band = freshnessOf(row);
     if (band === "stale" || band === "aging") return true;
     var r = casaDoc(row);
@@ -442,6 +485,20 @@ function matches(row) {
     return false;
   }
   return true;
+}
+
+function rowVisible(row, query, kind, health) {
+  return matchesQuery(row, query) && matchesKind(row, kind) && matchesHealth(row, health);
+}
+
+function matches(row) {
+  return rowVisible(row, QUERY, KIND, FILTER);
+}
+
+function hrefForRow(row) {
+  if (row && row.mint) return "/t/" + encodeURIComponent(row.mint);
+  if (row && row.slug) return "/c/" + encodeURIComponent(row.slug);
+  return null;
 }
 
 function median(a) {
@@ -519,10 +576,9 @@ function paintPodium(tokens) {
     else if (row.freshness) bits.push(row.freshness);
     var mark = (row.symbol || row.slug || "?").slice(0, 3);
     var sub = row.symbol ? "$" + F.esc(row.symbol) : (row.slug ? F.esc(row.slug) : "");
-    var open = row.mint
-      ? "<a class='pod' href='/t/" + encodeURIComponent(row.mint) + "'>"
-      : "<div class='pod'>";
-    var close = row.mint ? "</a>" : "</div>";
+    var href = hrefForRow(row);
+    var open = href ? "<a class='pod' href='" + href + "'>" : "<div class='pod'>";
+    var close = href ? "</a>" : "</div>";
     return open
       + "<div class='podrank'>" + (i + 1) + "</div>"
       + "<div class='podmark'>" + F.esc(mark) + "</div>"
@@ -553,16 +609,20 @@ function render() {
     var d = casaDoc(x);
     if (d && d.binding && d.binding.status === "released") faded = " faded";
     var t7 = tasks7dOf(x);
-    html += "<tr class='" + faded + "'" + (x.mint ? " data-mint='" + F.esc(x.mint) + "'" : "") + ">"
+    var tokenless = x.kind === "company_without_token";
+    html += "<tr class='" + faded + "'"
+      + (x.mint ? " data-mint='" + F.esc(x.mint) + "'" : "")
+      + (!x.mint && x.slug ? " data-slug='" + F.esc(x.slug) + "'" : "")
+      + ">"
       + "<td class='l'><span class='rk'>" + (i + 1) + "</span></td>"
       + "<td class='l'>" + tokenCell(x) + "</td>"
       + "<td>" + scoreCell(healthOf(x)) + "</td>"
-      + "<td class='price'>" + (priceOf(x) == null ? dash() : "<span class='d1'>" + F.usdPx(priceOf(x)) + (stale ? " <span class='stale-mark'>stale</span>" : "") + "</span>") + "</td>"
-      + "<td>" + chgCell(chgOf(x)) + "</td>"
-      + "<td>" + dualUsd(volOf(x), stale) + "</td>"
-      + "<td>" + dualUsd(liqOf(x), stale) + "</td>"
-      + "<td>" + dualUsd(mcapOf(x), stale) + "</td>"
-      + "<td>" + sparkCell(x) + "</td>"
+      + "<td class='price'>" + (tokenless || priceOf(x) == null ? dash() : "<span class='d1'>" + F.usdPx(priceOf(x)) + (stale ? " <span class='stale-mark'>stale</span>" : "") + "</span>") + "</td>"
+      + "<td>" + (tokenless ? dash() : chgCell(chgOf(x))) + "</td>"
+      + "<td>" + (tokenless ? dash() : dualUsd(volOf(x), stale)) + "</td>"
+      + "<td>" + (tokenless ? dash() : dualUsd(liqOf(x), stale)) + "</td>"
+      + "<td>" + (tokenless ? dash() : dualUsd(mcapOf(x), stale)) + "</td>"
+      + "<td>" + (tokenless ? dash() : sparkCell(x)) + "</td>"
       + "<td class='work'>" + (t7 == null ? dash() : F.ci(t7)) + "</td>"
       + "<td class='calcell'>" + calCell(x) + "</td>"
       + "<td>" + buildmapCell(x) + "</td>"
@@ -573,7 +633,7 @@ function render() {
   }
   $("rows").innerHTML = html || "<tr><td colspan='15' style='text-align:center; color:var(--t500); padding:36px'>no rows match</td></tr>";
   $("hint").textContent = list.length === all.length
-    ? "click a token to open"
+    ? "click a row to open"
     : list.length + " of " + all.length + " rows";
   document.querySelectorAll("thead th[data-k]").forEach(function (th) {
     var base = th.textContent.replace(/[↑↓]/g, "").trim();
@@ -616,9 +676,11 @@ document.querySelector("thead").addEventListener("click", function (e) {
   render();
 });
 $("rows").addEventListener("click", function (e) {
-  var tr = e.target.closest("tr[data-mint]");
+  var tr = e.target.closest("tr[data-mint], tr[data-slug]");
   if (!tr) return;
-  location.href = "/t/" + tr.getAttribute("data-mint");
+  var mint = tr.getAttribute("data-mint");
+  if (mint) location.href = "/t/" + mint;
+  else location.href = "/c/" + tr.getAttribute("data-slug");
 });
 $("q").addEventListener("input", function () {
   QUERY = this.value.trim();
@@ -627,10 +689,18 @@ $("q").addEventListener("input", function () {
 $("chips").addEventListener("click", function (e) {
   var b = e.target.closest(".fchip");
   if (!b) return;
-  FILTER = b.getAttribute("data-f");
-  document.querySelectorAll(".fchip").forEach(function (c) {
-    c.classList.toggle("on", c.getAttribute("data-f") === FILTER);
-  });
+  if (b.hasAttribute("data-kind")) {
+    var next = b.getAttribute("data-kind");
+    KIND = KIND === next ? "all" : next;
+    document.querySelectorAll(".fchip[data-kind]").forEach(function (c) {
+      c.classList.toggle("on", c.getAttribute("data-kind") === KIND);
+    });
+  } else {
+    FILTER = b.getAttribute("data-f");
+    document.querySelectorAll(".fchip[data-f]").forEach(function (c) {
+      c.classList.toggle("on", c.getAttribute("data-f") === FILTER);
+    });
+  }
   render();
 });
 

@@ -30,3 +30,5 @@ intact). `v1.css` only covers missing-tile layout.
   Casa `GET /v1/companies` with Launchpad tokens into typed `rows[]` and
   keeps `tokens[]` for existing clients. Directory assembly does not
   per-mint `GET /v1/tokens/{mint}` or use the 5-minute Casa cache.
+  TR-02 adds company+token / company-only / token-only chips, search
+  across both sources, and dash/null market columns on tokenless rows.

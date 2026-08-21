@@ -176,3 +176,146 @@ export function kindCounts(rows) {
   }
   return counts;
 }
+
+export const CATEGORY_FILTERS = [
+  { id: "company_with_token", label: "Company + token" },
+  { id: "company_without_token", label: "Company only" },
+  { id: "token_without_company", label: "Token only" },
+];
+
+export const MARKET_KEYS = [
+  "price_usd",
+  "fdv_usd",
+  "volume_24h_usd",
+  "liquidity_usd",
+  "change_24h_percent",
+];
+
+function str(v) {
+  return v == null ? "" : String(v);
+}
+
+export function searchHaystack(row) {
+  const company = row && row.company ? row.company : {};
+  const token = row && row.token ? row.token : {};
+  const casaCo = row && row.casa && row.casa.document && row.casa.document.company
+    ? row.casa.document.company
+    : {};
+  return [
+    company.name,
+    company.slug,
+    company.description,
+    company.category,
+    token.name,
+    token.symbol,
+    token.mint,
+    row && row.name,
+    row && row.symbol,
+    row && row.mint,
+    row && row.slug,
+    row && row.description,
+    row && row.category,
+    casaCo.name,
+    casaCo.slug,
+  ].map(str).join(" ").toLowerCase();
+}
+
+export function matchesSearch(row, query) {
+  const q = String(query || "").trim().toLowerCase();
+  if (!q) return true;
+  return searchHaystack(row).includes(q);
+}
+
+export function matchesKind(row, kind) {
+  if (!kind || kind === "all") return true;
+  return !!(row && row.kind === kind);
+}
+
+export function healthValue(row) {
+  if (!row) return null;
+  const att = row.casa && row.casa.document && row.casa.document.attestation;
+  if (att && typeof att.health_score === "number") return att.health_score;
+  if (typeof row.healthScore === "number") return row.healthScore;
+  if (row.company && typeof row.company.health_score === "number") return row.company.health_score;
+  return null;
+}
+
+export function freshnessValue(row) {
+  if (!row) return null;
+  const att = row.casa && row.casa.document && row.casa.document.attestation;
+  if (att && att.freshness) return att.freshness;
+  if (row.freshness) return row.freshness;
+  if (row.company && row.company.freshness) return row.company.freshness;
+  return null;
+}
+
+export function hoursSinceValue(row) {
+  const att = row && row.casa && row.casa.document && row.casa.document.attestation;
+  const h = att && att.hours_since;
+  return typeof h === "number" && Number.isFinite(h) ? h : null;
+}
+
+export function matchesHealth(row, filter) {
+  if (!filter || filter === "all") return true;
+  if (filter === "leaders") {
+    const h = healthValue(row);
+    return h != null && h >= 80;
+  }
+  if (filter === "fresh") {
+    if (freshnessValue(row) === "fresh") return true;
+    const hs = hoursSinceValue(row);
+    return hs != null && hs <= 168;
+  }
+  if (filter === "review") {
+    const band = freshnessValue(row);
+    if (band === "stale" || band === "aging") return true;
+    const doc = row && row.casa && row.casa.document;
+    if (!doc) return false;
+    if (doc.attestation && doc.attestation.attested === false) return true;
+    if (doc.binding && doc.binding.continuity_break) return true;
+    return false;
+  }
+  return true;
+}
+
+export function filterRows(rows, opts = {}) {
+  const query = opts.query || "";
+  const kind = opts.kind || "all";
+  const health = opts.health || "all";
+  return (Array.isArray(rows) ? rows : []).filter((row) => (
+    matchesSearch(row, query)
+    && matchesKind(row, kind)
+    && matchesHealth(row, health)
+  ));
+}
+
+export function honestMarket(row) {
+  const empty = {
+    price_usd: null,
+    fdv_usd: null,
+    volume_24h_usd: null,
+    liquidity_usd: null,
+    change_24h_percent: null,
+  };
+  if (!row || row.kind === "company_without_token") return empty;
+  const m = row.market;
+  if (!m || typeof m !== "object") return empty;
+  const out = { ...empty };
+  for (const key of MARKET_KEYS) {
+    const v = m[key];
+    out[key] = typeof v === "number" && Number.isFinite(v) ? v : null;
+  }
+  return out;
+}
+
+export function marketDash(value) {
+  return value == null ? "--" : value;
+}
+
+export function hrefForRow(row) {
+  const mint = (row && row.token && row.token.mint) || (row && row.mint) || null;
+  if (mint) return `/t/${encodeURIComponent(mint)}`;
+  const slug = (row && row.company && row.company.slug) || (row && row.slug) || null;
+  if (slug) return `/c/${encodeURIComponent(slug)}`;
+  return null;
+}

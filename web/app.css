@@ -110,11 +110,12 @@ header{position:sticky; top:0; z-index:30; background:rgba(8,9,10,.86); backdrop
   .podium{grid-template-columns:1fr;}
   .sbnote{margin-left:0;}
 }
-.chips{display:flex; gap:6px; flex-wrap:wrap;}
+.chips{display:flex; align-items:center; gap:6px; flex-wrap:wrap;}
 .fchip{background:var(--bg2); border:1px solid var(--line2); border-radius:var(--radius); color:var(--t500);
        font-family:var(--mono); font-size:10px; letter-spacing:.05em; padding:6px 10px; cursor:pointer; transition:color .12s, border-color .12s, background .12s;}
 .fchip:hover{color:var(--fg);}
 .fchip.on{background:var(--capx-a); border-color:var(--capx-b); color:var(--capx);}
+.chip-gap{width:1px; align-self:stretch; min-height:14px; background:var(--line2); margin:0 2px;}
 
 /* ---------- market table ---------- */
 .tblzone{padding:var(--gut) 0 30px;}

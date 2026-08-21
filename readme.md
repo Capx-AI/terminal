@@ -59,3 +59,6 @@ node web/e2e.mjs
 - **2026-08-22** - TR-01: `/api/market` joins Casa companies with Launchpad
   tokens into typed `rows[]`. Directory path does not per-mint Casa GET
   or use the 5-minute negative cache. `tokens[]` stays for old clients.
+- **2026-08-22** - TR-02: market chips filter company+token, company-only
+  and token-only rows. Search covers company name/slug/description/category
+  and token name/symbol/mint. Tokenless market columns stay dash/null.
