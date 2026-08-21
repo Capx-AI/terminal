@@ -10,7 +10,7 @@ not the old `terminal/` log and not the uncommitted `capx-onchain` v2 tree.
 - `GROK-TERMINAL-DEPLOYMENT-PROMPT.md` — original kickoff (Q&A then board).
 - `GROK-TERMINAL-SURFACE-UPDATE.md` — **paste this now**: wire the demo to the
   widened Casa `GET /v1/tokens/{mint}` (calendar, ledger, claimed north star).
-- `docs/TERMINAL-V1-CONTRACT.md` — frozen 2026-08-20. Binding contract for v1.
+- `docs/TERMINAL-V1-CONTRACT.md` - frozen 2026-08-20, amended 2026-08-21 for token-optional directory and `/register`.
 - `progress/` — operator board on `http://127.0.0.1:4199/`.
 - `web/` - product on `http://127.0.0.1:4200/` (`SAMPLE=1`).
 - `mock-casa/` - fixture `GET /v1/tokens/:mint` on `:4201`.
@@ -49,3 +49,7 @@ node web/e2e.mjs
   function can read sibling HTML/CSS/JS. Without this, production `GET /`
   404s. Local SAMPLE fixture and live-deploy logs stay in the dirty
   `terminal-deployment` checkout and are not part of this baseline.
+- **2026-08-21 (CT-01)** - Freeze token-optional directory and register
+  contract in `docs/TERMINAL-V1-CONTRACT.md` section 16. Shared schemas
+  live in `ORCHESTRATOR/casa-terminal-plan-01/contracts/`. Current
+  `/api/market` remains `tokens[]` only until TR-01.

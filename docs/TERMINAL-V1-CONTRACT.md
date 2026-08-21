@@ -351,3 +351,113 @@ No `.env` with secrets. These are public origins.
 - Round 2: 5 minute backend cache; Vercel later; live directory / sample localhost-with-pill; hide extra tiles for v1 (founder: bring most back later); Casa health as returned; localhost done; Neon freeze; board 4199.
 - Round 3: forbidden vs deferred split; live mints 404 on mock; PUBLIC filter=all drain cursor; CAPX quote + listed sums; hide roiMultiple; `/t/{mint}`; GitHub/DNS later.
 - Round 4: fundraising raise facts; empty podium chrome; drain cursor; product :4200 mock :4201; api.launchpad.capx.ai fail visible; freeze and build.
+
+---
+
+## 16. Token-optional directory and register (2026-08-21)
+
+Dated amendment. Does not restyle the demo visual language. Does not add a
+Terminal account database, OAuth, wallet adapter, password, social layer, or
+trader gimmicks. Casa spec v1.2 and `ORCHESTRATOR/casa-terminal-plan-01/contracts/`
+are the machine-readable join contract. If this section disagrees with Casa
+`GET /v1/tokens/{mint}`, that mint document still wins for mint-keyed panels.
+
+v1 D4 (a row is every PUBLIC Launchpad Agent token) is superseded for the
+market table: a row is one of three typed join results. Launchpad-only tokens
+remain first-class as `token_without_company`.
+
+### 16.1 Aggregation
+
+Terminal backend fetches in parallel:
+
+- Casa `GET /v1/companies` (drain `next_cursor`)
+- Launchpad `GET /v1/projects?filter=all` (drain `nextCursor`, existing rule)
+
+Join once on nullable Casa `agent_mint` equal to Launchpad `agentMint`.
+
+| Join result | `kind` | Detail route |
+|---|---|---|
+| Casa company + Launchpad token | `company_with_token` | `/c/{slug}`; `/t/{mint}` MAY link or redirect to the company page |
+| Casa company, no token | `company_without_token` | `/c/{slug}` |
+| Launchpad token, no Casa company | `token_without_company` | `/t/{mint}` |
+
+Each entity appears exactly once. A later token attach changes `kind` from
+`company_without_token` to `company_with_token` without changing `company_id`,
+slug, history, or `/c/{slug}`.
+
+This path MUST NOT per-mint `GET /v1/tokens/{mint}` and MUST NOT use the
+five-minute negative cache (`casaCache` TTL 300s) for directory assembly.
+Keep per-mint Casa GET only where a mint-keyed panel still needs the v1.1
+document (token-only `/t/{mint}` until a company exists).
+
+Aggregate snapshot TTL is about 60 seconds (`Cache-Control: public, max-age=60`
+is fine). Registration success MUST drop the in-process snapshot immediately.
+Correctness does not depend on a Casa webhook.
+
+Shared row schema: `terminal-composite-row.schema.json`. Goldens:
+`composite-company-token.json`, `composite-company-only.json`,
+`composite-token-only.json`.
+
+### 16.2 Search, filters, honest market fields
+
+Search spans: company name, slug, description, category, token name, symbol,
+mint.
+
+Semantic filters (customer-facing names get a later copy review, not a new
+product loop):
+
+- company with token
+- company without token
+- token without company
+
+Tokenless rows (`company_without_token`) show company work and artifact
+readiness. Market columns (`price_usd`, `fdv_usd`, `volume_24h_usd`,
+`liquidity_usd`, `change_24h_percent`) are JSON `null` and render as a dash.
+Never `0` and never a synthetic price.
+
+Fundraising token-only rows already use dash / not launched; keep that.
+
+Do not restyle the demo. Lime stays company/Casa. White/green/red stays
+market. Sample data pill rules are unchanged.
+
+### 16.3 Routes
+
+| Route | Role |
+|---|---|
+| `/register` | One code field. No account dashboard. |
+| `/c/{slug}` | Company page. Survives later token attach. |
+| `/t/{mint}` | Token-only page. Bound token MAY link or redirect to `/c/{slug}`. |
+| `GET /api/market` | Composite payload (companies + tokens + kinds). Current HEAD still has only `tokens[]` until TR-01. |
+| `POST /api/register` | Thin proxy to Casa `POST /v1/companies/redeem`. No-store. Invalidate snapshot. Redirect to `/c/{slug}`. |
+
+`/register` errors map Casa codes without inventing copy the system cannot
+back: `CODE_EXPIRED`, `CODE_USED`, `CODE_INVALID`, `NOT_READY`, `PRIVATE`,
+`SLUG_CONFLICT`. Concurrent redeem: one winner.
+
+### 16.4 Company page and previews
+
+`/c/{slug}` shows identity, category, description, Casa level, progress,
+heatmap, attestations, health, and market/price content only when the joined
+token exists.
+
+Website, one-pager, and deck previews are sandboxed lazy iframes:
+
+- not same-origin with Terminal
+- no `allow-top-navigation`
+- no `allow-popups`
+- no `allow-same-origin` with the Terminal origin
+
+User JavaScript never runs on the Terminal origin. The full site opens on
+`https://{slug}.casa.capx.ai` in a separate tab.
+
+Hidden or unpublished artifact URLs MUST NOT be sent to the browser.
+Private/unready slugs 404 with the Casa error code.
+
+### 16.5 What this amendment refuses
+
+- Terminal account DB, OAuth, wallet, social, follows, comments, reactions,
+  waitlists, trader gimmicks
+- Restyling the July demo visual language
+- Rebuilding `/api/attest/*`
+- Treating tokenless market nulls as zero
+- Five-minute negative-cache delay after registration on the directory path
