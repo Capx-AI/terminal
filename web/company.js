@@ -44,6 +44,7 @@ function fmtDay(d) {
 
 function isCasaUrl(url, slug) {
   if (typeof url !== "string" || typeof slug !== "string") return false;
+  if (/[\s'"<>\\]/.test(url)) return false;
   if (!CASA_HOST.test(url)) return false;
   var host = "https://" + slug + ".casa.capx.ai";
   return url === host || url.indexOf(host + "/") === 0;
@@ -58,15 +59,24 @@ function publicArtifact(art, slug) {
 
 function paintIdentity(company) {
   var mark = $("id-mark");
+  mark.replaceChildren();
   if (company.logo && isCasaUrl(company.logo, company.slug)) {
-    mark.innerHTML = "<img src='" + F.esc(company.logo) + "' alt=''>";
+    var img = document.createElement("img");
+    img.src = company.logo;
+    img.alt = "";
+    mark.appendChild(img);
   } else {
     mark.textContent = (company.name || "?").slice(0, 2).toUpperCase();
   }
   $("id-name").textContent = company.name || company.slug || "Company";
   document.title = (company.name || company.slug || "Company") + " · Capx Terminal";
-  var cat = company.category ? String(company.category).replace(/-/g, " ") : "";
-  $("id-category").innerHTML = cat ? "<b>" + F.esc(cat) + "</b>" : "";
+  var catEl = $("id-category");
+  catEl.replaceChildren();
+  if (company.category) {
+    var b = document.createElement("b");
+    b.textContent = String(company.category).replace(/-/g, " ");
+    catEl.appendChild(b);
+  }
   var p = company.progress;
   var level = "";
   if (p && p.level_name) level = "Level " + p.level + " · " + p.level_name;

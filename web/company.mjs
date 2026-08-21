@@ -32,6 +32,7 @@ export function publicHostForSlug(slug) {
 
 export function isCasaPublicUrl(url, slug) {
   if (typeof url !== "string" || !isValidSlug(slug)) return false;
+  if (/[\s'"<>\\]/.test(url)) return false;
   const host = publicHostForSlug(slug);
   return url === host || url.startsWith(`${host}/`);
 }

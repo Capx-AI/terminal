@@ -239,6 +239,15 @@ function assertNoLeak(body) {
   assert.doesNotMatch(raw, /file-store|s3:\/\/|\.jsonl|upload.token|filestore/i);
 }
 
+test("Casa public URLs reject quote and whitespace XSS payloads", () => {
+  const slug = "northstar-labs";
+  const host = "https://northstar-labs.casa.capx.ai";
+  assert.equal(isCasaPublicUrl(host + "/", slug), true);
+  assert.equal(isCasaPublicUrl(host + "/' onerror='alert(1)", slug), false);
+  assert.equal(isCasaPublicUrl(host + "/logo.png onerror=alert(1)", slug), false);
+  assert.equal(isCasaPublicUrl(host + "/x\" onload=\"alert(1)", slug), false);
+});
+
 test("slug helper and iframe sandbox constant", () => {
   assert.equal(isValidSlug("northstar-labs"), true);
   assert.equal(isValidSlug("InboxPilot"), false);

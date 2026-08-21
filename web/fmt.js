@@ -68,7 +68,8 @@ window.CAPX_FMT = (function () {
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;");
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
   }
   function tokenPriceUsd(row) {
     var mcap = row && row.marketPerformance && row.marketPerformance.currentMarketCapUsd;
