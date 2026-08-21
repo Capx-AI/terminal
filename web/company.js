@@ -235,6 +235,28 @@ function paintPulse(company) {
   }
 }
 
+function previewFallbackCopy(kind) {
+  if (kind === "site") return "Preview failed. Open the full site.";
+  if (kind === "one_pager") return "Preview failed. Open the one-pager.";
+  return "Preview failed. Open the deck.";
+}
+
+function applyPreviewFallback(kind) {
+  var frame = $(kind + "-frame");
+  var empty = $(kind + "-empty");
+  var open = $(kind + "-open");
+  if (frame) {
+    frame.hidden = true;
+    frame.removeAttribute("src");
+    frame.tabIndex = -1;
+  }
+  if (empty) {
+    empty.hidden = false;
+    empty.textContent = previewFallbackCopy(kind);
+  }
+  if (open && open.getAttribute("href")) open.hidden = false;
+}
+
 function paintPreview(kind, artifact, slug, canonical) {
   var frame = $(kind + "-frame");
   var empty = $(kind + "-empty");
@@ -243,6 +265,8 @@ function paintPreview(kind, artifact, slug, canonical) {
   frame.setAttribute("sandbox", IFRAME_SANDBOX);
   frame.setAttribute("loading", "lazy");
   frame.setAttribute("referrerpolicy", "no-referrer");
+  frame.tabIndex = -1;
+  frame.onerror = function () { applyPreviewFallback(kind); };
   frame.removeAttribute("src");
   var art = publicArtifact(artifact, slug);
   if (kind === "site" && open && canonical && isCasaUrl(canonical, slug)) {

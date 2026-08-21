@@ -10,7 +10,7 @@
 <link rel="stylesheet" href="/v1.css">
 </head>
 <body>
-
+<a class="skip" href="#page">Skip to company</a>
 <canvas id="stars" aria-hidden="true"></canvas>
 
 <main>
@@ -33,7 +33,7 @@
     </div>
   </div>
 
-  <div id="err" class="errbanner" hidden></div>
+  <div id="err" class="errbanner" role="status" hidden></div>
 
   <div class="bento" id="page" hidden>
 
@@ -116,7 +116,7 @@
         <a class="open-full" id="site-open" target="_blank" rel="noopener noreferrer" hidden>Open full site</a>
       </div>
       <div class="preview">
-        <iframe id="site-frame" title="Website preview" loading="lazy" sandbox="allow-scripts" referrerpolicy="no-referrer" hidden></iframe>
+        <iframe id="site-frame" title="Website preview" loading="lazy" sandbox="allow-scripts" referrerpolicy="no-referrer" tabindex="-1" hidden></iframe>
         <div class="preview-empty" id="site-empty">No public website.</div>
       </div>
     </section>
@@ -127,7 +127,7 @@
         <a class="open-full" id="one_pager-open" target="_blank" rel="noopener noreferrer" hidden>Open one-pager</a>
       </div>
       <div class="preview">
-        <iframe id="one_pager-frame" title="One-pager preview" loading="lazy" sandbox="allow-scripts" referrerpolicy="no-referrer" hidden></iframe>
+        <iframe id="one_pager-frame" title="One-pager preview" loading="lazy" sandbox="allow-scripts" referrerpolicy="no-referrer" tabindex="-1" hidden></iframe>
         <div class="preview-empty" id="one_pager-empty">No public one-pager.</div>
       </div>
     </section>
@@ -138,7 +138,7 @@
         <a class="open-full" id="deck-open" target="_blank" rel="noopener noreferrer" hidden>Open deck</a>
       </div>
       <div class="preview">
-        <iframe id="deck-frame" title="Deck preview" loading="lazy" sandbox="allow-scripts" referrerpolicy="no-referrer" hidden></iframe>
+        <iframe id="deck-frame" title="Deck preview" loading="lazy" sandbox="allow-scripts" referrerpolicy="no-referrer" tabindex="-1" hidden></iframe>
         <div class="preview-empty" id="deck-empty">No public deck.</div>
       </div>
     </section>

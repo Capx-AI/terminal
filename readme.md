@@ -69,3 +69,7 @@ node web/e2e.mjs
   sandboxed artifact previews, separate full-site links. Market content
   only when a joined token exists. Token-later keeps the URL. `/t/{mint}`
   links to the company page when one exists.
+- **2026-08-22** - TR-05: partial Casa/Launchpad outages stay explicit on
+  `/api/market`. Broken artifact previews fall back and keep open-full
+  links. Register and company pages are labeled and keyboard-reachable.
+  Vercel `includeFiles` still packs company and register assets.

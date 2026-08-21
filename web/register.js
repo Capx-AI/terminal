@@ -12,12 +12,14 @@
     ok.hidden = true;
     err.textContent = text;
     err.hidden = false;
+    input.setAttribute("aria-invalid", "true");
   }
 
   function showOk(text) {
     err.hidden = true;
     ok.textContent = text;
     ok.hidden = false;
+    input.removeAttribute("aria-invalid");
   }
 
   form.addEventListener("submit", function (e) {

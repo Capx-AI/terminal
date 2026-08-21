@@ -10,7 +10,7 @@
 <link rel="stylesheet" href="/v1.css">
 </head>
 <body>
-
+<a class="skip" href="#code">Skip to code</a>
 <canvas id="stars" aria-hidden="true"></canvas>
 
 <main>
@@ -30,12 +30,12 @@
       <form id="reg" class="regform" action="/api/register" method="post" autocomplete="off">
         <span class="label lit">Company code</span>
         <h1>Register</h1>
-        <p class="regnote">Paste the single-use code Casa printed. Terminal does not keep an account.</p>
+        <p class="regnote" id="reg-help">Paste the single-use code Casa printed. Terminal does not keep an account.</p>
         <label class="label" for="code">Code</label>
-        <input id="code" name="code" required spellcheck="false" autocomplete="off" autocapitalize="characters" placeholder="CASA-...." aria-label="Company registration code">
+        <input id="code" name="code" type="text" required spellcheck="false" autocomplete="off" autocapitalize="characters" placeholder="CASA-...." aria-label="Company registration code" aria-describedby="reg-help err" aria-required="true">
         <button type="submit" class="regbtn" id="go">Register</button>
-        <div id="err" class="errbanner" hidden></div>
-        <div id="ok" class="regok" hidden></div>
+        <div id="err" class="errbanner" role="alert" hidden></div>
+        <div id="ok" class="regok" role="status" hidden></div>
       </form>
     </div>
   </section>

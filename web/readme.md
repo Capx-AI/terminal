@@ -40,3 +40,7 @@ intact). `v1.css` only covers missing-tile layout.
   on `{slug}.casa.capx.ai`. Market chart only when a joined token exists.
   Token-later keeps the same company URL. `/t/{mint}` links to `/c/{slug}`
   when a public company is joined.
+  TR-05: Casa or Launchpad outage is partial on `/api/market`. Broken
+  iframe previews fall back to copy plus the full-site link. Keyboard
+  labels, skip links, and Vercel `includeFiles` cover register and
+  `/c/{slug}`.

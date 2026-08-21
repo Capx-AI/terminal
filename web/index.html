@@ -10,7 +10,7 @@
 <link rel="stylesheet" href="/v1.css">
 </head>
 <body>
-
+<a class="skip" href="#market">Skip to market</a>
 <canvas id="stars" aria-hidden="true"></canvas>
 
 <main>
@@ -21,11 +21,14 @@
         <span class="sep"></span>
         <span class="label lit">Terminal</span>
       </div>
-      <span class="pill" id="sample-pill" hidden><span class="dot"></span>Sample data</span>
+      <div class="hactions">
+        <a class="back" href="/register">Register</a>
+        <span class="pill" id="sample-pill" hidden><span class="dot"></span>Sample data</span>
+      </div>
     </div>
   </header>
 
-  <div id="err" class="errbanner" hidden></div>
+  <div id="err" class="errbanner" role="status" hidden></div>
 
   <section class="aggwrap">
     <div class="wrap aggrow">
@@ -56,24 +59,25 @@
   <section class="toolbar">
     <div class="wrap trow">
       <div class="search"><input id="q" placeholder="Search name, ticker, or slug" autocomplete="off" spellcheck="false" aria-label="Search companies and tokens"></div>
-      <div class="chips" id="chips">
-        <button class="fchip on" data-f="all">All</button>
-        <button class="fchip" data-f="leaders">Health 80+</button>
-        <button class="fchip" data-f="fresh">Attesting weekly</button>
-        <button class="fchip" data-f="review">Needs review</button>
+      <div class="chips" id="chips" role="group" aria-label="Filters">
+        <button type="button" class="fchip on" aria-pressed="true" data-f="all">All</button>
+        <button type="button" class="fchip" aria-pressed="false" data-f="leaders">Health 80+</button>
+        <button type="button" class="fchip" aria-pressed="false" data-f="fresh">Attesting weekly</button>
+        <button type="button" class="fchip" aria-pressed="false" data-f="review">Needs review</button>
         <span class="chip-gap" aria-hidden="true"></span>
-        <button class="fchip" data-kind="company_with_token">Company + token</button>
-        <button class="fchip" data-kind="company_without_token">Company only</button>
-        <button class="fchip" data-kind="token_without_company">Token only</button>
+        <button type="button" class="fchip" aria-pressed="false" data-kind="company_with_token">Company + token</button>
+        <button type="button" class="fchip" aria-pressed="false" data-kind="company_without_token">Company only</button>
+        <button type="button" class="fchip" aria-pressed="false" data-kind="token_without_company">Token only</button>
       </div>
-      <span class="hint" id="hint">click a row to open</span>
+      <span class="hint" id="hint">open a row</span>
     </div>
   </section>
 
-  <section class="tblzone">
+  <section class="tblzone" id="market">
     <div class="wrap">
       <div class="tbl-scroll">
         <table>
+          <caption class="sr-only">Public companies and agent tokens</caption>
           <colgroup>
             <col class="c-rank"><col class="c-co"><col class="c-ver">
             <col class="c-px"><col class="c-chg"><col class="c-vol"><col class="c-liq"><col class="c-fdv"><col class="c-spark">
@@ -82,21 +86,21 @@
           </colgroup>
           <thead>
             <tr>
-              <th class="nosort" style="text-align:left">#</th>
-              <th class="l nosort">Token</th>
-              <th class="co" data-k="health">Health score</th>
-              <th data-k="price">Price</th>
-              <th data-k="chg">24h</th>
-              <th data-k="vol">24h volume</th>
-              <th data-k="liq">Liquidity</th>
-              <th data-k="fdv">FDV</th>
-              <th class="nosort">Price 7d</th>
-              <th class="co" data-k="work7">Tasks (7d)</th>
-              <th class="co nosort">Heatmap</th>
-              <th class="co" data-k="donePct">Build map</th>
-              <th class="co" data-k="coverage">Coverage</th>
-              <th class="co" data-k="seq">Chain</th>
-              <th class="co" data-k="fresh">Attested</th>
+              <th class="nosort" scope="col" style="text-align:left">#</th>
+              <th class="l nosort" scope="col">Token</th>
+              <th class="co" data-k="health" scope="col" tabindex="0">Health score</th>
+              <th data-k="price" scope="col" tabindex="0">Price</th>
+              <th data-k="chg" scope="col" tabindex="0">24h</th>
+              <th data-k="vol" scope="col" tabindex="0">24h volume</th>
+              <th data-k="liq" scope="col" tabindex="0">Liquidity</th>
+              <th data-k="fdv" scope="col" tabindex="0">FDV</th>
+              <th class="nosort" scope="col">Price 7d</th>
+              <th class="co" data-k="work7" scope="col" tabindex="0">Tasks (7d)</th>
+              <th class="co nosort" scope="col">Heatmap</th>
+              <th class="co" data-k="donePct" scope="col" tabindex="0">Build map</th>
+              <th class="co" data-k="coverage" scope="col" tabindex="0">Coverage</th>
+              <th class="co" data-k="seq" scope="col" tabindex="0">Chain</th>
+              <th class="co" data-k="fresh" scope="col" tabindex="0">Attested</th>
             </tr>
           </thead>
           <tbody id="rows"></tbody>

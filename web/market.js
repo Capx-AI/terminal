@@ -407,7 +407,12 @@ function tokenCell(row) {
   var ticker = row.symbol
     ? "$" + F.esc(row.symbol) + (slug ? " · <b>" + F.esc(slug) + "</b>" : "")
     : (slug ? "<b>" + F.esc(slug) + "</b>" : "");
-  return "<div class='tok'>" + logo + "<span><div class='nm'>" + F.esc(row.name) + "</div>"
+  var href = hrefForRow(row);
+  var name = F.esc(row.name);
+  var nameEl = href
+    ? "<a class='nm' href='" + F.esc(href) + "'>" + name + "</a>"
+    : "<div class='nm'>" + name + "</div>";
+  return "<div class='tok'>" + logo + "<span>" + nameEl
     + "<div class='tk'>" + ticker + "</div>"
     + (tells ? "<div class='tells'>" + tells + "</div>" : "")
     + "</span></div>";
@@ -633,7 +638,7 @@ function render() {
   }
   $("rows").innerHTML = html || "<tr><td colspan='15' style='text-align:center; color:var(--t500); padding:36px'>no rows match</td></tr>";
   $("hint").textContent = list.length === all.length
-    ? "click a row to open"
+    ? "open a row"
     : list.length + " of " + all.length + " rows";
   document.querySelectorAll("thead th[data-k]").forEach(function (th) {
     var base = th.textContent.replace(/[↑↓]/g, "").trim();
@@ -667,15 +672,28 @@ function boot(data) {
   render();
 }
 
-document.querySelector("thead").addEventListener("click", function (e) {
-  var th = e.target.closest("th[data-k]");
-  if (!th) return;
+function sortByHeader(th) {
   var k = th.getAttribute("data-k");
+  if (!k) return;
   if (SORTK === k) DIR = -DIR;
   else { SORTK = k; DIR = -1; }
   render();
+}
+document.querySelector("thead").addEventListener("click", function (e) {
+  var th = e.target.closest("th[data-k]");
+  if (!th) return;
+  sortByHeader(th);
+});
+document.querySelector("thead").addEventListener("keydown", function (e) {
+  var th = e.target.closest("th[data-k]");
+  if (!th) return;
+  if (e.key === "Enter" || e.key === " ") {
+    e.preventDefault();
+    sortByHeader(th);
+  }
 });
 $("rows").addEventListener("click", function (e) {
+  if (e.target.closest("a")) return;
   var tr = e.target.closest("tr[data-mint], tr[data-slug]");
   if (!tr) return;
   var mint = tr.getAttribute("data-mint");
@@ -693,12 +711,16 @@ $("chips").addEventListener("click", function (e) {
     var next = b.getAttribute("data-kind");
     KIND = KIND === next ? "all" : next;
     document.querySelectorAll(".fchip[data-kind]").forEach(function (c) {
-      c.classList.toggle("on", c.getAttribute("data-kind") === KIND);
+      var on = c.getAttribute("data-kind") === KIND;
+      c.classList.toggle("on", on);
+      c.setAttribute("aria-pressed", on ? "true" : "false");
     });
   } else {
     FILTER = b.getAttribute("data-f");
     document.querySelectorAll(".fchip[data-f]").forEach(function (c) {
-      c.classList.toggle("on", c.getAttribute("data-f") === FILTER);
+      var on = c.getAttribute("data-f") === FILTER;
+      c.classList.toggle("on", on);
+      c.setAttribute("aria-pressed", on ? "true" : "false");
     });
   }
   render();
