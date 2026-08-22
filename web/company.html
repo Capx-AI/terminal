@@ -53,6 +53,21 @@
       </div>
     </section>
 
+    <section class="tile t-showcase" id="tile-showcase">
+      <div class="showcase-head">
+        <div class="artifact-tabs" id="artifact-tabs" role="tablist" aria-label="Company artifacts">
+          <button class="artifact-tab" id="artifact-tab-site" type="button" role="tab" aria-controls="artifact-stage" aria-selected="true" data-artifact="site">Website</button>
+          <button class="artifact-tab" id="artifact-tab-one_pager" type="button" role="tab" aria-controls="artifact-stage" aria-selected="false" data-artifact="one_pager">One-pager</button>
+          <button class="artifact-tab" id="artifact-tab-deck" type="button" role="tab" aria-controls="artifact-stage" aria-selected="false" data-artifact="deck">Pitch deck</button>
+        </div>
+        <a class="open-full artifact-open" id="artifact-open" target="_blank" rel="noopener noreferrer" hidden>Open in new tab</a>
+      </div>
+      <div class="artifact-stage" id="artifact-stage" role="tabpanel" aria-labelledby="artifact-tab-site">
+        <iframe id="artifact-frame" title="Website preview" loading="lazy" sandbox="allow-scripts" referrerpolicy="no-referrer" tabindex="-1" hidden></iframe>
+        <div class="preview-empty artifact-empty" id="artifact-empty" role="status">No public website.</div>
+      </div>
+    </section>
+
     <section class="tile t-price" id="tile-price">
       <div class="halfhead"><span class="label">Market</span><span class="label">Price</span></div>
       <div class="big" id="m-price">--</div>
@@ -107,39 +122,6 @@
       <div class="chartbox">
         <canvas id="chart"></canvas>
         <div class="chart-empty" id="chart-empty">No token yet. Market chart appears when a token is attached.</div>
-      </div>
-    </section>
-
-    <section class="tile t-site" id="tile-site">
-      <div class="th">
-        <span class="label lit">Website</span>
-        <a class="open-full" id="site-open" target="_blank" rel="noopener noreferrer" hidden>Open full site</a>
-      </div>
-      <div class="preview">
-        <iframe id="site-frame" title="Website preview" loading="lazy" sandbox="allow-scripts" referrerpolicy="no-referrer" tabindex="-1" hidden></iframe>
-        <div class="preview-empty" id="site-empty">No public website.</div>
-      </div>
-    </section>
-
-    <section class="tile t-pager" id="tile-pager">
-      <div class="th">
-        <span class="label lit">One-pager</span>
-        <a class="open-full" id="one_pager-open" target="_blank" rel="noopener noreferrer" hidden>Open one-pager</a>
-      </div>
-      <div class="preview">
-        <iframe id="one_pager-frame" title="One-pager preview" loading="lazy" sandbox="allow-scripts" referrerpolicy="no-referrer" tabindex="-1" hidden></iframe>
-        <div class="preview-empty" id="one_pager-empty">No public one-pager.</div>
-      </div>
-    </section>
-
-    <section class="tile t-deck" id="tile-deck">
-      <div class="th">
-        <span class="label lit">Deck</span>
-        <a class="open-full" id="deck-open" target="_blank" rel="noopener noreferrer" hidden>Open deck</a>
-      </div>
-      <div class="preview">
-        <iframe id="deck-frame" title="Deck preview" loading="lazy" sandbox="allow-scripts" referrerpolicy="no-referrer" tabindex="-1" hidden></iframe>
-        <div class="preview-empty" id="deck-empty">No public deck.</div>
       </div>
     </section>
 

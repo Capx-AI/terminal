@@ -4,6 +4,8 @@ var $ = function (id) { return document.getElementById(id); };
 
 var IFRAME_SANDBOX = "allow-scripts";
 var ARTIFACTS = ["site", "one_pager", "deck"];
+var ARTIFACT_LABELS = { site: "Website", one_pager: "One-pager", deck: "Pitch deck" };
+var artifactPreviewState = { artifacts: {}, slug: "", canonical: "", active: "site" };
 var CASA_HOST = /^https:\/\/[a-z0-9-]{1,32}\.casa\.capx\.ai(\/.*)?$/;
 
 function slugFromPath() {
@@ -242,9 +244,9 @@ function previewFallbackCopy(kind) {
 }
 
 function applyPreviewFallback(kind) {
-  var frame = $(kind + "-frame");
-  var empty = $(kind + "-empty");
-  var open = $(kind + "-open");
+  var frame = $("artifact-frame");
+  var empty = $("artifact-empty");
+  var open = $("artifact-open");
   if (frame) {
     frame.hidden = true;
     frame.removeAttribute("src");
@@ -258,16 +260,25 @@ function applyPreviewFallback(kind) {
 }
 
 function paintPreview(kind, artifact, slug, canonical) {
-  var frame = $(kind + "-frame");
-  var empty = $(kind + "-empty");
-  var open = $(kind + "-open");
+  var frame = $("artifact-frame");
+  var empty = $("artifact-empty");
+  var open = $("artifact-open");
+  var stage = $("artifact-stage");
   if (!frame) return;
   frame.setAttribute("sandbox", IFRAME_SANDBOX);
   frame.setAttribute("loading", "lazy");
   frame.setAttribute("referrerpolicy", "no-referrer");
+  frame.title = (ARTIFACT_LABELS[kind] || "Artifact") + " preview";
   frame.tabIndex = -1;
-  frame.onerror = function () { applyPreviewFallback(kind); };
+  frame.onerror = function () {
+    if (artifactPreviewState.active === kind) applyPreviewFallback(kind);
+  };
   frame.removeAttribute("src");
+  if (stage) stage.setAttribute("aria-labelledby", "artifact-tab-" + kind);
+  if (open) {
+    open.removeAttribute("href");
+    open.hidden = true;
+  }
   var art = publicArtifact(artifact, slug);
   if (art && art.preview_ok === false) {
     if (kind === "site" && open && canonical && isCasaUrl(canonical, slug)) {
@@ -292,10 +303,10 @@ function paintPreview(kind, artifact, slug, canonical) {
   }
   if (!art) {
     frame.hidden = true;
-    if (empty) empty.hidden = false;
-    if (kind !== "site" && open) {
-      open.removeAttribute("href");
-      open.hidden = true;
+    if (empty) {
+      empty.hidden = false;
+      empty.textContent = kind === "site" ? "No public website."
+        : (kind === "one_pager" ? "No public one-pager." : "No public deck.");
     }
     return;
   }
@@ -310,13 +321,86 @@ function paintPreview(kind, artifact, slug, canonical) {
   }
 }
 
+function enabledArtifactKinds() {
+  return ARTIFACTS.filter(function (kind) { return !!artifactPreviewState.artifacts[kind]; });
+}
+
+function selectArtifact(kind, focusTab) {
+  if (ARTIFACTS.indexOf(kind) < 0 || !artifactPreviewState.artifacts[kind]) return false;
+  artifactPreviewState.active = kind;
+  ARTIFACTS.forEach(function (candidate) {
+    var tab = $("artifact-tab-" + candidate);
+    if (!tab) return;
+    var selected = candidate === kind;
+    tab.setAttribute("aria-selected", selected ? "true" : "false");
+    tab.tabIndex = selected ? 0 : -1;
+  });
+  paintPreview(
+    kind,
+    artifactPreviewState.artifacts[kind],
+    artifactPreviewState.slug,
+    artifactPreviewState.canonical,
+  );
+  var activeTab = $("artifact-tab-" + kind);
+  if (focusTab && activeTab) activeTab.focus();
+  return true;
+}
+
+function moveArtifactTab(kind, step) {
+  var enabled = enabledArtifactKinds();
+  if (!enabled.length) return null;
+  var current = enabled.indexOf(kind);
+  if (current < 0) current = 0;
+  return enabled[(current + step + enabled.length) % enabled.length];
+}
+
+function initArtifactTabs() {
+  ARTIFACTS.forEach(function (kind) {
+    var tab = $("artifact-tab-" + kind);
+    if (!tab) return;
+    tab.addEventListener("click", function () { selectArtifact(kind, false); });
+    tab.addEventListener("keydown", function (event) {
+      var next = null;
+      if (event.key === "ArrowRight") next = moveArtifactTab(kind, 1);
+      else if (event.key === "ArrowLeft") next = moveArtifactTab(kind, -1);
+      else if (event.key === "Home") next = enabledArtifactKinds()[0] || null;
+      else if (event.key === "End") {
+        var enabled = enabledArtifactKinds();
+        next = enabled.length ? enabled[enabled.length - 1] : null;
+      }
+      if (!next) return;
+      event.preventDefault();
+      selectArtifact(next, true);
+    });
+  });
+}
+
 function paintPreviews(company) {
   var arts = (company && company.artifacts) || {};
   var slug = company && company.slug;
   var canonical = company && company.canonical_url;
+  artifactPreviewState = { artifacts: {}, slug: slug, canonical: canonical, active: "site" };
   ARTIFACTS.forEach(function (kind) {
-    paintPreview(kind, arts[kind], slug, canonical);
+    var art = publicArtifact(arts[kind], slug);
+    artifactPreviewState.artifacts[kind] = art;
+    var tab = $("artifact-tab-" + kind);
+    if (tab) {
+      tab.disabled = !art;
+      tab.setAttribute("aria-selected", "false");
+      tab.tabIndex = -1;
+    }
   });
+  var available = enabledArtifactKinds();
+  if (available.length) {
+    selectArtifact(available.indexOf("site") >= 0 ? "site" : available[0], false);
+    return;
+  }
+  var frame = $("artifact-frame");
+  var empty = $("artifact-empty");
+  var open = $("artifact-open");
+  if (frame) { frame.hidden = true; frame.removeAttribute("src"); }
+  if (empty) { empty.hidden = false; empty.textContent = "No public company artifacts."; }
+  if (open) { open.hidden = true; open.removeAttribute("href"); }
 }
 
 function paintChart(payload) {
@@ -445,6 +529,7 @@ function boot(payload) {
   if (work) work.classList.toggle("wide", payload.kind !== "company_with_token");
 }
 
+initArtifactTabs();
 var slug = slugFromPath();
 if (!slug) {
   paintUnavailable("NOT_FOUND", "No such company");

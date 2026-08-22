@@ -317,17 +317,16 @@ test("broken artifact preview falls back and keeps the open-full link", () => {
   assert.match(src, /Preview failed\. Open the full site\./);
   assert.match(src, /tabIndex = -1/);
   assert.doesNotMatch(src, /allow-same-origin|allow-top-navigation|allow-popups/);
-  assert.match(html, /id="site-open"/);
-  assert.match(html, /Open full site/);
-  assert.match(html, /Open one-pager/);
-  assert.match(html, /Open deck/);
-  assert.match(html, /id="site-empty"/);
+  assert.match(html, /id="artifact-open"/);
+  assert.match(html, /Open in new tab/);
+  assert.match(html, /id="artifact-empty"/);
+  assert.match(html, /id="artifact-tabs"/);
   assert.match(html, /tabindex="-1"/);
 
   const els = {
-    "site-frame": { hidden: false, tabIndex: 0, href: null, getAttribute() { return null; }, removeAttribute(name) { if (name === "src") this.src = undefined; } },
-    "site-empty": { hidden: true, textContent: "No public website." },
-    "site-open": { hidden: true, href: "https://northstar-labs.casa.capx.ai", getAttribute(name) { return name === "href" ? this.href : null; } },
+    "artifact-frame": { hidden: false, tabIndex: 0, href: null, getAttribute() { return null; }, removeAttribute(name) { if (name === "src") this.src = undefined; } },
+    "artifact-empty": { hidden: true, textContent: "No public website." },
+    "artifact-open": { hidden: true, href: "https://northstar-labs.casa.capx.ai", getAttribute(name) { return name === "href" ? this.href : null; } },
   };
   const api = vm.runInNewContext(
     `"use strict";
@@ -341,12 +340,12 @@ ${extractFunction(src, "function applyPreviewFallback(kind)")}
   assert.equal(api.previewFallbackCopy("one_pager"), "Preview failed. Open the one-pager.");
   assert.equal(api.previewFallbackCopy("deck"), "Preview failed. Open the deck.");
   api.applyPreviewFallback("site");
-  assert.equal(els["site-frame"].hidden, true);
-  assert.equal(els["site-frame"].tabIndex, -1);
-  assert.equal(els["site-empty"].hidden, false);
-  assert.equal(els["site-empty"].textContent, "Preview failed. Open the full site.");
-  assert.equal(els["site-open"].hidden, false);
-  assert.equal(els["site-open"].href, "https://northstar-labs.casa.capx.ai");
+  assert.equal(els["artifact-frame"].hidden, true);
+  assert.equal(els["artifact-frame"].tabIndex, -1);
+  assert.equal(els["artifact-empty"].hidden, false);
+  assert.equal(els["artifact-empty"].textContent, "Preview failed. Open the full site.");
+  assert.equal(els["artifact-open"].hidden, false);
+  assert.equal(els["artifact-open"].href, "https://northstar-labs.casa.capx.ai");
   assert.equal(JSON.stringify(els).includes("file-store"), false);
 });
 
@@ -374,9 +373,10 @@ test("/register and /c/{slug} have labels and keyboard-focusable controls", asyn
   assert.match(company.text, /href="#page"/);
   assert.match(company.text, /<a class="back" href="\/">Back to market<\/a>/);
   assert.match(company.text, /title="Website preview"/);
-  assert.match(company.text, /title="One-pager preview"/);
-  assert.match(company.text, /title="Deck preview"/);
-  assert.match(company.text, /Open full site/);
+  assert.match(company.text, /role="tablist"/);
+  assert.match(company.text, /role="tab"/);
+  assert.match(company.text, /role="tabpanel"/);
+  assert.match(company.text, /Open in new tab/);
   assert.match(company.text, /target="_blank"/);
   assert.match(company.text, /rel="noopener noreferrer"/);
   assert.match(company.text, /sandbox="allow-scripts"/);
@@ -388,7 +388,7 @@ test("/register and /c/{slug} have labels and keyboard-focusable controls", asyn
   assert.equal(coFocus[0].href, "#page");
   assert.ok(coFocus.some((el) => el.tag === "a" && el.href === "/"));
   assert.equal(coFocus.some((el) => el.tag === "iframe"), false);
-  assert.equal((company.text.match(/tabindex="-1"/g) || []).length, 3);
+  assert.equal((company.text.match(/tabindex="-1"/g) || []).length, 1);
 
   const market = await getText(`${terminal.url}/`);
   assert.equal(market.status, 200);
@@ -431,13 +431,11 @@ test("mobile and desktop fixtures keep overflow, contrast, and keyboard chrome",
   }
   assert.match(app, /@media \(max-width:880px\)/);
   assert.match(app, /@media \(max-width:700px\)/);
-  assert.match(v1, /@media \(min-width:881px\)/);
-  assert.match(v1, /@media \(max-width:880px\)/);
   assert.match(v1, /@media \(max-width:700px\)/);
   assert.match(app, /\.tbl-scroll\{overflow-x:auto/);
-  assert.match(v1, /\.preview\{[^}]*overflow:hidden/);
-  assert.match(v1, /\.t-site\{grid-column:span 12/);
-  assert.match(v1, /\.t-pager\{grid-column:span 6/);
+  assert.match(v1, /\.artifact-stage\{[^}]*height:clamp\(620px,76vh,980px\)/);
+  assert.match(v1, /\.t-showcase\{grid-column:span 12/);
+  assert.match(v1, /\.artifact-tabs\{[^}]*overflow-x:auto/);
   assert.match(app, /:focus-visible/);
   assert.match(app, /outline:1px solid var\(--capx\)/);
   assert.match(app, /\.back\{[^}]*color:var\(--t400\)/);
@@ -451,6 +449,8 @@ test("mobile and desktop fixtures keep overflow, contrast, and keyboard chrome",
   assert.match(marketJs, /data\.directoryError/);
   assert.match(companyJs, /noopener noreferrer/);
   assert.match(companyJs, /IFRAME_SANDBOX = "allow-scripts"/);
+  assert.match(companyJs, /ArrowRight/);
+  assert.match(companyJs, /ArrowLeft/);
   assert.doesNotMatch(app + v1 + index + register + company, /\u2014/);
   assert.doesNotMatch(app + v1, /[\u{1F300}-\u{1FAFF}]/u);
 });

@@ -54,38 +54,54 @@
   color:var(--capx); font-family:var(--mono); font-size:12px;
 }
 
-/* /c/{slug}: artifact previews. Sandboxed iframes; full site opens separately. */
-.t-site{grid-column:span 12; min-height:420px;}
-.t-pager{grid-column:span 6; min-height:320px;}
-.t-deck{grid-column:span 6; min-height:320px;}
+/* /c/{slug}: one large artifact stage near the top of the company page. */
+.t-showcase{grid-column:span 12; min-height:0;}
+.showcase-head{
+  min-height:48px; display:flex; align-items:center; justify-content:space-between; gap:14px;
+  padding:7px 10px; border-bottom:1px solid var(--line); background:rgba(13,14,16,.92);
+}
+.artifact-tabs{
+  display:flex; align-items:center; gap:5px; min-width:0; overflow-x:auto;
+  scrollbar-width:thin; scrollbar-color:var(--line3) transparent;
+}
+.artifact-tab{
+  flex:none; border:1px solid transparent; border-radius:var(--radius); background:transparent;
+  color:var(--t400); padding:8px 13px; cursor:pointer; font-family:var(--mono); font-size:10px;
+  letter-spacing:.07em; text-transform:uppercase; white-space:nowrap;
+  transition:color .12s,border-color .12s,background .12s;
+}
+.artifact-tab:hover:not(:disabled){color:var(--fg); border-color:var(--line2);}
+.artifact-tab[aria-selected="true"]{
+  color:var(--capx); border-color:var(--capx-b); background:var(--capx-a);
+}
+.artifact-tab:disabled{color:var(--t600); cursor:not-allowed; opacity:.46;}
+.artifact-tab:focus-visible{outline:1px solid var(--capx); outline-offset:2px;}
 .open-full{
   font-family:var(--mono); font-size:10px; letter-spacing:.07em; text-transform:uppercase;
   color:var(--capx); white-space:nowrap;
 }
 .open-full:hover{color:var(--fg);}
-.preview{
-  position:relative; flex:1 1 auto; min-height:280px; min-width:0; background:var(--bg); overflow:hidden;
+.artifact-open{padding:7px 9px; border:1px solid var(--line2); border-radius:var(--radius);}
+.artifact-stage{
+  position:relative; height:clamp(620px,76vh,980px); min-width:0; background:var(--bg); overflow:hidden;
 }
-.preview iframe{
+.artifact-stage iframe{
   position:absolute; inset:0; width:100%; height:100%; border:0; background:#fff;
 }
 .preview-empty{
   padding:16px; font-family:var(--mono); font-size:12px; color:var(--t400);
 }
+.artifact-empty{position:absolute; inset:0; display:grid; place-items:center; text-align:center;}
 .chart-empty{
   position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
   padding:16px; font-family:var(--mono); font-size:12px; color:var(--t500); text-align:center;
 }
-@media (min-width:881px){
-  .t-site{grid-column:span 12;}
-  .t-pager,.t-deck{grid-column:span 6;}
-}
-@media (max-width:880px){
-  .t-site,.t-pager,.t-deck{grid-column:span 6;}
-}
 @media (max-width:700px){
-  .t-site,.t-pager,.t-deck{min-height:220px;}
-  .preview{min-height:180px;}
+  .showcase-head{align-items:stretch; flex-direction:column; gap:6px;}
+  .artifact-tabs{width:100%;}
+  .artifact-tab{flex:1 0 auto; text-align:center;}
+  .artifact-open{text-align:center;}
+  .artifact-stage{height:72vh; min-height:520px; max-height:760px;}
   .regwrap{padding:28px 0 48px;}
   .regform{max-width:100%;}
 }

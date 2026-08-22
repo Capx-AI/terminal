@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { createServer } from "node:http";
 import { spawn } from "node:child_process";
 import { readFileSync } from "node:fs";
+import vm from "node:vm";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadJson } from "../../../../ORCHESTRATOR/casa-terminal-plan-01/contracts/validate.mjs";
@@ -279,7 +280,7 @@ test("tokenless join keeps market nulls and the company URL", () => {
   assert.equal(companyHref(view.slug), "/c/northstar-labs");
 });
 
-test("GET /c/{slug} is Terminal chrome with sandboxed lazy previews", async (t) => {
+test("GET /c/{slug} is Terminal chrome with one large sandboxed artifact stage", async (t) => {
   const { terminal } = await withTerminal(t, { docs: { "northstar-labs": tokenless } });
   const page = await getText(`${terminal.url}/c/northstar-labs`);
   assert.equal(page.status, 200);
@@ -288,21 +289,61 @@ test("GET /c/{slug} is Terminal chrome with sandboxed lazy previews", async (t) 
   assert.match(page.text, /company\.js/);
   assert.match(page.text, /Website/);
   assert.match(page.text, /One-pager/);
-  assert.match(page.text, /Deck/);
-  assert.match(page.text, /id="site-frame"/);
-  assert.match(page.text, /id="one_pager-frame"/);
-  assert.match(page.text, /id="deck-frame"/);
+  assert.match(page.text, /Pitch deck/);
+  assert.match(page.text, /id="artifact-tabs"/);
+  assert.match(page.text, /role="tablist"/);
+  assert.match(page.text, /data-artifact="site"/);
+  assert.match(page.text, /data-artifact="one_pager"/);
+  assert.match(page.text, /data-artifact="deck"/);
+  assert.match(page.text, /id="artifact-frame"/);
+  assert.match(page.text, /id="artifact-stage" role="tabpanel"/);
+  assert.ok(page.text.indexOf('id="tile-showcase"') < page.text.indexOf('id="tile-price"'), "artifact stage must be near the top, before market tiles");
   assert.match(page.text, /sandbox="allow-scripts"/);
   assert.match(page.text, /loading="lazy"/);
   assert.doesNotMatch(page.text, /allow-same-origin/);
   assert.doesNotMatch(page.text, /allow-top-navigation/);
   assert.doesNotMatch(page.text, /allow-popups/);
   assert.doesNotMatch(page.text, /src="https:\/\/northstar-labs\.casa\.capx\.ai/);
-  assert.match(page.text, /Open full site/);
+  assert.match(page.text, /Open in new tab/);
   assert.match(page.text, /target="_blank"/);
   assert.match(page.text, /rel="noopener noreferrer"/);
   assert.doesNotMatch(page.text, /yield|profit|equity/i);
-  assert.equal((page.text.match(/sandbox="allow-scripts"/g) || []).length, 3);
+  assert.equal((page.text.match(/sandbox="allow-scripts"/g) || []).length, 1);
+});
+
+test("artifact tabs switch one shared preview and skip unavailable artifacts", () => {
+  const src = readFileSync(join(webRoot, "company.js"), "utf8");
+  const tabs = Object.fromEntries(["site", "one_pager", "deck"].map((kind) => [
+    `artifact-tab-${kind}`,
+    {
+      attrs: {}, tabIndex: -1, focused: false,
+      setAttribute(name, value) { this.attrs[name] = value; },
+      focus() { this.focused = true; },
+    },
+  ]));
+  const calls = [];
+  const api = vm.runInNewContext(
+    `"use strict";
+var ARTIFACTS = ["site", "one_pager", "deck"];
+var artifactPreviewState = { artifacts: { site: { url: "site" }, one_pager: null, deck: { url: "deck" } }, slug: "frame-markets", canonical: "canonical", active: "site" };
+var $ = function (id) { return tabs[id] || null; };
+var paintPreview = function (kind, artifact, slug, canonical) { calls.push({ kind, artifact, slug, canonical }); };
+${extractFunction(src, "function enabledArtifactKinds()")}
+${extractFunction(src, "function selectArtifact(kind, focusTab)")}
+${extractFunction(src, "function moveArtifactTab(kind, step)")}
+({ enabledArtifactKinds, selectArtifact, moveArtifactTab });`,
+    { tabs, calls },
+  );
+  assert.deepEqual([...api.enabledArtifactKinds()], ["site", "deck"]);
+  assert.equal(api.moveArtifactTab("site", 1), "deck");
+  assert.equal(api.moveArtifactTab("deck", 1), "site");
+  assert.equal(api.selectArtifact("one_pager", false), false);
+  assert.equal(api.selectArtifact("deck", true), true);
+  assert.equal(tabs["artifact-tab-deck"].attrs["aria-selected"], "true");
+  assert.equal(tabs["artifact-tab-site"].attrs["aria-selected"], "false");
+  assert.equal(tabs["artifact-tab-deck"].tabIndex, 0);
+  assert.equal(tabs["artifact-tab-deck"].focused, true);
+  assert.equal(calls.at(-1).kind, "deck");
 });
 
 test("tokenless layout: progress, health, dashes, no fake price", async (t) => {
@@ -382,7 +423,10 @@ test("iframe sandbox attributes stay allow-scripts only in page and script", () 
   assert.match(html, /loading="lazy"/);
   assert.match(js, /loading/);
   assert.match(js, /noopener noreferrer/);
-  assert.match(css, /\.t-site/);
+  assert.match(css, /\.t-showcase/);
+  assert.match(css, /height:clamp\(620px,76vh,980px\)/);
+  assert.match(js, /function selectArtifact\(kind, focusTab\)/);
+  assert.match(js, /ArrowRight/);
   assert.match(js, /IFRAME_SANDBOX = "allow-scripts"/);
 });
 
