@@ -327,16 +327,20 @@ export function liveDocument() {
 export function unobservedDocument() {
   const cal = calendar180({ seed: 1, attestedThroughAgo: 180, density: 0 });
   cal.days = cal.days.map((d) => ({ ...d, events: 0, attestation: false, decision: false }));
+  // Keep this E2E fixture inside the <= 2 day hourly-heatmap window. A fixed
+  // launch timestamp makes the full release gate start failing as wall time
+  // advances even though the production age-selection behavior is unchanged.
+  const startedAt = isoDaysAgo(1, 18);
   return {
     mint: MINTS.none,
     company: company(
       "dGVzdC1saXZlLW5vbmUtcHVia2V5LTEyMz",
       "fixture-none",
       "Fixture Unobserved",
-      { one_liner: "Bound, never pushed.", created_at: "2026-08-19T18:00:00.000Z" },
+      { one_liner: "Bound, never pushed.", created_at: startedAt },
     ),
     creator_wallet: "CapxTermFixCreator1111111111111111111111",
-    binding: binding("live", { bound_at: "2026-08-19T18:00:00Z" }),
+    binding: binding("live", { bound_at: startedAt }),
     attestation: emptyAttestation(),
     reproduced: {
       plane: "reproduced",
