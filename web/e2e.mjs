@@ -117,6 +117,9 @@ assert(String(liveHtml.data).includes("founder claimed"), "constraint labeled cl
 
 const companyPage = await get(`${base}/c/northstar-labs`);
 assert(companyPage.status === 200, "company html");
+assert(String(companyPage.data).includes("id=\"tile-cons\""), "company has constraint tile");
+assert(String(companyPage.data).includes("id=\"tile-wire\""), "company has ledger tile");
+assert(String(companyPage.data).includes("No token yet"), "tokenless chart copy");
 assert(String(companyPage.data).includes("sandbox=\"allow-scripts\""), "preview sandbox");
 assert(!String(companyPage.data).includes("allow-same-origin"), "no same-origin sandbox");
 assert(!String(companyPage.data).includes("allow-top-navigation"), "no top navigation");
@@ -125,6 +128,13 @@ const companyApi = await get(`${base}/api/companies/northstar-labs`);
 assert(companyApi.status === 200, "company api");
 assert(companyApi.data.kind === "company_without_token", "tokenless kind");
 assert(companyApi.data.market.price_usd === null, "tokenless price is null");
+assert(companyApi.data.company.progress.constraint, "company constraint present");
+assert(Array.isArray(companyApi.data.company.ledger.shown) && companyApi.data.company.ledger.shown.length > 0, "company ledger present");
+const northRow = market.data.rows.find((r) => r.company && r.company.slug === "northstar-labs");
+assert(northRow && northRow.kind === "company_without_token", "northstar is company-only");
+assert(northRow.market.price_usd === null, "northstar market price null");
+assert(market.data.company_surfaces && market.data.company_surfaces["northstar-labs"], "northstar sidecar");
+assert(market.data.company_surfaces["northstar-labs"].document.progress.work.tasks_7d === 4, "sidecar tasks");
 const missingCo = await get(`${base}/api/companies/no-such-company`);
 assert(missingCo.status === 404 && missingCo.data.error === "NOT_FOUND", "missing company 404");
 

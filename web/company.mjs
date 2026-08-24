@@ -190,6 +190,49 @@ export function publicCompanyView(doc) {
   };
 }
 
+function numOrNull(n) {
+  return typeof n === "number" && Number.isFinite(n) ? n : null;
+}
+
+/** Slim company record for market columns. No ledger, envelope, or artifact URLs. */
+export function marketSurface(view) {
+  if (!view || typeof view !== "object") return null;
+  const att = view.attestation && typeof view.attestation === "object" ? view.attestation : null;
+  const repro = view.reproduced && typeof view.reproduced === "object" ? view.reproduced : null;
+  const progress = view.progress && typeof view.progress === "object" ? view.progress : null;
+  const work = progress && progress.work && typeof progress.work === "object" ? progress.work : null;
+  return {
+    attestation: att
+      ? {
+        attested: att.attested === true,
+        health_score: numOrNull(att.health_score),
+        freshness: att.freshness || null,
+        hours_since: numOrNull(att.hours_since),
+        sequence: numOrNull(att.sequence),
+        observed_at: att.observed_at || null,
+      }
+      : null,
+    reproduced: repro
+      ? {
+        coverage_bp: numOrNull(repro.coverage_bp),
+        signature_valid: repro.signature_valid === true ? true : (repro.signature_valid === false ? false : null),
+        chain_intact: repro.chain_intact === true ? true : (repro.chain_intact === false ? false : null),
+      }
+      : null,
+    progress: progress
+      ? {
+        level: numOrNull(progress.level),
+        level_name: progress.level_name || null,
+        playbooks_done: numOrNull(progress.playbooks_done),
+        playbooks_total: numOrNull(progress.playbooks_total),
+        work: work
+          ? { tasks_7d: numOrNull(work.tasks_7d) }
+          : null,
+      }
+      : null,
+  };
+}
+
 export function companyGateError(doc) {
   if (!doc || typeof doc !== "object") return "NOT_FOUND";
   if (doc.visibility && doc.visibility !== "public") return "PRIVATE";
@@ -283,6 +326,9 @@ export const SAMPLE_COMPANY_DOCS = {
       playbooks_ready: 3,
       playbooks_blocked: 1,
       done_nodes: [{ node_id: "opportunity-scan", title: "Opportunity Scan" }],
+      constraint: { archetype: "no_users", lead_departments: ["Growth"] },
+      north_star: { band: "validation", metric_id: "validated_demand", label: "validated demand" },
+      work: { tasks_7d: 6, tasks_total: 6, artifacts_total: 3, rubric_pins: 2, in_flight: 0 },
     },
     attestation: {
       attested: true,
@@ -341,6 +387,9 @@ export const SAMPLE_COMPANY_DOCS = {
       playbooks_ready: 2,
       playbooks_blocked: 0,
       done_nodes: [{ node_id: "opportunity-scan", title: "Opportunity Scan" }],
+      constraint: { archetype: "no_users", lead_departments: ["Growth", "Strategy"] },
+      north_star: { band: "activation", metric_id: "activation_rate", label: "activation rate" },
+      work: { tasks_7d: 4, tasks_total: 4, artifacts_total: 3, rubric_pins: 3, in_flight: 0 },
     },
     attestation: {
       attested: true,
@@ -349,6 +398,42 @@ export const SAMPLE_COMPANY_DOCS = {
       observed_at: "2026-08-19T18:00:00Z",
       sequence: 1,
     },
+    reproduced: {
+      plane: "reproduced",
+      chain_intact: true,
+      signature_valid: true,
+      tier0: true,
+      tier1: true,
+      tier2_ran: false,
+      coverage_bp: 10000,
+      catalog_matches: true,
+      violations: { dag: 0, dataflow: 0, level: 0, other: 0 },
+    },
+    calendar: {
+      plane: "reproduced",
+      days: [
+        { date: "2026-08-19", events: 4, attestation: true, decision: false },
+        { date: "2026-08-20", events: 0, attestation: false, decision: false },
+        { date: "2026-08-21", events: 0, attestation: false, decision: false },
+      ],
+    },
+    ledger: {
+      plane: "claimed",
+      window_events: 4,
+      shown: [
+        { ts: "2026-08-19T18:00:00Z", kind: "playbook", status: "done", node_id: "phase0-website", title: "Phase 0 Website", department: "Brand", committed: true, has_rubric: true },
+      ],
+    },
+    envelope: {
+      plane: "reproduced",
+      caf_version: "1.1.0",
+      sequence: 1,
+      subject: { company_pubkey: "Y2FzYS1ub3J0aHN0YXItbGFicy1rZXktZml4dHVy", harness: { name: "capx-casa", version: "4.1.0" } },
+      window: { from_ts: "2026-08-19T18:00:00Z", to_ts: "2026-08-19T18:00:00Z" },
+      roots: { brain_root: "abc", disclosed_root: "def" },
+      signature_present: true,
+    },
+    departments_30d: { plane: "claimed", items: [{ department: "Brand", events: 3 }, { department: "Strategy", events: 1 }] },
     token: null,
     artifacts: {
       site: { url: "https://northstar-labs.casa.capx.ai/", version_id: "ver_site_1", visibility: "public" },

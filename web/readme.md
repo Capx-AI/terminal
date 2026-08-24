@@ -48,3 +48,4 @@ intact). `v1.css` only covers missing-tile layout.
   the Terminal static-asset fingerprint (html, css, js, favicons,
   brand). Names in that glob are the packaged set. Do not restyle the
   glob. Hashes of those files are release evidence; no secret values.
+- **2026-08-24** — Company page paints constraint, vitals, reproduced, ledger, envelope, judgment, departments when present. Market `company_surfaces` fills company-only work columns. Tokenless price stays null.

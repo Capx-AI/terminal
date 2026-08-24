@@ -432,6 +432,8 @@ test("GET /api/market joins in parallel and does not per-mint Casa GET", async (
   }
   assert.ok(market.data.tokens.every((tok) => tok.mint));
   assert.equal(market.data.tokens.some((tok) => tok.casa), false);
+  assert.equal(typeof market.data.company_surfaces, "object");
+  assert.equal(tokenless.casa, undefined);
 
   const tokenGetsBefore = hits.tokens;
   const detail = await getJson(`${terminal.url}/api/tokens/${encodeURIComponent(inbox.mint)}`);

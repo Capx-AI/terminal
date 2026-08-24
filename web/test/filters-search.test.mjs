@@ -71,6 +71,7 @@ function loadMarketApi() {
   const src = readFileSync(join(webRoot, "market.js"), "utf8");
   const signatures = [
     "function tokenByMint(mint)",
+    "function companySurface(slug)",
     "function honestMarket(row)",
     "function fromComposite(row)",
     "function casaDoc(row)",
@@ -97,7 +98,7 @@ function loadMarketApi() {
     },
   };
   return vm.runInNewContext(
-    `"use strict";\n${body}\n({ tokenByMint, honestMarket, fromComposite, casaDoc, healthOf, freshnessOf, hoursSinceOf, searchBlob, matchesQuery, matchesKind, matchesHealth, rowVisible, hrefForRow });`,
+    `"use strict";\n${body}\n({ tokenByMint, companySurface, honestMarket, fromComposite, casaDoc, healthOf, freshnessOf, hoursSinceOf, searchBlob, matchesQuery, matchesKind, matchesHealth, rowVisible, hrefForRow });`,
     sandbox,
   );
 }

@@ -46,3 +46,7 @@ Backend fetches Casa. Cache 5 minutes. Never from the browser. 404 = hide Casa t
 | Pay | `pay.pay_attested` is false; do not invent receipts |
 
 Unbound (404): no Casa panel. Bound never pushed: `progress` is null, `attestation.freshness` is `unobserved`. Released: `binding.status === "released"`. Continuity break: `binding.continuity_break`.
+
+## Company page (`/c/{slug}`)
+
+Same lime tiles as the token page, minus price. Source is `GET /v1/companies/{slug}` (`payload.company`), not `GET /v1/tokens/{mint}`. Hide a tile when its block is absent or empty. Keep Market/Price and the chart as empty chrome when `kind === company_without_token`. Market table company columns read `GET /api/market` `company_surfaces[slug]`, not the join row.

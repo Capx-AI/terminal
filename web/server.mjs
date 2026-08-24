@@ -21,6 +21,7 @@ import {
   mapCasaCompanyError,
   probeArtifacts,
   publicCompanyView,
+  marketSurface,
 } from "./company.mjs";
 
 const root = fileURLToPath(new URL(".", import.meta.url));
@@ -47,6 +48,7 @@ let sparkCache = { at: 0, key: "", value: { error: null, byMint: {} } };
 const capxChartCache = new Map();
 let listCache = { at: 0, value: null, error: null };
 let companiesCache = { at: 0, value: null, error: null };
+const companySurfaceCache = new Map();
 const LIST_TTL_MS = 60_000;
 let capxCache = { at: 0, value: null, error: null };
 
@@ -60,6 +62,7 @@ function sendJson(response, status, body, maxAge) {
 
 function invalidateCompaniesSnapshot() {
   companiesCache = { at: 0, value: null, error: null };
+  companySurfaceCache.clear();
 }
 
 function readRequestBody(request, limit = 4096) {
@@ -404,6 +407,56 @@ async function loadCompanyBySlug(slug) {
   }
 }
 
+function sampleCompanyDoc(slug, casa) {
+  if (!sample || !SAMPLE_COMPANY_DOCS[slug]) return null;
+  if (casa && casa.document) return null;
+  if (casa && casa.error !== "NOT_FOUND" && casa.error !== "CASA_UNAVAILABLE") return null;
+  return SAMPLE_COMPANY_DOCS[slug];
+}
+
+async function loadCompanySurface(slug) {
+  if (!isValidSlug(slug)) return null;
+  const now = Date.now();
+  const hit = companySurfaceCache.get(slug);
+  if (hit && now - hit.at < LIST_TTL_MS) return hit.value;
+  let value = null;
+  try {
+    const casa = await loadCompanyBySlug(slug);
+    const doc = casa.document || sampleCompanyDoc(slug, casa);
+    if (doc && !companyGateError(doc)) {
+      const view = publicCompanyView(doc);
+      const document = marketSurface(view);
+      if (view && document) {
+        value = {
+          document,
+          heatmap: view.calendar ? buildHeatmap(null, view) : null,
+        };
+      }
+    }
+  } catch {
+    value = null;
+  }
+  companySurfaceCache.set(slug, { at: now, value });
+  return value;
+}
+
+async function loadCompanySurfaces(rows) {
+  const slugs = [];
+  const seen = new Set();
+  for (const row of Array.isArray(rows) ? rows : []) {
+    const slug = row && row.company && row.company.slug;
+    if (!slug || seen.has(slug)) continue;
+    seen.add(slug);
+    slugs.push(slug);
+  }
+  const out = {};
+  await Promise.all(slugs.map(async (slug) => {
+    const value = await loadCompanySurface(slug);
+    if (value) out[slug] = value;
+  }));
+  return out;
+}
+
 async function loadCasa(mint) {
   const now = Date.now();
   const hit = casaCache.get(mint);
@@ -573,6 +626,7 @@ async function marketPayload() {
     ? [...(casaDir.value || []), ...SAMPLE_COMPANIES]
     : (casaDir.value || []);
   const rows = joinDirectory(companies, launchpad);
+  const company_surfaces = await loadCompanySurfaces(rows);
   const sparks = await loadSparks(launchpad);
   const tokens = launchpad.map((row) => ({
     ...row,
@@ -592,6 +646,7 @@ async function marketPayload() {
     },
     tokens,
     rows,
+    company_surfaces,
   };
 }
 
