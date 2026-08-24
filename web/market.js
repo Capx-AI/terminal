@@ -39,6 +39,11 @@ function tokenByMint(mint) {
   return null;
 }
 
+function companySurface(slug) {
+  if (!DATA || !DATA.company_surfaces || !slug) return null;
+  return DATA.company_surfaces[slug] || null;
+}
+
 function honestMarket(row) {
   var empty = {
     price_usd: null,
@@ -64,6 +69,7 @@ function fromComposite(row) {
   var market = honestMarket(row);
   var mint = token && token.mint ? token.mint : null;
   var src = tokenByMint(mint);
+  var surface = company && company.slug ? companySurface(company.slug) : null;
   var fdv = market.fdv_usd;
   var vol = market.volume_24h_usd;
   var liq = market.liquidity_usd;
@@ -91,7 +97,10 @@ function fromComposite(row) {
       stale: !!(src && src.marketPerformance && src.marketPerformance.stale),
     } : null,
     sparkline: src ? src.sparkline : null,
-    casa: src ? src.casa : null,
+    casa: (surface && surface.document)
+      ? { status: 200, document: surface.document }
+      : (src ? src.casa : null),
+    heatmap: (surface && surface.heatmap) || (src && src.heatmap) || null,
     healthScore: company && typeof company.health_score === "number" ? company.health_score : null,
     freshness: company ? company.freshness : null,
     description: company ? company.description : (src ? src.description : ""),
@@ -263,10 +272,15 @@ function attestedCell(row) {
 }
 
 function calCell(row) {
-  if (!row || !row.mint) return dash();
   var days = calDays(row);
   if (!days || !days.length) return dash();
-  return "<canvas class='cal' data-mint='" + F.esc(row.mint) + "' width='" + CAL_W + "' height='" + CAL_H + "'></canvas>";
+  if (row && row.mint) {
+    return "<canvas class='cal' data-mint='" + F.esc(row.mint) + "' width='" + CAL_W + "' height='" + CAL_H + "'></canvas>";
+  }
+  if (row && row.slug) {
+    return "<canvas class='cal' data-slug='" + F.esc(row.slug) + "' width='" + CAL_W + "' height='" + CAL_H + "'></canvas>";
+  }
+  return dash();
 }
 
 function lastAttestedIndex(days) {
@@ -277,9 +291,28 @@ function lastAttestedIndex(days) {
   return last;
 }
 
+function rowFromDirectory(pred) {
+  if (!DATA || !Array.isArray(DATA.rows)) return null;
+  var i;
+  for (i = 0; i < DATA.rows.length; i++) {
+    if (pred(DATA.rows[i])) return fromComposite(DATA.rows[i]);
+  }
+  return null;
+}
+
+function rowBySlug(slug) {
+  if (!slug) return null;
+  return rowFromDirectory(function (row) {
+    return row && row.company && row.company.slug === slug;
+  });
+}
+
 function drawCal(c) {
   var mint = c.getAttribute("data-mint");
-  var row = tokenByMint(mint);
+  var slug = c.getAttribute("data-slug");
+  var row = mint
+    ? (rowFromDirectory(function (r) { return r && r.token && r.token.mint === mint; }) || tokenByMint(mint))
+    : rowBySlug(slug);
   var days = calDays(row);
   if (!days || !days.length) return;
   var spec = row && row.heatmap && row.heatmap.spec ? row.heatmap.spec : { kind: "1d", layout: "weeks", cols: 7 };

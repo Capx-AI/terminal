@@ -362,5 +362,6 @@ test("register proxy is a no-store Casa redeem forward with snapshot invalidatio
   assert.doesNotMatch(handler, /writeFile|writeFileSync/);
   assert.doesNotMatch(handler, /oauth|wallet|password|CASA_LAUNCHPAD_KEY/i);
   assert.match(invalidate, /companiesCache = \{ at: 0, value: null, error: null \}/);
+  assert.match(invalidate, /companySurfaceCache\.clear\(\)/);
   assert.match(src, /relative === "register"/);
 });

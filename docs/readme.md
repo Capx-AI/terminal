@@ -8,6 +8,7 @@ Contracts and notes for Capx Terminal v1.
 - `TERMINAL-AGENT-SURFACE.md` - tile to JSON map. Wins over the thin v1.1 whitelist.
 - `CASA-TERMINAL-SURFACE-PLAN.md` - what Casa publishes.
 - `casa-openapi.yaml` - pointer to canonical Casa `docs/openapi.yaml` 1.4.0.
+- `plans/` — implementation plans. Work from `origin/main`.
 
 ## Log
 
@@ -15,3 +16,4 @@ Contracts and notes for Capx Terminal v1.
 - **2026-08-20 (later)** — Casa terminal surface docs copied in. Contract D10 amended: paint demo company tiles from the widened GET.
 - **2026-08-21** - Token-optional directory and `/register` freeze (CT-01).
   `casa-openapi.yaml` is a pointer to Casa OpenAPI 1.4.0.
+- **2026-08-24** — Company pages paint Casa lime tiles minus price. Market company columns read `company_surfaces`.

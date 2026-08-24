@@ -409,6 +409,57 @@ test("token-later keeps /c/{slug} and fills market only after attach", async (t)
   assert.equal(new URL(`${terminal.url}/c/northstar-labs`).pathname, "/c/northstar-labs");
 });
 
+test("company page ships Casa tiles and hides empty judgment", () => {
+  const html = readFileSync(join(webRoot, "company.html"), "utf8");
+  const js = readFileSync(join(webRoot, "company.js"), "utf8");
+  for (const id of ["tile-cons", "tile-vitals", "tile-repro", "tile-wire", "tile-env", "tile-judge", "tile-dept"]) {
+    assert.match(html, new RegExp(`id="${id}"`));
+    assert.match(html, new RegExp(`id="${id}" hidden`));
+  }
+  assert.match(html, /id="c-artifacts"/);
+  assert.match(html, /id="tile-price"/);
+  assert.match(html, /No token yet/);
+  assert.match(js, /function paintCasaTiles\(company\)/);
+  assert.match(js, /function paintConstraint\(doc\)/);
+  assert.match(js, /function paintWire\(doc\)/);
+  assert.match(js, /show\("tile-judge", judge\)/);
+  assert.match(js, /show\("tile-cons", cons\)/);
+  assert.doesNotMatch(js, /yield|profit|equity/i);
+  assert.ok(html.indexOf('id="tile-showcase"') < html.indexOf('id="tile-price"'));
+  assert.ok(html.indexOf('id="tile-price"') < html.indexOf('id="tile-cons"'));
+
+  const vis = {};
+  const stub = function () {};
+  const api = vm.runInNewContext(
+    `"use strict";\n${extractFunction(js, "function paintCasaTiles(company)")}\n({ paintCasaTiles });`,
+    {
+      show(id, on) { vis[id] = on; },
+      paintConstraint: stub,
+      paintVitals: stub,
+      paintRepro: stub,
+      paintWire: stub,
+      paintEnvelope: stub,
+      paintJudgment: stub,
+      paintDepts: stub,
+    },
+  );
+  api.paintCasaTiles({
+    progress: { constraint: { archetype: "no_users" } },
+    reproduced: { coverage_bp: 10000 },
+    ledger: { shown: [{ title: "Phase 0 Website" }] },
+    envelope: { caf_version: "1.1.0" },
+    decisions: { items: [] },
+    departments_30d: { items: [{ department: "Brand", events: 3 }] },
+  });
+  assert.equal(vis["tile-cons"], true);
+  assert.equal(vis["tile-vitals"], true);
+  assert.equal(vis["tile-repro"], true);
+  assert.equal(vis["tile-wire"], true);
+  assert.equal(vis["tile-env"], true);
+  assert.equal(vis["tile-judge"], false);
+  assert.equal(vis["tile-dept"], true);
+});
+
 test("iframe sandbox attributes stay allow-scripts only in page and script", () => {
   const html = readFileSync(join(webRoot, "company.html"), "utf8");
   const js = readFileSync(join(webRoot, "company.js"), "utf8");

@@ -11,6 +11,8 @@
 
 **2026-08-20 (later) - Codex price series.** The token chart price line and the market Price 7d spark come from Codex GraphQL (`getTokenBars`, `tokenSparklines`), the API behind defined.fi. Solana network id `1399811149`. Terminal **backend** fetches; `CODEX_API_KEY` is process env, never git, never the browser. Spot / FDV / volume on the Market tile stay Launchpad. If the key is missing or Codex has no bars (fundraising, unindexed mint), the chart shows work bars only and says so. Sample fixture mints are not sent to Codex.
 
+**2026-08-24 - Company record on `/c/{slug}` and market company columns.** `/c/{slug}` paints the mint-doc lime tiles (constraint, vitals, reproduced checks, ledger, envelope, judgment, departments) from `GET /v1/companies/{slug}` when those blocks exist. Empty tiles stay hidden. Tokenless Market/Price and chart stay dash / "No token yet." Market table company rows fill Tasks, Heatmap, Build map, Coverage, and Chain from a `company_surfaces` sidecar keyed by slug. Directory assembly still must not `GET /v1/tokens/{mint}`. Join `rows[]` shape is unchanged (`additionalProperties: false`). Tokenless `market.*` stays null.
+
 Terminal is the public market and honesty surface. It shows Launchpad Agent-token price next to Casa progress for that mint. It is a read client. It does not own the attestation store.
 
 ---

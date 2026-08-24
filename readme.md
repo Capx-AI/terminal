@@ -73,3 +73,4 @@ node web/e2e.mjs
   `/api/market`. Broken artifact previews fall back and keep open-full
   links. Register and company pages are labeled and keyboard-reachable.
   Vercel `includeFiles` still packs company and register assets.
+- **2026-08-24** — `/c/{slug}` paints constraint, vitals, reproduced checks, ledger, envelope, judgment, and departments when those blocks exist. Empty tiles stay hidden. Tokenless price stays dash. Market company rows fill Tasks / Heatmap / Coverage / Chain from `company_surfaces` (slug GET, not mint GET).

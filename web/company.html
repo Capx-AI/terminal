@@ -91,6 +91,12 @@
         <div class="mini"><div class="k">Ready</div><div class="v lit v-clm" id="c-ready">--</div></div>
         <div class="mini"><div class="k">Freshness</div><div class="v lit v-rep" id="c-fresh">--</div></div>
       </div>
+      <div class="minirow" id="work-extra" hidden>
+        <div class="mini"><div class="k">Committed artifacts</div><div class="v lit v-com" id="c-artifacts">--</div></div>
+        <div class="mini"><div class="k">With a pinned rubric</div><div class="v lit v-com" id="c-rubrics">--</div></div>
+        <div class="mini"><div class="k">Events all time</div><div class="v lit v-rep" id="c-events">--</div></div>
+        <div class="mini"><div class="k">In flight</div><div class="v v-clm" id="c-inflight">--</div></div>
+      </div>
     </section>
 
     <section class="tile t-pulse" id="tile-pulse" hidden>
@@ -125,12 +131,61 @@
       </div>
     </section>
 
+    <section class="tile t-cons casa-only" id="tile-cons" hidden>
+      <div class="th"><span class="label lit">Binding constraint</span><span class="label">founder claimed</span></div>
+      <div class="tb" id="cons-body"></div>
+    </section>
+
+    <section class="tile t-vitals casa-only" id="tile-vitals" hidden>
+      <div class="th"><span class="label lit">What arrived in attest/</span><span class="label">claimed plus reproduced</span></div>
+      <div class="vitals">
+        <div class="vit star"><span class="label">North star</span><div class="v v-clm" id="v-ns">--</div></div>
+        <div class="vit"><span class="label">Build map</span><div class="v v-clm" id="v-bm">--</div></div>
+        <div class="vit"><span class="label">Critical path</span><div class="v v-clm" id="v-cp">--</div></div>
+        <div class="vit"><span class="label">Self graded</span><div class="v v-clm" id="v-q">--</div></div>
+        <div class="vit"><span class="label">Graph checkable</span><div class="v v-rep" id="v-cov">--</div></div>
+        <div class="vit"><span class="label">Chain</span><div class="v v-rep" id="v-chain">--</div></div>
+      </div>
+    </section>
+
+    <section class="tile t-repro casa-only" id="tile-repro" hidden>
+      <div class="th"><span class="label lit">What Capx re-ran</span><span class="label" id="repro-count"></span></div>
+      <div class="tb pad">
+        <div class="checks" id="checks"></div>
+        <div class="covwrap">
+          <div class="covtop"><span class="label">Graph checkable</span><span class="covv mono" id="cov-v"></span></div>
+          <div class="covbar"><i id="cov-bar"></i></div>
+        </div>
+        <p class="reprofoot" id="repro-foot"></p>
+      </div>
+    </section>
+
+    <section class="tile t-wire casa-only" id="tile-wire" hidden>
+      <div class="th"><span class="label lit">Disclosed ledger</span><span class="label" id="wire-count"></span></div>
+      <div class="tb scroll wire" id="wire"></div>
+    </section>
+
+    <section class="tile t-env casa-only" id="tile-env" hidden>
+      <div class="th"><span class="label lit">The envelope</span><span class="label">attestation.json</span></div>
+      <div class="tb scroll" id="env"></div>
+    </section>
+
     <section class="tile t-ladder" id="tile-ladder">
       <div class="th"><span class="label lit">Company progress</span><span class="label">levels gate &middot; departments are the lens</span></div>
       <div class="tb">
         <div class="ladder" id="ladder"></div>
         <p class="laddermeta" id="laddermeta"></p>
       </div>
+    </section>
+
+    <section class="tile t-judge casa-only" id="tile-judge" hidden>
+      <div class="th"><span class="label lit">Judgment</span><span class="label">founder claimed</span></div>
+      <div class="tb scroll" id="judge"></div>
+    </section>
+
+    <section class="tile t-dept casa-only" id="tile-dept" hidden>
+      <div class="th"><span class="label lit">Where work went</span><span class="label">30d</span></div>
+      <div class="tb"><div class="deptboard" id="deptboard"></div></div>
     </section>
 
     <section class="tile t-attest">
