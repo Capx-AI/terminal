@@ -115,15 +115,26 @@ function paintMarket(payload) {
   var hasToken = payload.kind === "company_with_token" && payload.token;
   var price = hasToken && finite(m.price_usd) ? m.price_usd : null;
   if (!hasToken) {
-    $("m-price").textContent = "--";
-    $("m-price-note").textContent = "No token yet.";
+    // Collapse: no dashed-out market grid and no empty chart while the
+    // company has no token. One line plus the attach route instead.
+    $("m-price").textContent = "No token yet";
+    $("m-price-note").textContent =
+      "This company attests work without a market. Market data appears the moment a token launches and binds.";
     $("m-chg").innerHTML = "";
-    $("m-fdv").textContent = "--";
-    $("m-liq").textContent = "--";
-    $("m-vol").textContent = "--";
-    $("m-chg2").textContent = "--";
+    var minirow = $("m-minirow");
+    if (minirow) minirow.hidden = true;
+    var attach = $("m-attach");
+    if (attach) attach.hidden = false;
+    var chartTile = $("tile-chart");
+    if (chartTile) chartTile.hidden = true;
     return;
   }
+  var minirow2 = $("m-minirow");
+  if (minirow2) minirow2.hidden = false;
+  var attach2 = $("m-attach");
+  if (attach2) attach2.hidden = true;
+  var chartTile2 = $("tile-chart");
+  if (chartTile2) chartTile2.hidden = false;
   $("m-price").textContent = price == null ? "--" : F.usdPx(price);
   $("m-price-note").textContent = price == null
     ? "Token listed. No pool snapshot yet."

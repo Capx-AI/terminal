@@ -13,12 +13,27 @@ window.CAPX_FMT = (function () {
     if (n == null || !isFinite(n)) return "--";
     return "$" + compact(n);
   }
+  var SUBSCRIPT_DIGITS = "₀₁₂₃₄₅₆₇₈₉";
+  function subscriptNumber(z) {
+    return String(z).split("").map(function (ch) {
+      return SUBSCRIPT_DIGITS[+ch] || ch;
+    }).join("");
+  }
+  /* Never scientific notation: $0.0(7)786 style, the zero run as a subscript. */
   function usdPx(n) {
     if (n == null || !isFinite(n)) return "--";
     if (n >= 1) return "$" + n.toFixed(2);
     if (n >= 0.01) return "$" + n.toFixed(4);
     if (n >= 1e-4) return "$" + n.toFixed(6);
-    return "$" + n.toExponential(2);
+    if (n <= 0) return "$0.00";
+    var zeros = Math.max(0, -Math.floor(Math.log10(n)) - 1);
+    var mantissa = Math.round(n * Math.pow(10, zeros + 3));
+    if (mantissa >= 1000) {
+      zeros -= 1;
+      mantissa = Math.round(n * Math.pow(10, zeros + 3));
+    }
+    if (zeros < 4) return "$" + n.toFixed(zeros + 3);
+    return "$0.0" + subscriptNumber(zeros) + mantissa;
   }
   function pct(n, d) {
     if (n == null || !isFinite(n)) return "--";

@@ -22,6 +22,7 @@
         <span class="label lit">Terminal</span>
       </div>
       <div class="hactions">
+        <a class="back" href="https://launchpad.capx.ai/create" target="_blank" rel="noopener noreferrer">Launch a token</a>
         <a class="back" href="/register">Register</a>
         <span class="pill" id="sample-pill" hidden><span class="dot"></span>Sample data</span>
       </div>
@@ -30,15 +31,29 @@
 
   <div id="err" class="errbanner" role="status" hidden></div>
 
+  <section class="thesis">
+    <div class="wrap">
+      <p>The registry where agent companies prove their work, and the market
+      that prices them. Every agent token pairs against CAPX.</p>
+    </div>
+  </section>
+
   <section class="aggwrap">
     <div class="wrap aggrow">
-      <div class="ag"><span class="label">CAPX price</span><div class="v" id="ag-px">--</div><div class="v2" id="ag-px2"></div></div>
-      <div class="ag"><span class="label">Ecosystem FDV</span><div class="v" id="ag-fdv">--</div><div class="v2" id="ag-fdv2"></div></div>
-      <div class="ag"><span class="label">24h volume</span><div class="v" id="ag-vol">--</div><div class="v2" id="ag-vol2"></div></div>
       <div class="ag"><span class="label lit">Work &middot; 7d</span><div class="v" id="ag-work">--</div></div>
       <div class="ag"><span class="label lit">Median coverage</span><div class="v v-rep" id="ag-cov">--</div></div>
       <div class="ag"><span class="label lit">Signed</span><div class="v v-rep" id="ag-signed">--</div></div>
       <div class="ag"><span class="label lit">Attested 7d</span><div class="v v-rep" id="ag-fresh">--</div></div>
+      <div class="ag"><span class="label">CAPX price</span><div class="v" id="ag-px">--</div><div class="v2" id="ag-px2"></div></div>
+      <div class="ag"><span class="label">Ecosystem FDV</span><div class="v" id="ag-fdv">--</div><div class="v2" id="ag-fdv2"></div></div>
+      <div class="ag"><span class="label">24h volume</span><div class="v" id="ag-vol">--</div><div class="v2" id="ag-vol2"></div></div>
+    </div>
+  </section>
+
+  <section class="liverail" id="live-rail" hidden>
+    <div class="wrap">
+      <span class="label lit">Live presales</span>
+      <div class="liveitems" id="live-items"></div>
     </div>
   </section>
 
@@ -53,6 +68,7 @@
         </span>
       </div>
       <div class="podium" id="podium"></div>
+      <div class="attfeed" id="attfeed" hidden></div>
     </div>
   </section>
 
@@ -68,6 +84,8 @@
         <button type="button" class="fchip" aria-pressed="false" data-kind="company_with_token">Company + token</button>
         <button type="button" class="fchip" aria-pressed="false" data-kind="company_without_token">Company only</button>
         <button type="button" class="fchip" aria-pressed="false" data-kind="token_without_company">Token only</button>
+        <span class="chip-gap" aria-hidden="true"></span>
+        <button type="button" class="fchip" aria-pressed="false" id="chip-ended" data-ended="1">Show ended</button>
       </div>
       <span class="hint" id="hint">open a row</span>
     </div>
@@ -75,35 +93,46 @@
 
   <section class="tblzone" id="market">
     <div class="wrap">
+      <div class="secthead"><span class="label">Tokens</span><span class="secnote" id="tokens-note"></span></div>
       <div class="tbl-scroll">
-        <table>
-          <caption class="sr-only">Public companies and agent tokens</caption>
-          <colgroup>
-            <col class="c-rank"><col class="c-co"><col class="c-ver">
-            <col class="c-px"><col class="c-chg"><col class="c-vol"><col class="c-liq"><col class="c-fdv"><col class="c-spark">
-            <col class="c-work"><col class="c-cal"><col class="c-bm">
-            <col class="c-cov"><col class="c-chain"><col class="c-att">
-          </colgroup>
+        <table id="table-tokens">
+          <caption class="sr-only">Agent tokens</caption>
           <thead>
             <tr>
               <th class="nosort" scope="col" style="text-align:left">#</th>
               <th class="l nosort" scope="col">Token</th>
-              <th class="co" data-k="health" scope="col" tabindex="0">Health score</th>
               <th data-k="price" scope="col" tabindex="0">Price</th>
               <th data-k="chg" scope="col" tabindex="0">24h</th>
               <th data-k="vol" scope="col" tabindex="0">24h volume</th>
               <th data-k="liq" scope="col" tabindex="0">Liquidity</th>
               <th data-k="fdv" scope="col" tabindex="0">FDV</th>
               <th class="nosort" scope="col">Price 7d</th>
+              <th class="co" data-k="health" scope="col" tabindex="0">Company</th>
+            </tr>
+          </thead>
+          <tbody id="rows-tokens"></tbody>
+        </table>
+      </div>
+
+      <div class="secthead"><span class="label lit">Companies</span><span class="secnote" id="companies-note"></span></div>
+      <div class="tbl-scroll">
+        <table id="table-companies">
+          <caption class="sr-only">Attested companies</caption>
+          <thead>
+            <tr>
+              <th class="nosort" scope="col" style="text-align:left">#</th>
+              <th class="l nosort" scope="col">Company</th>
+              <th class="co" data-k="health" scope="col" tabindex="0">Health score</th>
               <th class="co" data-k="work7" scope="col" tabindex="0">Tasks (7d)</th>
               <th class="co nosort" scope="col">Heatmap</th>
               <th class="co" data-k="donePct" scope="col" tabindex="0">Build map</th>
               <th class="co" data-k="coverage" scope="col" tabindex="0">Coverage</th>
               <th class="co" data-k="seq" scope="col" tabindex="0">Chain</th>
               <th class="co" data-k="fresh" scope="col" tabindex="0">Attested</th>
+              <th data-k="fdv" scope="col" tabindex="0">Market</th>
             </tr>
           </thead>
-          <tbody id="rows"></tbody>
+          <tbody id="rows-companies"></tbody>
         </table>
       </div>
 

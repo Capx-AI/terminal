@@ -4,8 +4,12 @@ var $ = function (id) { return document.getElementById(id); };
 var QUERY = "";
 var FILTER = "all";
 var KIND = "all";
-var SORTK = "fdv";
-var DIR = -1;
+var SHOW_ENDED = false;
+var SORT = {
+  tokens: { k: "fdv", dir: -1 },
+  companies: { k: "health", dir: -1 },
+};
+var ENDED_STATES = { REFUNDED: true, UNFUNDED_EXPIRED: true };
 var DATA = null;
 var MARKET_KEYS = ["price_usd", "fdv_usd", "volume_24h_usd", "liquidity_usd", "change_24h_percent"];
 
@@ -529,7 +533,12 @@ function rowVisible(row, query, kind, health) {
   return matchesQuery(row, query) && matchesKind(row, kind) && matchesHealth(row, health);
 }
 
+function isEnded(row) {
+  return !!(row && row.mint && row.state && ENDED_STATES[row.state]);
+}
+
 function matches(row) {
+  if (!SHOW_ENDED && isEnded(row)) return false;
   return rowVisible(row, QUERY, KIND, FILTER);
 }
 
@@ -556,14 +565,11 @@ function paintAggr(tokens) {
     if (m != null) { fdv += m; haveFdv = true; }
     var v = volOf(row);
     if (v != null) { vol += v; haveVol = true; }
+    var t7 = tasks7dOf(row);
+    if (t7 != null) { work += t7; haveWork = true; }
     var d = casaDoc(row);
     if (!d) return;
     casaN += 1;
-    if (d.binding && d.binding.status === "live"
-      && d.progress && d.progress.work && typeof d.progress.work.tasks_7d === "number") {
-      work += d.progress.work.tasks_7d;
-      haveWork = true;
-    }
     if (d.reproduced && typeof d.reproduced.coverage_bp === "number") covs.push(d.reproduced.coverage_bp);
     if (d.reproduced && d.reproduced.signature_valid === true) signed += 1;
     if (attestedWithin7d(d)) attested7 += 1;
@@ -628,56 +634,157 @@ function paintPodium(tokens) {
   }).join("");
 }
 
-function render() {
-  if (!DATA) return;
-  var all = listed();
-  var list = all.filter(matches);
+function sortList(list, table) {
+  var s = SORT[table];
   list.sort(function (a, b) {
-    var va = sortVal(a, SORTK), vb = sortVal(b, SORTK);
+    var va = sortVal(a, s.k), vb = sortVal(b, s.k);
     if (va == null && vb == null) return 0;
     if (va == null) return 1;
     if (vb == null) return -1;
-    return va === vb ? 0 : (va > vb ? DIR : -DIR);
+    return va === vb ? 0 : (va > vb ? s.dir : -s.dir);
   });
-  var html = "";
-  for (var i = 0; i < list.length; i++) {
-    var x = list[i];
-    var stale = x.marketPerformance && x.marketPerformance.stale;
-    var faded = "";
-    var d = casaDoc(x);
-    if (d && d.binding && d.binding.status === "released") faded = " faded";
-    var t7 = tasks7dOf(x);
-    var tokenless = x.kind === "company_without_token";
-    html += "<tr class='" + faded + "'"
-      + (x.mint ? " data-mint='" + F.esc(x.mint) + "'" : "")
-      + (!x.mint && x.slug ? " data-slug='" + F.esc(x.slug) + "'" : "")
-      + ">"
-      + "<td class='l'><span class='rk'>" + (i + 1) + "</span></td>"
-      + "<td class='l'>" + tokenCell(x) + "</td>"
-      + "<td>" + scoreCell(healthOf(x)) + "</td>"
-      + "<td class='price'>" + (tokenless || priceOf(x) == null ? dash() : "<span class='d1'>" + F.usdPx(priceOf(x)) + (stale ? " <span class='stale-mark'>stale</span>" : "") + "</span>") + "</td>"
-      + "<td>" + (tokenless ? dash() : chgCell(chgOf(x))) + "</td>"
-      + "<td>" + (tokenless ? dash() : dualUsd(volOf(x), stale)) + "</td>"
-      + "<td>" + (tokenless ? dash() : dualUsd(liqOf(x), stale)) + "</td>"
-      + "<td>" + (tokenless ? dash() : dualUsd(mcapOf(x), stale)) + "</td>"
-      + "<td>" + (tokenless ? dash() : sparkCell(x)) + "</td>"
-      + "<td class='work'>" + (t7 == null ? dash() : F.ci(t7)) + "</td>"
-      + "<td class='calcell'>" + calCell(x) + "</td>"
-      + "<td>" + buildmapCell(x) + "</td>"
-      + "<td>" + coverageCell(coverageOf(x)) + "</td>"
-      + "<td>" + (seqOf(x) == null ? dash() : seqOf(x)) + "</td>"
-      + "<td>" + attestedCell(x) + "</td>"
-      + "</tr>";
-  }
-  $("rows").innerHTML = html || "<tr><td colspan='15' style='text-align:center; color:var(--t500); padding:36px'>no rows match</td></tr>";
-  $("hint").textContent = list.length === all.length
+  return list;
+}
+
+function rowOpen(x, faded) {
+  return "<tr class='" + faded + "'"
+    + (x.mint ? " data-mint='" + F.esc(x.mint) + "'" : "")
+    + (!x.mint && x.slug ? " data-slug='" + F.esc(x.slug) + "'" : "")
+    + ">";
+}
+
+function fadedOf(x) {
+  var d = casaDoc(x);
+  return d && d.binding && d.binding.status === "released" ? " faded" : "";
+}
+
+function marketChipCell(x) {
+  if (x.kind !== "company_with_token") return dash();
+  var p = priceOf(x);
+  var m = mcapOf(x);
+  if (p == null && m == null) return "<span class='lit'>token listed</span>";
+  return "<span class='d1'>" + (p == null ? "" : F.usdPx(p))
+    + (m != null ? " <span class='u'>FDV " + F.usdCompact(m) + "</span>" : "") + "</span>";
+}
+
+function tokenRowHtml(x, i) {
+  var stale = x.marketPerformance && x.marketPerformance.stale;
+  return rowOpen(x, fadedOf(x))
+    + "<td class='l'><span class='rk'>" + (i + 1) + "</span></td>"
+    + "<td class='l'>" + tokenCell(x) + "</td>"
+    + "<td class='price'>" + (priceOf(x) == null ? dash() : "<span class='d1'>" + F.usdPx(priceOf(x)) + (stale ? " <span class='stale-mark'>stale</span>" : "") + "</span>") + "</td>"
+    + "<td>" + chgCell(chgOf(x)) + "</td>"
+    + "<td>" + dualUsd(volOf(x), stale) + "</td>"
+    + "<td>" + dualUsd(liqOf(x), stale) + "</td>"
+    + "<td>" + dualUsd(mcapOf(x), stale) + "</td>"
+    + "<td>" + sparkCell(x) + "</td>"
+    + "<td>" + (healthOf(x) == null ? "<span style='color:var(--t600)'>not bound</span>" : scoreCell(healthOf(x))) + "</td>"
+    + "</tr>";
+}
+
+function companyRowHtml(x, i) {
+  var t7 = tasks7dOf(x);
+  return rowOpen(x, fadedOf(x))
+    + "<td class='l'><span class='rk'>" + (i + 1) + "</span></td>"
+    + "<td class='l'>" + tokenCell(x) + "</td>"
+    + "<td>" + scoreCell(healthOf(x)) + "</td>"
+    + "<td class='work'>" + (t7 == null ? dash() : F.ci(t7)) + "</td>"
+    + "<td class='calcell'>" + calCell(x) + "</td>"
+    + "<td>" + buildmapCell(x) + "</td>"
+    + "<td>" + coverageCell(coverageOf(x)) + "</td>"
+    + "<td>" + (seqOf(x) == null ? dash() : seqOf(x)) + "</td>"
+    + "<td>" + attestedCell(x) + "</td>"
+    + "<td>" + marketChipCell(x) + "</td>"
+    + "</tr>";
+}
+
+function paintSortArrows() {
+  [["table-tokens", "tokens"], ["table-companies", "companies"]].forEach(function (pair) {
+    var s = SORT[pair[1]];
+    document.querySelectorAll("#" + pair[0] + " thead th[data-k]").forEach(function (th) {
+      var base = th.textContent.replace(/[↑↓]/g, "").trim();
+      th.innerHTML = base + (th.getAttribute("data-k") === s.k ? "<span class='arr'>" + (s.dir < 0 ? "↓" : "↑") + "</span>" : "");
+    });
+  });
+}
+
+function render() {
+  if (!DATA) return;
+  var all = listed();
+  var vis = all.filter(matches);
+  var tokensList = sortList(vis.filter(function (r) { return !!r.mint; }), "tokens");
+  var companiesList = sortList(vis.filter(function (r) {
+    return r.kind === "company_without_token" || r.kind === "company_with_token";
+  }), "companies");
+
+  $("rows-tokens").innerHTML = tokensList.map(tokenRowHtml).join("")
+    || "<tr><td colspan='9' style='text-align:center; color:var(--t500); padding:28px'>no tokens match</td></tr>";
+  $("rows-companies").innerHTML = companiesList.map(companyRowHtml).join("")
+    || "<tr><td colspan='10' style='text-align:center; color:var(--t500); padding:28px'>no companies match</td></tr>";
+
+  var endedHidden = SHOW_ENDED ? 0 : all.filter(function (r) {
+    return isEnded(r) && rowVisible(r, QUERY, KIND, FILTER);
+  }).length;
+  $("tokens-note").textContent = tokensList.length + " listed"
+    + (endedHidden ? " · " + endedHidden + " ended hidden" : "");
+  $("companies-note").textContent = companiesList.length + " attesting";
+
+  $("hint").textContent = vis.length === all.length
     ? "open a row"
-    : list.length + " of " + all.length + " rows";
-  document.querySelectorAll("thead th[data-k]").forEach(function (th) {
-    var base = th.textContent.replace(/[↑↓]/g, "").trim();
-    th.innerHTML = base + (th.getAttribute("data-k") === SORTK ? "<span class='arr'>" + (DIR < 0 ? "↓" : "↑") + "</span>" : "");
-  });
+    : vis.length + " of " + all.length + " rows";
+  paintSortArrows();
   drawCals();
+}
+
+function fmtCountdown(iso) {
+  var ms = Date.parse(iso) - Date.now();
+  if (!isFinite(ms)) return "";
+  if (ms <= 0) return "closing";
+  var h = Math.floor(ms / 3600000);
+  var m = Math.floor((ms % 3600000) / 60000);
+  return (h > 0 ? h + "h " : "") + m + "m left";
+}
+
+function paintLive() {
+  var el = $("live-rail");
+  if (!el) return;
+  var live = ((DATA && DATA.tokens) || []).filter(function (t) {
+    return t.state === "FUNDRAISING";
+  });
+  if (!live.length) { el.hidden = true; return; }
+  el.hidden = false;
+  $("live-items").innerHTML = live.map(function (t) {
+    return "<a class='liveitem' href='https://launchpad.capx.ai/presales/" + F.esc(t.id) + "' target='_blank' rel='noopener noreferrer'>"
+      + "<b>" + F.esc(t.name) + "</b><span class='tk'>$" + F.esc(t.symbol) + "</span>"
+      + "<span class='lt'>" + F.esc(fmtCountdown(t.fundraisingDeadlineAt)) + "</span>"
+      + "<span class='lq'>" + F.esc(F.capxLabel(t.qualifyingNetCapxBase)) + " qualifying · " + (t.participantCount || 0) + " qualified</span>"
+      + "<span class='go'>Join on Launchpad ↗</span></a>";
+  }).join("");
+}
+
+function paintFeed(rows) {
+  var el = $("attfeed");
+  if (!el) return;
+  var items = rows.map(function (r) {
+    var d = casaDoc(r);
+    if (!d || !d.attestation) return null;
+    var hs = hoursSinceOf(r);
+    if (hs == null && d.attestation.observed_at) {
+      var t = Date.parse(d.attestation.observed_at);
+      if (isFinite(t)) hs = (Date.now() - t) / 3600000;
+    }
+    if (hs == null || !isFinite(hs)) return null;
+    return { row: r, hours: hs };
+  }).filter(Boolean).sort(function (x, y) { return x.hours - y.hours; }).slice(0, 5);
+  if (!items.length) { el.hidden = true; return; }
+  el.hidden = false;
+  el.innerHTML = "<span class='label'>Latest attestations</span>" + items.map(function (it) {
+    var href = hrefForRow(it.row);
+    var inner = "<b>" + F.esc(it.row.name) + "</b> attested " + F.esc(F.hoursAgo(it.hours));
+    return href
+      ? "<a class='att' href='" + F.esc(href) + "'>" + inner + "</a>"
+      : "<span class='att'>" + inner + "</span>";
+  }).join("");
 }
 
 function boot(data) {
@@ -702,37 +809,49 @@ function boot(data) {
   var rows = listed();
   paintAggr(rows);
   paintPodium(rows);
+  paintFeed(rows);
+  paintLive();
+  window.setInterval(paintLive, 30000);
   render();
 }
 
-function sortByHeader(th) {
-  var k = th.getAttribute("data-k");
-  if (!k) return;
-  if (SORTK === k) DIR = -DIR;
-  else { SORTK = k; DIR = -1; }
-  render();
-}
-document.querySelector("thead").addEventListener("click", function (e) {
-  var th = e.target.closest("th[data-k]");
-  if (!th) return;
-  sortByHeader(th);
-});
-document.querySelector("thead").addEventListener("keydown", function (e) {
-  var th = e.target.closest("th[data-k]");
-  if (!th) return;
-  if (e.key === "Enter" || e.key === " ") {
-    e.preventDefault();
-    sortByHeader(th);
+function bindSort(tableId, key) {
+  var head = document.querySelector("#" + tableId + " thead");
+  if (!head) return;
+  function apply(th) {
+    var k = th.getAttribute("data-k");
+    if (!k) return;
+    var s = SORT[key];
+    if (s.k === k) s.dir = -s.dir;
+    else { s.k = k; s.dir = -1; }
+    render();
   }
-});
-$("rows").addEventListener("click", function (e) {
+  head.addEventListener("click", function (e) {
+    var th = e.target.closest("th[data-k]");
+    if (th) apply(th);
+  });
+  head.addEventListener("keydown", function (e) {
+    var th = e.target.closest("th[data-k]");
+    if (!th) return;
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      apply(th);
+    }
+  });
+}
+bindSort("table-tokens", "tokens");
+bindSort("table-companies", "companies");
+
+function openRow(e) {
   if (e.target.closest("a")) return;
   var tr = e.target.closest("tr[data-mint], tr[data-slug]");
   if (!tr) return;
   var mint = tr.getAttribute("data-mint");
   if (mint) location.href = "/t/" + mint;
   else location.href = "/c/" + tr.getAttribute("data-slug");
-});
+}
+$("rows-tokens").addEventListener("click", openRow);
+$("rows-companies").addEventListener("click", openRow);
 $("q").addEventListener("input", function () {
   QUERY = this.value.trim();
   render();
@@ -740,7 +859,11 @@ $("q").addEventListener("input", function () {
 $("chips").addEventListener("click", function (e) {
   var b = e.target.closest(".fchip");
   if (!b) return;
-  if (b.hasAttribute("data-kind")) {
+  if (b.hasAttribute("data-ended")) {
+    SHOW_ENDED = !SHOW_ENDED;
+    b.classList.toggle("on", SHOW_ENDED);
+    b.setAttribute("aria-pressed", SHOW_ENDED ? "true" : "false");
+  } else if (b.hasAttribute("data-kind")) {
     var next = b.getAttribute("data-kind");
     KIND = KIND === next ? "all" : next;
     document.querySelectorAll(".fchip[data-kind]").forEach(function (c) {

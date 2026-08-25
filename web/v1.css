@@ -105,3 +105,45 @@
   .regwrap{padding:28px 0 48px;}
   .regform{max-width:100%;}
 }
+
+/* T1/T2 rework: thesis line, live presales rail, attestation feed, split tables, no-bind tiles. */
+.thesis{border-bottom:1px solid var(--line);}
+.thesis p{
+  margin:0; padding:10px var(--gut); max-width:1840px; margin:0 auto;
+  font-family:var(--mono); font-size:11.5px; letter-spacing:.02em; color:var(--t400);
+}
+.thesis p::before{content:""; display:inline-block; width:7px; height:7px; border-radius:2px;
+  background:var(--capx); margin-right:9px; vertical-align:1px;}
+.liverail{border-bottom:1px solid var(--line); background:var(--capx-a);}
+.liverail .wrap{display:flex; align-items:center; gap:14px; padding-top:9px; padding-bottom:9px; flex-wrap:wrap;}
+.liveitems{display:flex; gap:10px; flex-wrap:wrap;}
+.liveitem{
+  display:inline-flex; align-items:center; gap:9px; padding:6px 11px;
+  border:1px solid var(--capx-b); border-radius:var(--radius);
+  color:var(--t300, #d8dad4); text-decoration:none; font-size:12.5px;
+}
+.liveitem:hover{border-color:var(--capx); background:var(--capx-a);}
+.liveitem b{color:#f6f7f7; font-weight:600;}
+.liveitem .tk{font-family:var(--mono); font-size:11px; color:var(--capx);}
+.liveitem .lt{font-family:var(--mono); font-size:11px; color:#f6f7f7;}
+.liveitem .lq{font-family:var(--mono); font-size:10.5px; color:var(--t500);}
+.liveitem .go{font-family:var(--mono); font-size:10.5px; color:var(--capx);}
+.attfeed{display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-top:10px;}
+.attfeed .att{
+  font-family:var(--mono); font-size:11px; color:var(--t400); text-decoration:none;
+  border:1px solid var(--line2); border-radius:var(--radius); padding:4px 9px;
+}
+.attfeed a.att:hover{border-color:var(--capx); color:#f6f7f7;}
+.attfeed .att b{color:var(--capx); font-weight:600;}
+.secthead{display:flex; align-items:baseline; gap:10px; padding:16px 0 8px;}
+.secnote{font-family:var(--mono); font-size:10.5px; color:var(--t600);}
+.t-nobind{grid-column:span 6;}
+.nobind-copy{margin:0 0 12px; color:var(--t400); font-size:13px; line-height:1.55; max-width:60ch;}
+.nobind-actions{display:flex; gap:10px; margin-top:10px;}
+.tokenlinks{display:flex; gap:8px; flex-wrap:wrap; margin-top:12px;}
+.tokenlinks a{
+  font-family:var(--mono); font-size:10.5px; color:var(--t400); text-decoration:none;
+  border:1px solid var(--line2); border-radius:var(--radius); padding:3px 8px;
+}
+.tokenlinks a:hover{border-color:var(--capx); color:var(--capx);}
+@media (max-width:1100px){ .t-nobind{grid-column:span 12;} }

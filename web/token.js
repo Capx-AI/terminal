@@ -240,6 +240,9 @@ function paintIdentity(token, doc) {
 
   var mission = "";
   if (doc && doc.company && doc.company.one_liner) mission = doc.company.one_liner;
+  if (!mission && token.description) {
+    mission = String(token.description).split("\n")[0].slice(0, 180);
+  }
   $("id-mission").textContent = mission;
 
   paintProvenance(token, doc);
@@ -333,6 +336,24 @@ function paintMarket(token, capx) {
   $("m-deadline").textContent = token.fundraisingDeadlineAt
     ? new Date(token.fundraisingDeadlineAt).toISOString().replace("T", " ").replace(/\.\d+Z$/, " UTC")
     : "--";
+  paintTokenLinks(token);
+}
+
+function paintTokenLinks(token) {
+  var el = $("m-links");
+  if (!el) return;
+  var out = [];
+  function link(href, label) {
+    out.push("<a href='" + F.esc(href) + "' target='_blank' rel='noopener noreferrer'>" + F.esc(label) + " ↗</a>");
+  }
+  if (token.mint) link("https://solscan.io/token/" + token.mint, "Mint");
+  if (token.poolAddress) link("https://solscan.io/account/" + token.poolAddress, "Pool");
+  if (token.id) link("https://launchpad.capx.ai/presales/" + token.id, "Launchpad presale");
+  var links = token.links || {};
+  Object.keys(links).forEach(function (key) {
+    if (links[key]) link(links[key], key);
+  });
+  el.innerHTML = out.join("");
 }
 
 function dashWork() {
@@ -1513,17 +1534,24 @@ function loadCalendar(doc, token) {
 function paintCasa(token, doc) {
   if (!doc) {
     setCasaVisible(false);
+    show("tile-nobind", true);
     paintBanners(null);
     paintAttest(null);
     loadCalendar(null, token);
-    show("tile-chart", true);
-    requestAnimationFrame(function () {
-      initChart();
-      requestAnimationFrame(function () { drawChart(); });
-    });
+    // Age-aware: with no candles, no series, and no calendar there is
+    // nothing to plot, so the chart tile collapses instead of renting space.
+    var plottable = CANDLES.length >= 2 || PRICES != null || DAYS.length >= 2;
+    show("tile-chart", plottable);
+    if (plottable) {
+      requestAnimationFrame(function () {
+        initChart();
+        requestAnimationFrame(function () { drawChart(); });
+      });
+    }
     return;
   }
   setCasaVisible(true);
+  show("tile-nobind", false);
   paintBanners(doc);
   loadCalendar(doc, token);
   show("tile-chart", true);
