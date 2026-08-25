@@ -215,43 +215,103 @@ function paintLadder(company) {
   }
 }
 
+/*
+ * Hourly grid over the last 7 calendar days (UTC): 24 columns of hours,
+ * one row per day, newest row last. Only data with real hourly resolution
+ * paints a cell: disclosed ledger event timestamps fill, and the hour the
+ * last attestation landed gets the ring. The daily claimed-task counts have
+ * no hourly truth, so they are never spread across hours.
+ */
 function paintPulse(company) {
-  var days = company && company.calendar && Array.isArray(company.calendar.days) ? company.calendar.days : [];
-  if (!days.length) {
+  var ledger = company && company.ledger && Array.isArray(company.ledger.shown)
+    ? company.ledger.shown : [];
+  var days = company && company.calendar && Array.isArray(company.calendar.days)
+    ? company.calendar.days : [];
+  if (!days.length && !ledger.length) {
     show("tile-pulse", false);
     return;
   }
   show("tile-pulse", true);
   var grid = $("ghgrid");
   var mo = $("gh-months");
+  var dow = $("ghdow");
   if (!grid) return;
-  var max = 1;
+
+  var HOURS = 24, DAYS_N = 7, N = HOURS * DAYS_N;
+  var nowMs = Date.now();
+  var nowD = new Date(nowMs);
+  var todayMidnight = Date.UTC(nowD.getUTCFullYear(), nowD.getUTCMonth(), nowD.getUTCDate());
+  var start = todayMidnight - (DAYS_N - 1) * 86400000;
+
+  var buckets = new Array(N);
   var i;
-  for (i = 0; i < days.length; i++) {
-    if (days[i] && days[i].events > max) max = days[i].events;
+  for (i = 0; i < N; i++) buckets[i] = 0;
+  var inWindow = 0;
+  ledger.forEach(function (e) {
+    var t = e && e.ts ? Date.parse(e.ts) : NaN;
+    if (!isFinite(t) || t < start || t > nowMs) return;
+    buckets[Math.floor((t - start) / 3600000)] += 1;
+    inWindow += 1;
+  });
+  var a = company.attestation || {};
+  var attHour = -1;
+  if (a.observed_at) {
+    var at = Date.parse(a.observed_at);
+    if (isFinite(at) && at >= start && at <= nowMs) {
+      attHour = Math.floor((at - start) / 3600000);
+    }
   }
-  var first = days[0] ? parseUtc(days[0].date) : null;
-  var firstDow = first ? first.getUTCDay() : 0;
-  var weeks = Math.ceil((firstDow + days.length) / 7);
-  grid.style.gridAutoFlow = "column";
-  grid.style.gridTemplateRows = "repeat(7, var(--cell))";
-  grid.style.gridTemplateColumns = "repeat(" + weeks + ", var(--cell))";
+  var max = 1;
+  for (i = 0; i < N; i++) if (buckets[i] > max) max = buckets[i];
+
+  grid.style.gridAutoFlow = "row";
+  grid.style.gridTemplateColumns = "repeat(" + HOURS + ", var(--cell))";
+  grid.style.gridTemplateRows = "repeat(" + DAYS_N + ", var(--cell))";
   var cells = "";
-  for (i = 0; i < firstDow; i++) cells += "<span class='hc pad'></span>";
-  for (i = 0; i < days.length; i++) {
-    var v = days[i] && days[i].events || 0;
-    var ring = days[i] && days[i].attestation ? " push" : "";
+  for (i = 0; i < N; i++) {
+    var t0 = start + i * 3600000;
+    if (t0 > nowMs) {
+      cells += "<span class='hc pad'></span>";
+      continue;
+    }
+    var when = new Date(t0).toLocaleString("en-US", {
+      month: "short", day: "numeric", hour: "2-digit", hour12: false, timeZone: "UTC",
+    }) + ":00 UTC";
+    var v = buckets[i];
+    var ring = i === attHour ? " push" : "";
     var lvl = v === 0 ? "" : " l" + Math.min(4, Math.max(1, Math.ceil(v / max * 4)));
-    var when = fmtDay(days[i] && days[i].date);
-    cells += "<span class='hc" + lvl + ring + "' title='" + F.esc(when) + "'></span>";
+    var t2 = when + " · " + v + " disclosed event" + (v === 1 ? "" : "s")
+      + (i === attHour ? " · attestation landed" : "");
+    cells += "<span class='hc" + lvl + ring + "' title='" + F.esc(t2) + "'></span>";
   }
   grid.innerHTML = cells;
   if (mo) {
-    mo.style.gridTemplateColumns = "repeat(" + weeks + ", var(--cell))";
-    mo.innerHTML = "";
+    mo.style.gridTemplateColumns = "repeat(" + HOURS + ", var(--cell))";
+    var labels = "";
+    for (i = 0; i < HOURS; i++) {
+      labels += (i % 6 === 0) ? "<span class='ghm'>" + i + "h</span>" : "<span class='ghm'></span>";
+    }
+    mo.innerHTML = labels;
+  }
+  if (dow) {
+    dow.hidden = false;
+    var dl = "";
+    for (i = 0; i < DAYS_N; i++) {
+      dl += "<span>" + new Date(start + i * 86400000).toLocaleDateString("en-US", {
+        weekday: "short", timeZone: "UTC",
+      }) + "</span>";
+    }
+    dow.innerHTML = dl;
+  }
+  var pl = $("pulse-label");
+  if (pl) pl.textContent = "Work attested per hour · last 7 days";
+  var read = $("gh-read");
+  if (read) {
+    read.textContent = inWindow
+      ? "fill is disclosed ledger events per hour; a ringed cell is the hour the last attestation landed"
+      : "no disclosed events in the last 7 days; a ringed cell is the hour the last attestation landed";
   }
   var hz = $("pulse-hz");
-  var a = company.attestation || {};
   if (hz) {
     hz.textContent = finite(a.health_score) ? ("health " + a.health_score) : "";
   }

@@ -433,7 +433,7 @@ test("mobile and desktop fixtures keep overflow, contrast, and keyboard chrome",
   assert.match(app, /@media \(max-width:700px\)/);
   assert.match(v1, /@media \(max-width:700px\)/);
   assert.match(app, /\.tbl-scroll\{overflow-x:auto/);
-  assert.match(v1, /\.artifact-stage\{[^}]*height:clamp\(620px,76vh,980px\)/);
+  assert.match(v1, /\.artifact-stage\{[^}]*height:clamp\(280px,38vh,440px\)/);
   assert.match(v1, /\.t-showcase\{grid-column:span 12/);
   assert.match(v1, /\.artifact-tabs\{[^}]*overflow-x:auto/);
   assert.match(app, /:focus-visible/);

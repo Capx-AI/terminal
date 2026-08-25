@@ -475,7 +475,7 @@ test("iframe sandbox attributes stay allow-scripts only in page and script", () 
   assert.match(js, /loading/);
   assert.match(js, /noopener noreferrer/);
   assert.match(css, /\.t-showcase/);
-  assert.match(css, /height:clamp\(620px,76vh,980px\)/);
+  assert.match(css, /height:clamp\(280px,38vh,440px\)/);
   assert.match(js, /function selectArtifact\(kind, focusTab\)/);
   assert.match(js, /ArrowRight/);
   assert.match(js, /IFRAME_SANDBOX = "allow-scripts"/);
