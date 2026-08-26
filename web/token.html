@@ -55,7 +55,15 @@
       </div>
     </section>
 
-    <section class="tile t-price" id="tile-price">
+    <nav class="viewtabs" role="tablist" aria-label="Views">
+      <button class="vt on" type="button" data-view="overview" role="tab" aria-selected="true">Overview</button>
+      <button class="vt" type="button" data-view="work" role="tab" aria-selected="false">Work</button>
+      <button class="vt" type="button" data-view="verification" role="tab" aria-selected="false">Verification</button>
+      <button class="vt" type="button" data-view="market" role="tab" aria-selected="false">Market</button>
+    </nav>
+
+
+    <section class="tile t-price" data-view="overview market" id="tile-price">
       <div class="halfhead"><span class="label">Market</span><span class="label">Price</span></div>
       <div class="big" id="m-price">--</div>
       <div class="bigcapx" id="m-price-note"></div>
@@ -75,7 +83,7 @@
       <div class="tokenlinks" id="m-links"></div>
     </section>
 
-    <section class="tile t-nobind" id="tile-nobind" hidden>
+    <section class="tile t-nobind" data-view="overview" id="tile-nobind" hidden>
       <div class="th"><span class="label lit">Company</span><span class="label">not bound</span></div>
       <div class="tb pad">
         <p class="nobind-copy">No attested company is bound to this mint yet.
@@ -89,7 +97,7 @@
       </div>
     </section>
 
-    <section class="tile t-work casa-only" id="tile-work" hidden>
+    <section class="tile t-work casa-only" data-view="overview" id="tile-work" hidden>
       <div class="halfhead"><span class="label lit">Company</span><span class="label lit">Work &middot; 7d</span></div>
       <div class="big co" id="c-work">--</div>
       <div class="bigsub" id="c-worksub"></div>
@@ -101,7 +109,7 @@
       </div>
     </section>
 
-    <section class="tile t-pulse casa-only" id="tile-pulse" hidden>
+    <section class="tile t-pulse casa-only" data-view="work" id="tile-pulse" hidden>
       <div class="pulsehead">
         <span class="pulsemeta"><span class="dot" id="pulse-dot"></span><span class="label lit" id="pulse-label">Work attested per day</span></span>
         <span class="pulsehz" id="pulse-hz"></span>
@@ -123,7 +131,7 @@
       </div>
     </section>
 
-    <section class="tile t-chart" id="tile-chart">
+    <section class="tile t-chart" data-view="market" id="tile-chart">
       <div class="charttop">
         <div class="legend">
           <span class="lg"><i></i><span id="chart-price-legend">Price &middot; USD &middot; Codex</span></span>
@@ -154,12 +162,12 @@
       <div class="divergence" id="diverge"></div>
     </section>
 
-    <section class="tile t-cons casa-only" id="tile-cons" hidden>
+    <section class="tile t-cons casa-only" data-view="work" id="tile-cons" hidden>
       <div class="th"><span class="label lit">Binding constraint</span><span class="label">founder claimed</span></div>
       <div class="tb" id="cons-body"></div>
     </section>
 
-    <section class="tile t-vitals casa-only" id="tile-vitals" hidden>
+    <section class="tile t-vitals casa-only" data-view="verification" id="tile-vitals" hidden>
       <div class="th"><span class="label lit">What arrived in attest/</span><span class="label">claimed plus reproduced</span></div>
       <div class="vitals">
         <div class="vit star"><span class="label">North star</span><div class="v v-clm" id="v-ns">--</div></div>
@@ -171,7 +179,7 @@
       </div>
     </section>
 
-    <section class="tile t-repro casa-only" id="tile-repro" hidden>
+    <section class="tile t-repro casa-only" data-view="verification" id="tile-repro" hidden>
       <div class="th"><span class="label lit">What Capx re-ran</span><span class="label" id="repro-count"></span></div>
       <div class="tb pad">
         <div class="checks" id="checks"></div>
@@ -183,17 +191,17 @@
       </div>
     </section>
 
-    <section class="tile t-wire casa-only" id="tile-wire" hidden>
+    <section class="tile t-wire casa-only" data-view="work" id="tile-wire" hidden>
       <div class="th"><span class="label lit">Disclosed ledger</span><span class="label" id="wire-count"></span></div>
       <div class="tb scroll wire" id="wire"></div>
     </section>
 
-    <section class="tile t-env casa-only" id="tile-env" hidden>
+    <section class="tile t-env casa-only" data-view="verification" id="tile-env" hidden>
       <div class="th"><span class="label lit">The envelope</span><span class="label">attestation.json</span></div>
       <div class="tb scroll" id="env"></div>
     </section>
 
-    <section class="tile t-ladder casa-only" id="tile-ladder" hidden>
+    <section class="tile t-ladder casa-only" data-view="overview" id="tile-ladder" hidden>
       <div class="th"><span class="label lit">Company progress</span><span class="label">levels gate &middot; departments are the lens</span></div>
       <div class="tb">
         <div class="ladder" id="ladder"></div>
@@ -201,17 +209,17 @@
       </div>
     </section>
 
-    <section class="tile t-judge casa-only" id="tile-judge" hidden>
+    <section class="tile t-judge casa-only" data-view="work" id="tile-judge" hidden>
       <div class="th"><span class="label lit">Judgment</span><span class="label">founder claimed</span></div>
       <div class="tb scroll" id="judge"></div>
     </section>
 
-    <section class="tile t-dept casa-only" id="tile-dept" hidden>
+    <section class="tile t-dept casa-only" data-view="work" id="tile-dept" hidden>
       <div class="th"><span class="label lit">Where work went</span><span class="label">30d</span></div>
       <div class="tb"><div class="deptboard" id="deptboard"></div></div>
     </section>
 
-    <section class="tile t-attest">
+    <section class="tile t-attest" data-view="verification">
       <div class="th"><span class="label">Five data planes</span><span class="label">provenance</span></div>
       <div class="tb pad">
         <div class="planes">
@@ -234,6 +242,7 @@
 
 <script src="/fmt.js"></script>
 <script src="/stars.js"></script>
+<script src="/tabs.js"></script>
 <script src="/token.js"></script>
 </body>
 </html>

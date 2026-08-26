@@ -618,12 +618,27 @@ function paintWire(doc) {
     $("wire-count").textContent = isUnobserved(doc) ? "" : "0 events disclosed";
     return;
   }
+  var lastDay = null;
   $("wire").innerHTML = shown.map(function (e) {
     var title = e.title || e.node_id || e.kind || "event";
     if (looksLikePath(title)) title = e.node_id || e.kind || "event";
+    var dayKey = "";
+    if (e.ts) {
+      var dt = Date.parse(e.ts);
+      if (isFinite(dt)) {
+        dayKey = new Date(dt).toLocaleDateString("en-US", {
+          month: "short", day: "numeric", timeZone: "UTC",
+        });
+      }
+    }
+    var head = "";
+    if (dayKey && dayKey !== lastDay) {
+      head = "<div class='wrday'>" + F.esc(dayKey) + "</div>";
+      lastDay = dayKey;
+    }
     var band = e.criticality || "growth";
     var crit = e.criticality === "existential" ? "exi" : (e.criticality === "core" ? "cor" : "");
-    return "<div class='wr " + F.esc(band) + "'>"
+    return head + "<div class='wr " + F.esc(band) + "'>"
       + "<span class='ts'>" + F.esc(e.ts ? F.ago(e.ts) : "--") + "</span>"
       + "<span class='mid'>"
         + "<div class='pn'>" + F.esc(title) + "</div>"
@@ -1614,6 +1629,14 @@ function boot(payload) {
   paintIdentity(payload.token, DOC);
   paintMarket(payload.token, payload.capx);
   paintCasa(payload.token, DOC);
+  if (window.CAPX_TABS) {
+    var chartTile = $("tile-chart");
+    window.CAPX_TABS.available({
+      work: !!DOC,
+      verification: !!DOC,
+      market: !(chartTile && chartTile.hidden),
+    });
+  }
   if (payload.company_href) {
     var clink = $("company-link");
     if (clink) {
@@ -1641,3 +1664,5 @@ if (!mint) {
       $("err").textContent = "Terminal could not load this token: " + err.message;
     });
 }
+
+if (window.CAPX_TABS) window.CAPX_TABS.boot();

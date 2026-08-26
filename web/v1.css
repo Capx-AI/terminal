@@ -149,3 +149,30 @@
 }
 .tokenlinks a:hover{border-color:var(--capx); color:var(--capx);}
 @media (max-width:1100px){ .t-nobind{grid-column:span 12;} .t-showcase{grid-column:span 12;} }
+
+/* U1 tabbed views: sticky bar under the identity tile; CSS owns per-view visibility. */
+.viewtabs{
+  grid-column:1/-1; display:flex; gap:6px; align-items:center;
+  position:sticky; top:0; z-index:30; background:var(--bg);
+  padding:10px 2px 8px; border-bottom:1px solid var(--line);
+}
+.vt{
+  font-family:var(--mono); font-size:10.5px; letter-spacing:.07em; text-transform:uppercase;
+  color:var(--t400); background:transparent; border:1px solid var(--line2);
+  border-radius:var(--radius); padding:8px 14px; cursor:pointer;
+  transition:color .12s,border-color .12s,background .12s;
+}
+.vt:hover{color:var(--fg); border-color:var(--line3);}
+.vt.on{color:var(--capx); border-color:var(--capx-b); background:var(--capx-a);}
+.vt[hidden]{display:none;}
+.vt:focus-visible{outline:1px solid var(--capx); outline-offset:2px;}
+#page.v-overview .tile[data-view]:not([data-view~="overview"]),
+#page.v-work .tile[data-view]:not([data-view~="work"]),
+#page.v-verification .tile[data-view]:not([data-view~="verification"]),
+#page.v-market .tile[data-view]:not([data-view~="market"]){display:none !important;}
+.digest{margin-top:12px; font-family:var(--mono); font-size:11px; color:var(--t400);}
+.digest b{color:var(--capx); font-weight:500;}
+.wrday{
+  font-family:var(--mono); font-size:10px; letter-spacing:.08em; text-transform:uppercase;
+  color:var(--t500); padding:9px 0 3px; border-bottom:1px solid var(--line);
+}

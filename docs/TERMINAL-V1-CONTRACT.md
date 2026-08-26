@@ -463,3 +463,18 @@ Private/unready slugs 404 with the Casa error code.
 - Rebuilding `/api/attest/*`
 - Treating tokenless market nulls as zero
 - Five-minute negative-cache delay after registration on the directory path
+
+## 17. Amendment 2026-08-26: tabbed detail views (U1)
+
+Founder-directed. The company and token pages regroup their existing tiles
+under a sticky view bar: Overview, Work, Verification, Market. Hash routing
+(`#work`) preserves the one-URL rule; no route changes, no new data, CSS-only
+visibility over the same tiles. Market shows only when a token exists (company
+page) or a chart is plottable (token page); Work and Verification show only
+when a Casa document is bound (token page). Adds a weekly digest line on the
+company Overview and day-group headers in the disclosed ledger, both computed
+from fields this contract already serves. Also records the earlier
+founder-directed surface changes of the same day: hourly last-7-days pulse on
+the company page (fill is disclosed ledger events; ring is the hour the last
+attestation landed) and the artifact stage at half width and reduced height.
+Nothing in 16.5 is revisited.

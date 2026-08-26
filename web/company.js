@@ -781,6 +781,32 @@ function paintRepro(doc) {
     : "attested means Casa tier 0 and tier 1 and chain and observation signature. It is not identity and not a claim that the business is real. last_session_at is claimed. health and freshness are reproduced by Casa. Capx holds attest/, not the brain.";
 }
 
+/* One line on Overview: the trailing week from data already served. */
+function paintDigest(company) {
+  var el = $("c-digest");
+  if (!el) return;
+  var p = company && company.progress;
+  var w = p && p.work;
+  var days = company && company.calendar && Array.isArray(company.calendar.days)
+    ? company.calendar.days : [];
+  var att7 = 0;
+  days.slice(-7).forEach(function (d) { if (d && d.attestation) att7 += 1; });
+  var led = company && company.ledger && Array.isArray(company.ledger.shown)
+    ? company.ledger.shown : [];
+  var bits = [];
+  if (w && finite(w.tasks_7d)) bits.push("<b>" + F.ci(w.tasks_7d) + "</b> tasks");
+  bits.push("<b>" + att7 + "</b> attestation" + (att7 === 1 ? "" : "s"));
+  if (led.length && led[0].ts) bits.push("last event " + F.esc(F.ago(led[0].ts)));
+  el.innerHTML = bits.length ? "This week: " + bits.join(" · ") : "";
+}
+
+function wireDayKey(ts) {
+  var t = Date.parse(ts || "");
+  if (!isFinite(t)) return "";
+  var d = new Date(t);
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+}
+
 function paintWire(doc) {
   if (!$("wire")) return;
   var L = doc && doc.ledger;
@@ -790,9 +816,22 @@ function paintWire(doc) {
     $("wire-count").textContent = isUnobserved(doc) ? "" : "0 events disclosed";
     return;
   }
+  var lastDay = null;
   $("wire").innerHTML = shown.map(function (e) {
+    var day = wireDayKey(e.ts);
+    var head = "";
+    if (day && day !== lastDay) {
+      head = "<div class='wrday'>" + F.esc(day) + "</div>";
+      lastDay = day;
+    }
     var title = e.title || e.node_id || e.kind || "event";
     if (looksLikePath(title)) title = e.node_id || e.kind || "event";
+    return head + wireRow(e, title);
+  }).join("");
+  finishWireCount(doc, shown, L);
+}
+
+function wireRow(e, title) {
     var band = e.criticality || "growth";
     var crit = e.criticality === "existential" ? "exi" : (e.criticality === "core" ? "cor" : "");
     return "<div class='wr " + F.esc(band) + "'>"
@@ -813,7 +852,9 @@ function paintWire(doc) {
         + (e.has_rubric ? "<span class='pin'>rubric</span>" : "")
       + "</span>"
       + "</div>";
-  }).join("");
+}
+
+function finishWireCount(doc, shown, L) {
   var windowN = L && finite(L.window_events) ? L.window_events : shown.length;
   $("wire-count").textContent = shown.length + " of " + F.ci(windowN) + " events disclosed";
 }
@@ -937,12 +978,18 @@ function boot(payload) {
   paintProvenance(company);
   paintMarket(payload);
   paintProgress(company);
+  paintDigest(company);
   paintLadder(company);
   paintPulse(company);
   paintCasaTiles(company);
   paintPreviews(company);
   paintChart(payload);
   paintAttest(company, payload);
+  if (window.CAPX_TABS) {
+    window.CAPX_TABS.available({
+      market: payload.kind === "company_with_token",
+    });
+  }
   if (payload.token_href) {
     var link = $("token-link");
     if (link) {
@@ -979,3 +1026,5 @@ if (!slug) {
       $("err").textContent = "Terminal could not load this company: " + err.message;
     });
 }
+
+if (window.CAPX_TABS) window.CAPX_TABS.boot();
