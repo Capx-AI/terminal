@@ -986,12 +986,6 @@ function boot(payload) {
   paintChart(payload);
   paintAttest(company, payload);
   paintOutputs(company);
-  if (window.CAPX_TABS) {
-    window.CAPX_TABS.available({
-      market: payload.kind === "company_with_token",
-      outputs: OUTPUTS.length > 0,
-    });
-  }
   if (payload.token_href) {
     var link = $("token-link");
     if (link) {
@@ -1028,8 +1022,6 @@ if (!slug) {
       $("err").textContent = "Terminal could not load this company: " + err.message;
     });
 }
-
-if (window.CAPX_TABS) window.CAPX_TABS.boot();
 
 /* ---- U3 output library ---- */
 var OUTPUTS = [];

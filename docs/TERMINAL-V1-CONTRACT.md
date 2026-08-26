@@ -493,3 +493,13 @@ the browser-computed sha256 equals a disclosed event's artifact_sha256;
 content itself stays founder claimed; "attested" is never used for content.
 The market sidecar carries a URL-free outputs summary (count, latest) for the
 home Latest outputs rail. Nothing in 16.5 is revisited.
+
+## 19. Amendment 2026-08-26: view tabs removed
+
+Founder-directed, superseding section 17's navigation only. The detail pages
+return to one scrolling page in tile order; the sticky view bar, hash
+routing, and tabs.js are removed. Everything sections 17 and 18 added
+otherwise stands: the weekly digest line, day-grouped disclosed ledger,
+hourly pulse, half-width artifact stage, and the full output library with
+its reader and browser-side hash verification, now rendered inline as a
+full-width section.

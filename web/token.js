@@ -1629,14 +1629,6 @@ function boot(payload) {
   paintIdentity(payload.token, DOC);
   paintMarket(payload.token, payload.capx);
   paintCasa(payload.token, DOC);
-  if (window.CAPX_TABS) {
-    var chartTile = $("tile-chart");
-    window.CAPX_TABS.available({
-      work: !!DOC,
-      verification: !!DOC,
-      market: !(chartTile && chartTile.hidden),
-    });
-  }
   if (payload.company_href) {
     var clink = $("company-link");
     if (clink) {
@@ -1664,5 +1656,3 @@ if (!mint) {
       $("err").textContent = "Terminal could not load this token: " + err.message;
     });
 }
-
-if (window.CAPX_TABS) window.CAPX_TABS.boot();
