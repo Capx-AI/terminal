@@ -736,6 +736,36 @@ function render() {
   drawCals();
 }
 
+/* Latest published outputs across the registry, from the slim market sidecar. */
+function paintOutputsFeed(rows) {
+  var el = $("outfeed");
+  if (!el) return;
+  var surfaces = DATA && DATA.company_surfaces ? DATA.company_surfaces : {};
+  var items = [];
+  Object.keys(surfaces).forEach(function (slug) {
+    var doc = surfaces[slug] && surfaces[slug].document;
+    var o = doc && doc.outputs;
+    if (!o || !o.latest || !o.latest.title) return;
+    var row = rowBySlug(slug);
+    items.push({
+      slug: slug,
+      name: row && row.name ? row.name : slug,
+      title: o.latest.title,
+      at: o.latest.published_at || null,
+    });
+  });
+  if (!items.length) { el.hidden = true; return; }
+  items.sort(function (a, b) {
+    return String(b.at || "").localeCompare(String(a.at || ""));
+  });
+  el.hidden = false;
+  el.innerHTML = "<span class='label'>Latest outputs</span>" + items.slice(0, 4).map(function (it) {
+    return "<a class='att' href='/c/" + F.esc(it.slug) + "#outputs'><b>" + F.esc(it.name)
+      + "</b> published " + F.esc(it.title)
+      + (it.at ? " · " + F.esc(F.ago(it.at)) : "") + "</a>";
+  }).join("");
+}
+
 function fmtCountdown(iso) {
   var ms = Date.parse(iso) - Date.now();
   if (!isFinite(ms)) return "";
@@ -810,6 +840,7 @@ function boot(data) {
   paintAggr(rows);
   paintPodium(rows);
   paintFeed(rows);
+  paintOutputsFeed(rows);
   paintLive();
   window.setInterval(paintLive, 30000);
   render();

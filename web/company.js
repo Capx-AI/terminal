@@ -985,9 +985,11 @@ function boot(payload) {
   paintPreviews(company);
   paintChart(payload);
   paintAttest(company, payload);
+  paintOutputs(company);
   if (window.CAPX_TABS) {
     window.CAPX_TABS.available({
       market: payload.kind === "company_with_token",
+      outputs: OUTPUTS.length > 0,
     });
   }
   if (payload.token_href) {
@@ -1028,3 +1030,127 @@ if (!slug) {
 }
 
 if (window.CAPX_TABS) window.CAPX_TABS.boot();
+
+/* ---- U3 output library ---- */
+var OUTPUTS = [];
+var LEDGER_SHAS = {};
+
+function outputAgo(iso) {
+  return iso ? F.ago(iso) : "";
+}
+
+function readingTime(bytes) {
+  var words = Math.max(1, Math.round(Number(bytes) / 6));
+  var mins = Math.max(1, Math.round(words / 200));
+  return mins + " min read";
+}
+
+function outputBadge(entry) {
+  if (Object.prototype.hasOwnProperty.call(LEDGER_SHAS, entry.sha256)) {
+    var ts = LEDGER_SHAS[entry.sha256];
+    return "<span class='outbadge ok'>committed" + (ts ? " " + F.esc(outputAgo(ts)) : "") + "</span>";
+  }
+  return "<span class='outbadge'>not bound to a disclosed event</span>";
+}
+
+function paintOutputs(company) {
+  OUTPUTS = Array.isArray(company && company.outputs) ? company.outputs : [];
+  LEDGER_SHAS = {};
+  var shown = company && company.ledger && Array.isArray(company.ledger.shown)
+    ? company.ledger.shown : [];
+  shown.forEach(function (e) {
+    if (e && typeof e.artifact_sha256 === "string") {
+      LEDGER_SHAS[e.artifact_sha256] = e.ts || null;
+    }
+  });
+  show("tile-outputs", OUTPUTS.length > 0);
+  var count = $("outputs-count");
+  if (count) count.textContent = OUTPUTS.length ? OUTPUTS.length + " published" : "";
+  var list = $("outlist");
+  if (!list) return;
+  closeReader();
+  list.innerHTML = OUTPUTS.map(function (o, i) {
+    return "<button class='outrow' type='button' data-out='" + i + "'>"
+      + "<span class='ot'><b>" + F.esc(o.title) + "</b>"
+      + "<span class='om'>"
+      + (o.node_id ? "<span class='chip'>" + F.esc(o.node_id) + "</span>" : "")
+      + "<span class='chip'>" + F.esc(readingTime(o.bytes)) + "</span>"
+      + "</span></span>"
+      + outputBadge(o)
+      + "<span class='when'>" + F.esc(outputAgo(o.published_at) || "--") + "</span>"
+      + "</button>";
+  }).join("");
+}
+
+function sha256HexOf(buf) {
+  return crypto.subtle.digest("SHA-256", buf).then(function (digest) {
+    return Array.prototype.map.call(new Uint8Array(digest), function (b) {
+      return b.toString(16).padStart(2, "0");
+    }).join("");
+  });
+}
+
+function openReader(entry) {
+  var reader = $("reader");
+  var list = $("outlist");
+  if (!reader || !list) return;
+  list.hidden = true;
+  reader.hidden = false;
+  $("reader-raw").href = entry.url;
+  $("reader-prov").innerHTML = [
+    entry.node_id ? "<span class='chip'>" + F.esc(entry.node_id) + "</span>" : "",
+    entry.published_at ? "<span class='chip'>published " + F.esc(outputAgo(entry.published_at)) + "</span>" : "",
+    "<span class='chip'>" + F.esc(readingTime(entry.bytes)) + "</span>",
+    "<span class='chip'>founder claimed</span>",
+  ].filter(Boolean).join("");
+  $("reader-verdict").textContent = "fetching from the company host…";
+  $("reader-body").innerHTML = "";
+  fetch(entry.url, { cache: "no-store" })
+    .then(function (res) {
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      return res.arrayBuffer();
+    })
+    .then(function (buf) {
+      var text = new TextDecoder("utf-8").decode(buf);
+      $("reader-body").innerHTML = window.CAPX_MD.render(text);
+      return sha256HexOf(buf);
+    })
+    .then(function (hex) {
+      var v = $("reader-verdict");
+      if (hex !== entry.sha256) {
+        v.innerHTML = "<span class='dn'>content does not match the published hash</span>";
+      } else if (Object.prototype.hasOwnProperty.call(LEDGER_SHAS, hex)) {
+        var ts = LEDGER_SHAS[hex];
+        v.innerHTML = "<span class='lit'>hash matches the committed event"
+          + (ts ? " of " + F.esc(outputAgo(ts)) : "") + "</span> · verified in this browser";
+      } else {
+        v.innerHTML = "<span class='lit'>hash matches the published listing</span> · not bound to a disclosed event";
+      }
+    })
+    .catch(function () {
+      $("reader-verdict").innerHTML = "<span class='dn'>could not fetch from the company host</span>";
+      $("reader-body").innerHTML = "<p class='outnote'>The document could not be loaded here. "
+        + "<a href='" + F.esc(entry.url) + "' target='_blank' rel='noopener noreferrer nofollow'>Open it on the company host ↗</a></p>";
+    });
+}
+
+function closeReader() {
+  var reader = $("reader");
+  var list = $("outlist");
+  if (reader) reader.hidden = true;
+  if (list) list.hidden = false;
+}
+
+(function bindOutputs() {
+  var list = $("outlist");
+  if (list) {
+    list.addEventListener("click", function (e) {
+      var row = e.target.closest(".outrow");
+      if (!row) return;
+      var entry = OUTPUTS[parseInt(row.getAttribute("data-out"), 10)];
+      if (entry) openReader(entry);
+    });
+  }
+  var back = $("reader-back");
+  if (back) back.addEventListener("click", closeReader);
+})();

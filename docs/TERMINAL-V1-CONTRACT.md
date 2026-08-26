@@ -478,3 +478,18 @@ founder-directed surface changes of the same day: hourly last-7-days pulse on
 the company page (fill is disclosed ledger events; ring is the hour the last
 attestation landed) and the artifact stage at half width and reduced height.
 Nothing in 16.5 is revisited.
+
+## 18. Amendment 2026-08-26: output library (U3)
+
+Consumes the Casa U2 fields: `outputs[]` on the public company document
+(sanitized to same-host .md entries with 64-hex sha256, capped at 200) and
+`artifact_sha256` on disclosed ledger events. The company page gains an
+Outputs view: a listing with committed-event badges and a reader that fetches
+the document from the company's own casa host (CORS-opened public bytes),
+renders it through a zero-dependency escaping markdown renderer (raw HTML
+becomes visible text; links https-only), and hashes the fetched bytes in the
+browser. Verdict grammar: "hash matches the committed event of <t>" only when
+the browser-computed sha256 equals a disclosed event's artifact_sha256;
+content itself stays founder claimed; "attested" is never used for content.
+The market sidecar carries a URL-free outputs summary (count, latest) for the
+home Latest outputs rail. Nothing in 16.5 is revisited.

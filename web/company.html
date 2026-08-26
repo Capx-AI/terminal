@@ -6,8 +6,8 @@
 <title>Capx Terminal</title>
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/favicon-180.png">
-<link rel="stylesheet" href="/app.css?v=26082601">
-<link rel="stylesheet" href="/v1.css?v=26082601">
+<link rel="stylesheet" href="/app.css?v=26082602">
+<link rel="stylesheet" href="/v1.css?v=26082602">
 </head>
 <body>
 <a class="skip" href="#page">Skip to company</a>
@@ -56,6 +56,7 @@
     <nav class="viewtabs" role="tablist" aria-label="Views">
       <button class="vt on" type="button" data-view="overview" role="tab" aria-selected="true">Overview</button>
       <button class="vt" type="button" data-view="work" role="tab" aria-selected="false">Work</button>
+      <button class="vt" type="button" data-view="outputs" role="tab" aria-selected="false" hidden>Outputs</button>
       <button class="vt" type="button" data-view="verification" role="tab" aria-selected="false">Verification</button>
       <button class="vt" type="button" data-view="market" role="tab" aria-selected="false">Market</button>
     </nav>
@@ -143,6 +144,26 @@
       </div>
     </section>
 
+    <section class="tile t-outputs" data-view="outputs" id="tile-outputs" hidden>
+      <div class="th"><span class="label lit">Published outputs</span><span class="label" id="outputs-count"></span></div>
+      <div class="tb pad">
+        <p class="outnote">Playbook deliverables the founder published from the
+        company brain. Content is founder claimed; a hash badge means the
+        document's bytes match a committed event in the attestation chain,
+        checked in your browser against the company's own host.</p>
+        <div class="outlist" id="outlist"></div>
+        <div class="reader" id="reader" hidden>
+          <div class="reader-head">
+            <button class="back" id="reader-back" type="button">Back to outputs</button>
+            <span class="reader-verdict" id="reader-verdict"></span>
+            <a class="open-full" id="reader-raw" target="_blank" rel="noopener noreferrer nofollow">Open raw ↗</a>
+          </div>
+          <div class="reader-prov" id="reader-prov"></div>
+          <article class="reader-body" id="reader-body"></article>
+        </div>
+      </div>
+    </section>
+
     <section class="tile t-cons casa-only" data-view="overview" id="tile-cons" hidden>
       <div class="th"><span class="label lit">Binding constraint</span><span class="label">founder claimed</span></div>
       <div class="tb" id="cons-body"></div>
@@ -221,9 +242,10 @@
   </footer>
 </main>
 
-<script src="/fmt.js?v=26082601"></script>
-<script src="/stars.js?v=26082601"></script>
-<script src="/tabs.js?v=26082601"></script>
-<script src="/company.js?v=26082601"></script>
+<script src="/fmt.js?v=26082602"></script>
+<script src="/stars.js?v=26082602"></script>
+<script src="/tabs.js?v=26082602"></script>
+<script src="/md.js?v=26082602"></script>
+<script src="/company.js?v=26082602"></script>
 </body>
 </html>

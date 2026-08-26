@@ -127,6 +127,41 @@ function copyIfObject(value) {
   return value && typeof value === "object" ? value : null;
 }
 
+const OUTPUTS_MAX = 200;
+const SHA256_RE = /^[0-9a-f]{64}$/;
+
+/*
+ * Published playbook deliverables (U3). Strict rebuild: every entry must be
+ * a .md path on the company's own casa host with a well-formed sha256, or it
+ * is dropped. Content is founder-claimed; the hash check happens client-side.
+ */
+export function sanitizeOutputs(outputs, slug) {
+  if (!Array.isArray(outputs)) return [];
+  const clean = [];
+  for (const entry of outputs) {
+    if (!entry || typeof entry !== "object") continue;
+    const path = typeof entry.path === "string" ? entry.path : "";
+    if (!path || !/\.md$/i.test(path) || path.includes("..")) continue;
+    if (typeof entry.url !== "string" || !isCasaPublicUrl(entry.url, slug)) continue;
+    if (!entry.url.startsWith(`https://${slug}.casa.capx.ai/outputs/`)) continue;
+    if (typeof entry.sha256 !== "string" || !SHA256_RE.test(entry.sha256)) continue;
+    const bytes = Number(entry.bytes);
+    if (!Number.isInteger(bytes) || bytes < 1) continue;
+    clean.push({
+      id: typeof entry.id === "string" && entry.id ? entry.id : path,
+      node_id: typeof entry.node_id === "string" ? entry.node_id : "",
+      title: typeof entry.title === "string" && entry.title ? entry.title : path,
+      path,
+      sha256: entry.sha256,
+      bytes,
+      url: entry.url,
+      published_at: typeof entry.published_at === "string" ? entry.published_at : null,
+    });
+    if (clean.length >= OUTPUTS_MAX) break;
+  }
+  return clean;
+}
+
 export function publicCompanyView(doc) {
   if (!doc || typeof doc !== "object") return null;
   if (!isValidSlug(doc.slug)) return null;
@@ -175,6 +210,7 @@ export function publicCompanyView(doc) {
     },
     token: doc.token === undefined ? null : doc.token,
     artifacts,
+    outputs: sanitizeOutputs(doc.outputs, slug),
     reproduced: doc.reproduced === undefined ? undefined : doc.reproduced,
     calendar: doc.calendar === undefined ? undefined : doc.calendar,
     ledger: doc.ledger === undefined ? undefined : redactLedger(doc.ledger),
@@ -228,6 +264,16 @@ export function marketSurface(view) {
         work: work
           ? { tasks_7d: numOrNull(work.tasks_7d) }
           : null,
+      }
+      : null,
+    /* URL-free summary for the home rail; the full listing stays on /c/. */
+    outputs: Array.isArray(view.outputs) && view.outputs.length
+      ? {
+        count: view.outputs.length,
+        latest: [...view.outputs]
+          .sort((a, b) => String(b.published_at || "").localeCompare(String(a.published_at || "")))
+          .slice(0, 1)
+          .map((o) => ({ title: o.title, published_at: o.published_at }))[0],
       }
       : null,
   };
@@ -440,5 +486,27 @@ export const SAMPLE_COMPANY_DOCS = {
       one_pager: { url: "https://northstar-labs.casa.capx.ai/one-pager/", version_id: "ver_pager_1", visibility: "public" },
       deck: { url: "https://northstar-labs.casa.capx.ai/deck/", version_id: "ver_deck_1", visibility: "public" },
     },
+    outputs: [
+      {
+        id: "phase0-website.md",
+        node_id: "phase0-website",
+        title: "Phase 0 Website",
+        path: "phase0-website.md",
+        sha256: "0d5c7cbecd0ac3b4114e0089a4b87d15c2f5c2b0ac1e2f6a9b8c7d6e5f4a3b2c",
+        bytes: 1810,
+        url: "https://northstar-labs.casa.capx.ai/outputs/phase0-website.md",
+        published_at: "2026-08-24T09:00:00.000Z",
+      },
+      {
+        id: "brand-positioning/statement.md",
+        node_id: "brand-positioning",
+        title: "Brand Positioning Statement",
+        path: "brand-positioning/statement.md",
+        sha256: "1e6d8dcfde1bd4c5225f119ab5c98e26d3a6d3c1bd2f3a7bacbdcecfa5b4c3d1",
+        bytes: 942,
+        url: "https://northstar-labs.casa.capx.ai/outputs/brand-positioning/statement.md",
+        published_at: "2026-08-25T18:30:00.000Z",
+      },
+    ],
   },
 };
