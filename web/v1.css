@@ -85,7 +85,7 @@
 .artifact-stage{
   /* A preview band, not a takeover: the page below must stay discoverable
      and the wheel must mostly scroll the page, not the embedded site. */
-  position:relative; height:clamp(280px,38vh,440px); min-width:0; background:var(--bg); overflow:hidden;
+  position:relative; height:clamp(420px,57vh,660px); min-width:0; background:var(--bg); overflow:hidden;
 }
 .artifact-stage iframe{
   position:absolute; inset:0; width:100%; height:100%; border:0; background:#fff;
@@ -103,7 +103,7 @@
   .artifact-tabs{width:100%;}
   .artifact-tab{flex:1 0 auto; text-align:center;}
   .artifact-open{text-align:center;}
-  .artifact-stage{height:40vh; min-height:260px; max-height:420px;}
+  .artifact-stage{height:60vh; min-height:390px; max-height:630px;}
   .regwrap{padding:28px 0 48px;}
   .regform{max-width:100%;}
 }
