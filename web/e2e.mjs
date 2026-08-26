@@ -101,6 +101,8 @@ assert(bad.status === 400 && bad.data.error === "INVALID_MINT", "mock 400");
 
 const home = await get(`${base}/`);
 assert(home.status === 200 && String(home.data).includes("Healthiest companies"), "market html");
+assert(String(home.data).includes("Backed and attested"), "bound section chrome");
+assert(String(home.data).includes("table-bound"), "bound table present");
 assert(String(home.data).includes("Sample data"), "pill chrome");
 assert(!String(home.data).includes("win_definition"), "no win_definition");
 assert(!/yield|profit|equity/i.test(String(home.data)), "no yield copy on market");

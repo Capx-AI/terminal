@@ -6,6 +6,7 @@ var FILTER = "all";
 var KIND = "all";
 var SHOW_ENDED = false;
 var SORT = {
+  bound: { k: "health", dir: -1 },
   tokens: { k: "fdv", dir: -1 },
   companies: { k: "health", dir: -1 },
 };
@@ -591,6 +592,11 @@ function paintAggr(tokens) {
   $("ag-cov").innerHTML = med == null ? "--" : "<span class='lit'>" + F.bp(med) + "</span><span class='u'>of events</span>";
   $("ag-signed").innerHTML = casaN ? signed + "<span class='u'>of " + casaN + "</span>" : "--";
   $("ag-fresh").innerHTML = casaN ? attested7 + "<span class='u'>of " + casaN + "</span>" : "--";
+  var boundN = tokens.filter(function (row) {
+    return row.kind === "company_with_token";
+  }).length;
+  var agBound = $("ag-bound");
+  if (agBound) agBound.textContent = String(boundN);
 }
 
 function paintPodium(tokens) {
@@ -698,8 +704,28 @@ function companyRowHtml(x, i) {
     + "</tr>";
 }
 
+/* The flagship rows: the only ones that fill both the market and the proof
+   half. They render up top and leave the general tables. */
+function boundRowHtml(x, i) {
+  var stale = x.marketPerformance && x.marketPerformance.stale;
+  var t7 = tasks7dOf(x);
+  return rowOpen(x, fadedOf(x))
+    + "<td class='l'><span class='rk'>" + (i + 1) + "</span></td>"
+    + "<td class='l'>" + tokenCell(x) + "</td>"
+    + "<td class='price'>" + (priceOf(x) == null ? dash() : "<span class='d1'>" + F.usdPx(priceOf(x)) + (stale ? " <span class='stale-mark'>stale</span>" : "") + "</span>") + "</td>"
+    + "<td>" + chgCell(chgOf(x)) + "</td>"
+    + "<td>" + dualUsd(volOf(x), stale) + "</td>"
+    + "<td>" + dualUsd(mcapOf(x), stale) + "</td>"
+    + "<td>" + sparkCell(x) + "</td>"
+    + "<td>" + scoreCell(healthOf(x)) + "</td>"
+    + "<td class='work'>" + (t7 == null ? dash() : F.ci(t7)) + "</td>"
+    + "<td class='calcell'>" + calCell(x) + "</td>"
+    + "<td>" + attestedCell(x) + "</td>"
+    + "</tr>";
+}
+
 function paintSortArrows() {
-  [["table-tokens", "tokens"], ["table-companies", "companies"]].forEach(function (pair) {
+  [["table-bound", "bound"], ["table-tokens", "tokens"], ["table-companies", "companies"]].forEach(function (pair) {
     var s = SORT[pair[1]];
     document.querySelectorAll("#" + pair[0] + " thead th[data-k]").forEach(function (th) {
       var base = th.textContent.replace(/[↑↓]/g, "").trim();
@@ -712,11 +738,22 @@ function render() {
   if (!DATA) return;
   var all = listed();
   var vis = all.filter(matches);
-  var tokensList = sortList(vis.filter(function (r) { return !!r.mint; }), "tokens");
+  var boundList = sortList(vis.filter(function (r) {
+    return r.kind === "company_with_token";
+  }), "bound");
+  var tokensList = sortList(vis.filter(function (r) {
+    return !!r.mint && r.kind !== "company_with_token";
+  }), "tokens");
   var companiesList = sortList(vis.filter(function (r) {
-    return r.kind === "company_without_token" || r.kind === "company_with_token";
+    return r.kind === "company_without_token";
   }), "companies");
 
+  var boundZone = $("bound-zone");
+  if (boundZone) boundZone.hidden = boundList.length === 0;
+  $("rows-bound").innerHTML = boundList.map(boundRowHtml).join("");
+  $("bound-note").textContent = boundList.length
+    ? boundList.length + " bound · checkable work next to a live market"
+    : "";
   $("rows-tokens").innerHTML = tokensList.map(tokenRowHtml).join("")
     || "<tr><td colspan='9' style='text-align:center; color:var(--t500); padding:28px'>no tokens match</td></tr>";
   $("rows-companies").innerHTML = companiesList.map(companyRowHtml).join("")
@@ -870,6 +907,7 @@ function bindSort(tableId, key) {
     }
   });
 }
+bindSort("table-bound", "bound");
 bindSort("table-tokens", "tokens");
 bindSort("table-companies", "companies");
 
@@ -881,6 +919,7 @@ function openRow(e) {
   if (mint) location.href = "/t/" + mint;
   else location.href = "/c/" + tr.getAttribute("data-slug");
 }
+$("rows-bound").addEventListener("click", openRow);
 $("rows-tokens").addEventListener("click", openRow);
 $("rows-companies").addEventListener("click", openRow);
 $("q").addEventListener("input", function () {

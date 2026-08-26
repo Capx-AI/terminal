@@ -213,3 +213,7 @@
 .reader-body a{color:var(--capx);}
 .reader-body hr{border:0; border-top:1px solid var(--line2); margin:18px 0;}
 .outfeed-line{margin-top:8px;}
+
+/* Backed-and-attested band: the bound pairs, gently lit. */
+#bound-zone .tbl-scroll{border:1px solid var(--capx-b); border-radius:var(--tr); background:rgba(197,220,107,.025);}
+#table-bound tbody tr:hover{background:rgba(197,220,107,.05);}
