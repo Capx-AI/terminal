@@ -442,9 +442,9 @@ test("mobile and desktop fixtures keep overflow, contrast, and keyboard chrome",
   assert.match(app, /\.chips\{flex-wrap:nowrap/);
   // plan 2026-08-29-002 W2: real table widths, pinned phone columns, and a live scroll cue
   assert.equal((index.match(/<colgroup>/g) || []).length, 3);
-  assert.match(index, /<colgroup>\s*<col class="c-rank">\s*<col>\s*<col class="c-px">\s*<col class="c-chg">\s*<col class="c-vol">\s*<col class="c-fdv">\s*<col class="c-spark">\s*<col class="c-ver">\s*<col class="c-work">\s*<col class="c-cal">\s*<col class="c-att">\s*<\/colgroup>/);
-  assert.match(index, /<colgroup>\s*<col class="c-rank">\s*<col>\s*<col class="c-px">\s*<col class="c-chg">\s*<col class="c-vol">\s*<col class="c-liq">\s*<col class="c-fdv">\s*<col class="c-spark">\s*<col class="c-ver">\s*<\/colgroup>/);
-  assert.match(index, /<colgroup>\s*<col class="c-rank">\s*<col>\s*<col class="c-ver">\s*<col class="c-work">\s*<col class="c-cal">\s*<col class="c-bm">\s*<col class="c-cov">\s*<col class="c-chain">\s*<col class="c-att">\s*<col class="c-fdv">\s*<\/colgroup>/);
+  assert.match(index, /<colgroup>\s*<col class="c-rank">\s*<col class="c-name">\s*<col class="c-px">\s*<col class="c-chg">\s*<col class="c-vol">\s*<col class="c-fdv">\s*<col class="c-spark">\s*<col class="c-ver">\s*<col class="c-work">\s*<col class="c-cal">\s*<col class="c-att">\s*<\/colgroup>/);
+  assert.match(index, /<colgroup>\s*<col class="c-rank">\s*<col class="c-name">\s*<col class="c-px">\s*<col class="c-chg">\s*<col class="c-vol">\s*<col class="c-liq">\s*<col class="c-fdv">\s*<col class="c-spark">\s*<col class="c-ver">\s*<\/colgroup>/);
+  assert.match(index, /<colgroup>\s*<col class="c-rank">\s*<col class="c-name">\s*<col class="c-ver">\s*<col class="c-work">\s*<col class="c-cal">\s*<col class="c-bm">\s*<col class="c-cov">\s*<col class="c-chain">\s*<col class="c-att">\s*<col class="c-fdv">\s*<\/colgroup>/);
   assert.match(app, /\/\* ===== phone tables \(plan 2026-08-29-002, R5\) ===== \*\//);
   assert.match(app, /\.tbl-scroll\[data-more="1"\]\{-webkit-mask-image:linear-gradient\(to right,#000 calc\(100% - 48px\),transparent\); mask-image:/);
   assert.match(app, /\.tbl-scroll thead th:first-child,\s*\.tbl-scroll thead th:nth-child\(2\)\{position:sticky; background:#0d0e10; z-index:4;\}/);
