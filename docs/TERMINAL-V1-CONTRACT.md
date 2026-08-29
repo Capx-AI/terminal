@@ -528,3 +528,45 @@ day. This amendment records only what Phase 1 shipped.
 
 Part 2 (tables with pinned columns, rails, type floor, tap targets, touch
 readouts, stage gate) is recorded as 20b when Phase 2 ships.
+
+## 20b. Amendment 2026-08-29: phone layout, part 2
+
+Records what Phase 2 of `docs/plans/2026-08-29-002-fix-mobile-plan.md`
+shipped. Everything below applies at 700px and under unless stated;
+desktop is unchanged, proved by the harness baseline diff at 1024 and
+1440.
+
+- **Type floor.** No rendered text under 11px: one block at the end of
+  `app.css` raises every sub-11px selector; `test/type-floor.test.mjs`
+  re-derives the inventory from the stylesheets and fails on any selector
+  missing from the block. Chart axis labels follow the same floor in
+  `token.js`. Exceptions: `.sr-only`, `.skip`, `.hc` cells, canvases.
+- **Tap targets.** Header links, chips, timeframe buttons, artifact tabs,
+  Open anchors, token links, sort headers, output rows, rail items, and row
+  names reach a hit area of at least 24px; the row name covers its whole
+  cell. Inline links in running text and dense visualisations (heatmap
+  cells, chart pins) are exempt and use container hit testing.
+- **Tables.** All three market tables carry a `<colgroup>`. On phones the
+  `col.c-*` widths apply, the name column is 180px, the 1620px minimum is
+  lifted so the table is exactly as wide as its columns, the rank and name
+  cells pin left while the rest scrolls, and a right-edge mask plus
+  "swipe for more" show while more columns remain (`data-more` kept in
+  sync by `market.js` on render, sort, filter, search, resize, and scroll).
+  Desktop keeps the unsized remainder column and the 1620px floor; the
+  column set is unchanged everywhere.
+- **Rails.** `.chips`, `.liveitems`, and `.attfeed` are one horizontally
+  scrolling row with scroll snap. The stat strip is two cards per row. The
+  identity tile stacks mark and name, then mission, then provenance.
+- **Touch.** Token chart: pointer events, a tap (8px, 400ms) pins the
+  readout until the next tap, `touch-action:pan-y` so the page still
+  scrolls, 24px pin hit radius on touch. Company chart stays a static line.
+  Both heatmaps: cells carry `data-d`, a tap paints and holds the readout.
+- **Artifact stage.** `clamp(220px,34vh,320px)` on phones; a second Open
+  anchor below the stage (the head anchor hides); the iframe is behind a
+  "Tap to use the preview" gate until tapped, a Done chip restores it, and
+  a tab change resets it. Sandbox attribute unchanged. Reader body takes
+  the full width.
+- **Harness.** `web/tools/mobile` phase 2 checks (`npm run test:phase2`)
+  are the release gate alongside the phase 1 gates; the desktop baseline
+  excludes the time-dependent heatmap cells and tolerates additions that
+  are not rendered on desktop.
