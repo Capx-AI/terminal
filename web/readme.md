@@ -39,7 +39,15 @@ The harness boots `server.mjs` with `SAMPLE=1` and stubbed upstreams, so it is
 offline and deterministic. `npm run baseline` re-captures the desktop
 computed-style baseline in `tools/mobile/baseline/`; run it only on a tree
 whose desktop layout is the intended one, and commit the JSON. Fixture pages
-live in `tools/mobile/fixtures.json`.
+live in `tools/mobile/fixtures.json`. `phase2.test.mjs` is the Phase 2 release
+gate: type floor, tap-target hit areas, pinned market tables, one-row rails,
+chart and heatmap taps, the artifact stage gate, breakpoint tile pairing, and
+page-height caps, on the same SAMPLE stack and device contexts. Type exceptions
+are `.sr-only`, `.skip`, `.hc`, and canvases. Tap-target exceptions are inline
+links in `.reader-body`, `.nobind-copy`, and `.tblnote`, plus heatmap cells and
+chart pins. Run `npm run test:phase1` and `npm run test:phase2` from
+`tools/mobile/`; Phase 1 must stay green, and Phase 2 is the merge gate once
+the matching product work lands.
 
 Release: bump `?v=` on all four HTML files, `vercel --prod` on
 `capx-terminal-public`, invalidate CloudFront `E1AUBHOMH0OFF3`, re-run the
