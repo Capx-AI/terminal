@@ -1,0 +1,17 @@
+{
+  "note": "Pages and states the phone harness measures. All served by web/server.mjs with SAMPLE=1 and stubbed upstreams, so every run is deterministic and offline. Mints and slugs come from SAMPLE_ROWS and SAMPLE_COMPANY_DOCS in the server.",
+  "pages": [
+    { "key": "home", "path": "/", "ready": "#rows-tokens tr", "kind": "home" },
+    { "key": "token-only", "path": "/t/FixLiveProg111111111111111111capx", "ready": "#page:not([hidden])", "kind": "detail" },
+    { "key": "token-bound", "path": "/t/2CasaCoMint11111111111111111capx", "ready": "#page:not([hidden])", "kind": "detail" },
+    { "key": "company-with-token", "path": "/c/inboxpilot", "ready": "#page:not([hidden])", "kind": "detail" },
+    { "key": "company-without-token", "path": "/c/northstar-labs", "ready": "#page:not([hidden])", "kind": "detail" },
+    { "key": "register", "path": "/register", "ready": "form", "kind": "register" }
+  ],
+  "phoneWidths": [360, 390, 430],
+  "desktopWidths": [1024, 1440],
+  "pending": [
+    "company with failing artifact URLs (Phase 2: stage gate)",
+    "company with a published outputs sidecar and the reader open (Phase 2: reader)"
+  ]
+}

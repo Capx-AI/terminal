@@ -432,6 +432,18 @@ test("mobile and desktop fixtures keep overflow, contrast, and keyboard chrome",
   assert.match(app, /@media \(max-width:880px\)/);
   assert.match(app, /@media \(max-width:700px\)/);
   assert.match(v1, /@media \(max-width:700px\)/);
+  // plan 2026-08-29-002 Phase 1: one-column phone bento, chart box height, shrinkable legend
+  assert.match(app, /\.bento > \.tile\{grid-column:1 \/ -1;\}/);
+  assert.match(app, /\.chartbox\{min-height:0; height:clamp\(240px,45vh,360px\);\}/);
+  assert.match(app, /\.planes\.tight\{flex:0 1 auto; min-width:0;\}/);
+  assert.match(app, /\.hrow\{height:auto; min-height:50px; flex-wrap:wrap/);
+  // no v1.css tile span may fire against the six-column phone grid: every span 12 sits under a min-width query
+  const v1Blocks = v1.split(/(?=@media)/);
+  for (const block of v1Blocks) {
+    if (/grid-column:span 12/.test(block) && !/^@media \(min-width:881px\)/.test(block)) {
+      assert.fail("v1.css has a span 12 tile rule outside @media (min-width:881px): " + block.slice(0, 80));
+    }
+  }
   assert.match(app, /\.tbl-scroll\{overflow-x:auto/);
   assert.match(v1, /\.artifact-stage\{[^}]*height:clamp\(420px,57vh,660px\)/);
   assert.match(v1, /\.t-showcase\{grid-column:span 6/);

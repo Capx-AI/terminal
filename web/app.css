@@ -540,23 +540,30 @@ footer{border-top:1px solid var(--line); padding:16px 0 26px;}
 }
 @media (max-width:880px){
   .bento{grid-template-columns:repeat(6,1fr);}
-  .t-id,.t-chart,.t-cons,.t-vitals,.t-repro,.t-wire,.t-env,.t-judge,.t-ladder,
-  .t-dept,.t-attest,.t-site,.t-pager,.t-deck{grid-column:span 6;}
-  .t-price{grid-column:span 3;}
-  .t-work{grid-column:span 3;}
-  .t-pulse{grid-column:span 6;}
+  /* every tile takes the full row; a span wider than the grid would create
+     implicit tracks and collapse the explicit ones to zero (plan 2026-08-29-002, F1) */
+  .bento > .tile{grid-column:1 / -1;}
+  .bento > .t-price, .bento > .t-work{grid-column:span 3;}
+  .t-chart{grid-row:auto; min-height:0;}
+  .chartbox{min-height:0; height:clamp(240px,45vh,360px);}
+  /* the provenance legend must be allowed to shrink or it widens the layout viewport (F2) */
+  .planes.tight{flex:0 1 auto; min-width:0;}
+  .legendrow .planes{max-width:100%;}
   .vitals{grid-template-columns:repeat(2,1fr);}
   .big{font-size:26px;}
   .idname{font-size:16px;}
 }
 @media (max-width:700px){
+  /* the header row may wrap when the sample pill is showing; on production it stays one line (F2, R2) */
+  .hrow{height:auto; min-height:50px; flex-wrap:wrap; row-gap:2px; padding:6px 0;}
+  .hactions{flex-wrap:wrap; justify-content:flex-end; row-gap:6px; min-width:0; margin-left:auto;}
   .brand .label:not(.lit){display:none;}
   .search input{font-size:16px;}
   .hint{display:none;}
   .rung .n{display:none;}
   .rung.now .n{display:block;}
   .readout{gap:12px; left:10px;}
-  .t-price,.t-work{grid-column:span 6;}
+  .bento > .t-price, .bento > .t-work{grid-column:1 / -1;}
   .minirow{grid-template-columns:1fr 1fr;}
 }
 a:focus-visible, button:focus-visible, [tabindex]:focus-visible, .fchip:focus-visible,

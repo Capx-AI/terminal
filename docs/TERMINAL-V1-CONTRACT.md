@@ -503,3 +503,28 @@ otherwise stands: the weekly digest line, day-grouped disclosed ledger,
 hourly pulse, half-width artifact stage, and the full output library with
 its reader and browser-side hash verification, now rendered inline as a
 full-width section.
+
+## 20a. Amendment 2026-08-29: phone layout, part 1
+
+Founder ask: terminal.capx.ai was not usable on a phone. Plan
+`docs/plans/2026-08-29-002-fix-mobile-plan.md`, reviewed by Codex the same
+day. This amendment records only what Phase 1 shipped.
+
+- Below 880px the bento is one column of tiles in tile order
+  (`.bento > .tile{grid-column:1 / -1}`). Price and work may pair between
+  700px and 880px; below 700px they are full width too.
+- The chart box (`.chartbox`, not the tile) has a phone height of
+  `clamp(240px,45vh,360px)` below 880px; the chart tile no longer spans two
+  rows there.
+- The provenance legend may shrink below 880px, and the header row may wrap
+  below 700px, so nothing widens the layout viewport.
+- Every `v1.css` tile span lives under `@media (min-width:881px)`; a span
+  wider than the six-column phone grid is forbidden.
+- Desktop is unchanged: the computed-style baseline at 1024px and 1440px in
+  `web/tools/mobile/baseline/` diffs empty. The demo remains the spec above
+  880px.
+- The phone harness (`web/tools/mobile`, Playwright pinned) and the release
+  checklist in `web/readme.md` are the gate for every production deploy.
+
+Part 2 (tables with pinned columns, rails, type floor, tap targets, touch
+readouts, stage gate) is recorded as 20b when Phase 2 ships.

@@ -1,0 +1,15 @@
+{
+  "name": "capx-terminal-mobile-harness",
+  "private": true,
+  "type": "module",
+  "description": "Phone-layout acceptance harness for Capx Terminal. Not part of the Vercel function; run from the release checklist.",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "install-browser": "playwright install chromium",
+    "test": "node --test *.test.mjs",
+    "baseline": "node baseline.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.53.0"
+  }
+}

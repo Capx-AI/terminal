@@ -16,6 +16,37 @@ Browser talks only to this process. This process GETs Launchpad
 Visual source: `~/Documents/july/capx/capx-terminal-demo/` (`app.css` copied
 intact). `v1.css` only covers missing-tile layout.
 
+## Phone harness and release checklist (plan 2026-08-29-002)
+
+`tools/mobile/` is a pinned Playwright harness (`playwright@1.53.0`, its own
+lockfile). It is not a dependency of this package and never reaches the Vercel
+function. One-time setup:
+
+```bash
+cd web/tools/mobile && npm install && npx playwright install chromium
+```
+
+Then, before every production deploy (there is no CI; this list is the gate):
+
+```bash
+node --test test/*.test.mjs            # suite
+node e2e.mjs                           # against SAMPLE=1 on :4200 + mock Casa on :4201
+cd tools/mobile && npm test            # phone gates at 360/390/430 (iPhone 14) and Pixel 7,
+                                       # plus the desktop baseline diff at 1024 and 1440
+```
+
+The harness boots `server.mjs` with `SAMPLE=1` and stubbed upstreams, so it is
+offline and deterministic. `npm run baseline` re-captures the desktop
+computed-style baseline in `tools/mobile/baseline/`; run it only on a tree
+whose desktop layout is the intended one, and commit the JSON. Fixture pages
+live in `tools/mobile/fixtures.json`.
+
+Release: bump `?v=` on all four HTML files, `vercel --prod` on
+`capx-terminal-public`, invalidate CloudFront `E1AUBHOMH0OFF3`, re-run the
+phone checks against production, log the deployment id in the readme.
+Rollback: `vercel rollback` to the previous deployment plus the same
+invalidation.
+
 ## Log
 
 - **2026-08-20** - Folder created. CSS, logo, favicons copied from the demo.
@@ -49,3 +80,4 @@ intact). `v1.css` only covers missing-tile layout.
   brand). Names in that glob are the packaged set. Do not restyle the
   glob. Hashes of those files are release evidence; no secret values.
 - **2026-08-24** — Company page paints constraint, vitals, reproduced, ledger, envelope, judgment, departments when present. Market `company_surfaces` fills company-only work columns. Tokenless price stays null.
+- **2026-08-29** — Phone layout Phase 1 (plan 2026-08-29-002): every tile full width below 880px, chart box phone height, shrinkable legend, wrapping header under 700px; v1.css tile spans moved under `min-width:881px`. Harness in `tools/mobile/` with the desktop baseline. Stamp 26082901.

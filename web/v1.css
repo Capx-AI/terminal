@@ -1,9 +1,13 @@
-/* v1 layout only. Do not restyle the demo. Hidden deferred tiles leave a tighter bento. */
-.t-price.wide{grid-column:span 6;}
-.t-work.wide{grid-column:span 6;}
-.t-cons.wide{grid-column:span 6;}
-.t-repro.wide{grid-column:span 6;}
-.t-ladder{grid-column:span 12;}
+/* v1 layout only. Do not restyle the demo. Hidden deferred tiles leave a tighter bento.
+   Spans live above 880px only: below that app.css lays every tile full width, and a
+   span 12 against that six-column grid collapses the page (plan 2026-08-29-002, F1). */
+@media (min-width:881px){
+  .t-price.wide{grid-column:span 6;}
+  .t-work.wide{grid-column:span 6;}
+  .t-cons.wide{grid-column:span 6;}
+  .t-repro.wide{grid-column:span 6;}
+  .t-ladder{grid-column:span 12;}
+}
 .casa-only[hidden], .tile[hidden]{display:none !important;}
 .stale-mark{
   font-family:var(--mono); font-size:9px; letter-spacing:.06em; text-transform:uppercase;
@@ -55,7 +59,8 @@
 }
 
 /* /c/{slug}: one large artifact stage near the top of the company page. */
-.t-showcase{grid-column:span 6; min-height:0;}
+.t-showcase{min-height:0;}
+@media (min-width:881px){ .t-showcase{grid-column:span 6;} }
 .showcase-head{
   min-height:48px; display:flex; align-items:center; justify-content:space-between; gap:14px;
   padding:7px 10px; border-bottom:1px solid var(--line); background:rgba(13,14,16,.92);
@@ -139,7 +144,7 @@
 .attfeed .att b{color:var(--capx); font-weight:600;}
 .secthead{display:flex; align-items:baseline; gap:10px; padding:16px 0 8px;}
 .secnote{font-family:var(--mono); font-size:10.5px; color:var(--t600);}
-.t-nobind{grid-column:span 6;}
+@media (min-width:881px){ .t-nobind{grid-column:span 6;} }
 .nobind-copy{margin:0 0 12px; color:var(--t400); font-size:13px; line-height:1.55; max-width:60ch;}
 .nobind-actions{display:flex; gap:10px; margin-top:10px;}
 .tokenlinks{display:flex; gap:8px; flex-wrap:wrap; margin-top:12px;}
@@ -148,7 +153,7 @@
   border:1px solid var(--line2); border-radius:var(--radius); padding:3px 8px;
 }
 .tokenlinks a:hover{border-color:var(--capx); color:var(--capx);}
-@media (max-width:1100px){ .t-nobind{grid-column:span 12;} .t-showcase{grid-column:span 12;} }
+@media (min-width:881px) and (max-width:1100px){ .t-nobind{grid-column:span 12;} .t-showcase{grid-column:span 12;} }
 
 .digest{margin-top:12px; font-family:var(--mono); font-size:11px; color:var(--t400);}
 .digest b{color:var(--capx); font-weight:500;}
@@ -158,7 +163,7 @@
 }
 
 /* U3 output library: list rows, reader, verdict badges. */
-.t-outputs{grid-column:span 12;}
+@media (min-width:881px){ .t-outputs{grid-column:span 12;} }
 .outnote{margin:0 0 14px; color:var(--t400); font-size:13px; max-width:78ch; line-height:1.55;}
 .outlist{display:flex; flex-direction:column;}
 .outrow{
