@@ -152,6 +152,9 @@ export const baselineScript = () => {
   const root = document.querySelector("main") || document.body;
   for (const el of root.querySelectorAll("*")) {
     if (el.id === "stars" || el.closest("#stars")) continue;
+    // Heatmap cells are time-dependent (the current UTC hour bucket moves), so they
+    // cannot be part of a stable baseline; the phone tests cover them separately.
+    if (el.closest("#ghgrid")) continue;
     const cs = getComputedStyle(el);
     const props = [];
     for (let i = 0; i < cs.length; i++) { const n = cs[i]; props.push(n + ":" + cs.getPropertyValue(n)); }
