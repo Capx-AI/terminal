@@ -142,6 +142,7 @@ header{position:sticky; top:0; z-index:30; background:rgba(8,9,10,.86); backdrop
 /* col widths apply on phones only, where the pinned rank column needs a known 44px width; desktop keeps
    the layout it has always had (the tables never carried a colgroup until plan 2026-08-29-002) */
 @media (max-width:700px){
+  col.c-name{width:180px;}
   col.c-rank{width:44px;}                            col.c-ver{width:120px;}
   col.c-px{width:108px;}    col.c-chg{width:78px;}   col.c-vol{width:114px;}
   col.c-liq{width:108px;}   col.c-fdv{width:98px;}   col.c-spark{width:110px;}
@@ -159,6 +160,9 @@ header{position:sticky; top:0; z-index:30; background:rgba(8,9,10,.86); backdrop
 /* ===== phone tables (plan 2026-08-29-002, R5) ===== */
 @media (max-width:700px){
   .tbl-scroll{position:relative;}
+  /* no 1620px floor on phones: with every column sized, the table is exactly as wide as its columns,
+     so price and 24h sit one short swipe after the pinned name column instead of 600px of slack */
+  .tbl-scroll table{min-width:0;}
   /* a mask stays fixed to the scroll port; an absolutely positioned ::after would scroll away with the content */
   .tbl-scroll[data-more="1"]{-webkit-mask-image:linear-gradient(to right,#000 calc(100% - 48px),transparent); mask-image:linear-gradient(to right,#000 calc(100% - 48px),transparent);}
   .tbl-scroll tbody tr{--phone-row-bg:#0d0e10;}
