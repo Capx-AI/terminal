@@ -886,6 +886,20 @@ function cellHtml(i, max) {
   return "<span class='hc" + lvl + ring + "' data-d='" + i + "' title='" + F.esc(t) + "'></span>";
 }
 
+function paintHeatRead(i) {
+  var read = $("gh-read");
+  if (!read || !DAYS[i]) return;
+  var psh = DAYS[i].attestation;
+  var when = DAYS[i].label || fmtDay(DAYS[i].date || DAYS[i].iso);
+  if (i > LAST_COVERED) {
+    read.innerHTML = "<span class='dn'>" + F.esc(when || "") + " · never attested</span>";
+    return;
+  }
+  read.innerHTML = "<span class='lit'>" + F.esc(when || "") + "</span> · "
+    + (DAYS[i].events || 0) + " tasks"
+    + (psh ? " · <span class='lit'>attestation landed</span>" : "");
+}
+
 function paintCalendar(doc) {
   var grid = $("ghgrid");
   var mo = $("gh-months");
@@ -973,24 +987,29 @@ function paintCalendar(doc) {
       : "a ringed cell is a bucket an attestation landed";
     read.innerHTML = pulseDefaultRead;
   }
+  grid._held = null;
   if (!pulseBound) {
     pulseBound = true;
     grid.addEventListener("mouseover", function (e) {
       var c = e.target.closest(".hc[data-d]");
+      if (!c || !read || grid._held != null) return;
+      var i2 = parseInt(c.getAttribute("data-d"), 10);
+      paintHeatRead(i2);
+    });
+    grid.addEventListener("click", function (e) {
+      var c = e.target.closest(".hc[data-d]");
       if (!c || !read) return;
       var i2 = parseInt(c.getAttribute("data-d"), 10);
-      var psh = DAYS[i2] && DAYS[i2].attestation;
-      var when = DAYS[i2] && (DAYS[i2].label || fmtDay(DAYS[i2].date || DAYS[i2].iso));
-      if (i2 > LAST_COVERED) {
-        read.innerHTML = "<span class='dn'>" + F.esc(when || "") + " · never attested</span>";
+      if (grid._held === i2) {
+        grid._held = null;
+        read.innerHTML = pulseDefaultRead;
         return;
       }
-      read.innerHTML = "<span class='lit'>" + F.esc(when || "") + "</span> · "
-        + (DAYS[i2] && DAYS[i2].events || 0) + " tasks"
-        + (psh ? " · <span class='lit'>attestation landed</span>" : "");
+      grid._held = i2;
+      paintHeatRead(i2);
     });
     grid.addEventListener("mouseleave", function () {
-      if (read) read.innerHTML = pulseDefaultRead;
+      if (read && grid._held == null) read.innerHTML = pulseDefaultRead;
     });
     window.addEventListener("resize", fitCells);
   }
@@ -1317,8 +1336,9 @@ function onHover(ev) {
   paintReadout(day);
 
   var tip = $("evtip"), hit = null;
+  var hitRadius = ev.pointerType === "touch" ? 24 : 9;
   (chart._pins || []).forEach(function (p) {
-    if (Math.abs(p.x - mx) < 9 && Math.abs(p.y - my) < 16) hit = p;
+    if (Math.abs(p.x - mx) < hitRadius && Math.abs(p.y - my) < Math.max(16, hitRadius)) hit = p;
   });
   if (hit) {
     tip.innerHTML = "<div class='d'>" + F.esc(fmtDay(DAYS[hit.e.day] && DAYS[hit.e.day].date))
@@ -1464,6 +1484,35 @@ function syncTfButtons() {
   TF = n;
 }
 
+function clearChartHover() {
+  hoverIdx = -1;
+  $("evtip").classList.remove("show");
+  drawChart();
+  resetReadout();
+}
+
+function onChartPointerDown(ev) {
+  chart._tapStart = { x: ev.clientX, y: ev.clientY, t: ev.timeStamp };
+}
+
+function onChartPointerUp(ev) {
+  var down = chart._tapStart;
+  chart._tapStart = null;
+  if (!down) return;
+  var elapsed = ev.timeStamp - down.t;
+  if (elapsed < 0 || elapsed > 400 || Math.hypot(ev.clientX - down.x, ev.clientY - down.y) > 8) return;
+  var g = geom();
+  var rect = chart.getBoundingClientRect();
+  var mx = ev.clientX - rect.left;
+  if (mx < g.padL || mx > g.W - g.padR) {
+    chart._pinned = false;
+    clearChartHover();
+    return;
+  }
+  chart._pinned = true;
+  onHover(ev);
+}
+
 function initChart() {
   chart = $("chart");
   if (!chart) return;
@@ -1483,13 +1532,15 @@ function initChart() {
       TF = parseInt(b.getAttribute("data-d"), 10) || DAYS.length || 30;
       drawChart();
     });
-    chart.addEventListener("mousemove", onHover);
-    chart.addEventListener("mouseleave", function () {
-      hoverIdx = -1;
-      $("evtip").classList.remove("show");
-      drawChart();
-      resetReadout();
+    chart.addEventListener("pointermove", function (ev) {
+      if (ev.pointerType === "mouse" && !chart._pinned) onHover(ev);
     });
+    chart.addEventListener("pointerleave", function () {
+      if (chart._pinned) return;
+      clearChartHover();
+    });
+    chart.addEventListener("pointerdown", onChartPointerDown);
+    chart.addEventListener("pointerup", onChartPointerUp);
   }
   if (!resizeBound) {
     resizeBound = true;
