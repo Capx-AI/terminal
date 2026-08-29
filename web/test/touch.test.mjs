@@ -96,5 +96,5 @@ test("chart uses pointer events and permits vertical touch scrolling", () => {
   assert.match(tokenSrc, /chart\.addEventListener\("pointerup"/);
   assert.doesNotMatch(tokenSrc, /chart\.addEventListener\("mousemove"/);
   assert.match(tokenSrc, /ev\.pointerType === "touch" \? 24 : 9/);
-  assert.match(css, /#chart\{display:block; width:100%; height:100%; touch-action:pan-y;\}/);
+  assert.match(css, /@media \(max-width:880px\)\{[\s\S]*?#chart\{touch-action:pan-y;\}/);
 });

@@ -373,7 +373,7 @@ footer{border-top:1px solid var(--line); padding:16px 0 26px;}
 .tf:hover{color:var(--fg);}
 .tf.on{background:var(--capx-a); color:var(--capx);}
 .chartbox{position:relative; flex:1 1 auto; min-height:280px;}
-#chart{display:block; width:100%; height:100%; touch-action:pan-y;}
+#chart{display:block; width:100%; height:100%;}
 .readout{position:absolute; top:10px; left:14px; display:flex; gap:18px; pointer-events:none; font-family:var(--mono); font-size:11px;}
 .readout .r .k{font-size:9px; letter-spacing:.06em; text-transform:uppercase; color:var(--t600);}
 .readout .r .v{margin-top:3px; color:var(--t300);}
@@ -546,6 +546,8 @@ footer{border-top:1px solid var(--line); padding:16px 0 26px;}
   .bento > .t-price, .bento > .t-work{grid-column:span 3;}
   .t-chart{grid-row:auto; min-height:0;}
   .chartbox{min-height:0; height:clamp(240px,45vh,360px);}
+  /* vertical page scroll must win over the chart on touch screens (R13) */
+  #chart{touch-action:pan-y;}
   /* the provenance legend must be allowed to shrink or it widens the layout viewport (F2) */
   .planes.tight{flex:0 1 auto; min-width:0;}
   .legendrow .planes{max-width:100%;}
