@@ -579,3 +579,102 @@ a:focus-visible, button:focus-visible, [tabindex]:focus-visible, .fchip:focus-vi
   .wr{animation:none;}
   *{transition:none !important;}
 }
+
+/* ===== phone type floor (plan 2026-08-29-002, R11) ===== */
+@media (max-width:700px){
+  .ag{flex:1 1 calc(50% - 1px);}
+  .ag .v{font-size:18px;}
+  .chips{flex-wrap:nowrap; flex:1 0 100%; min-width:0; overflow-x:auto; -webkit-overflow-scrolling:touch; scroll-snap-type:x proximity; scrollbar-width:thin;}
+  .chips > *{flex:none; scroll-snap-align:start;}
+  .t-id{align-items:center; flex-wrap:wrap;}
+  .idmain{flex:1 1 calc(100% - 52px);}
+  .idmission{flex:0 0 100%; border-left:0; padding-left:0;}
+  .idmeta{flex:0 0 100%; justify-content:flex-start;}
+  .prov{text-align:left; width:100%;}
+  .provrow{justify-content:flex-start;}
+
+  .label{font-size:11px;}
+  .pill{font-size:11px;}
+  .back{font-size:11px;}
+  .ag .v .u{font-size:11px;}
+  .sbnote{font-size:11px;}
+  .podsub{font-size:11px;}
+  .podbits{font-size:11px;}
+  .podscore .u{font-size:11px;}
+  .hint{font-size:11px;}
+  .fchip{font-size:11px;}
+  .tbl-scroll thead th{font-size:11px;}
+  .rk{font-size:11px;}
+  .mono2{font-size:11px;}
+  .tok .tk{font-size:11px;}
+  td .u{font-size:11px;}
+  .d2{font-size:11px;}
+  .d2 .u{font-size:11px;}
+  .ag .v2{font-size:11px;}
+  .ag .v2 .u{font-size:11px;}
+  td.work .d{font-size:11px;}
+  .lvl{font-size:11px;}
+  .glyph{font-size:11px;}
+  .tell{font-size:11px;}
+  .planes.tight .plane{font-size:11px;}
+  .tblnote{font-size:11px;}
+  .foot-tag{font-size:11px;}
+  .idsub{font-size:11px;}
+  .pv{font-size:11px;}
+  .provsub{font-size:11px;}
+  .bigcapx .u{font-size:11px;}
+  .mini .v2{font-size:11px;}
+  .mini .v2 .u{font-size:11px;}
+  .readout .r .v .ro2{font-size:11px;}
+  .mini .k{font-size:11px;}
+  .pulsehz{font-size:11px;}
+  .ghm{font-size:11px;}
+  .ghdow{font-size:11px;}
+  .pulsefoot{font-size:11px;}
+  .wsmall{font-size:11px;}
+  .wdays .u{font-size:11px;}
+  .wnums em{font-size:11px;}
+  .guard{font-size:11px;}
+  .consfoot{font-size:11px;}
+  .vit .v .u{font-size:11px;}
+  .lg{font-size:11px;}
+  .tf{font-size:11px;}
+  .readout .r .k{font-size:11px;}
+  .evtip{font-size:11px;}
+  .divergence{font-size:11px;}
+  .chk{font-size:11px;}
+  .chk .ck{font-size:11px;}
+  .reprofoot{font-size:11px;}
+  #env{font-size:11px;}
+  .wr .ts{font-size:11px;}
+  .chip{font-size:11px;}
+  .chip.crit{font-size:11px;}
+  .chip.agent{font-size:11px;}
+  .wr .cost{font-size:11px;}
+  .wr .cost .st{font-size:11px;}
+  .chip.node{font-size:11px;}
+  .badge{font-size:11px;}
+  .pin{font-size:11px;}
+  .op .act{font-size:11px;}
+  .dec .dt{font-size:11px;}
+  .esc .es{font-size:11px;}
+  .empty{font-size:11px;}
+  .empty.tall{font-size:11px;}
+  .scale{font-size:11px;}
+  .rung .n{font-size:11px;}
+  .dp{font-size:11px;}
+  .plane{font-size:11px;}
+  .plane b{font-size:11px;}
+  .attest{font-size:11px;}
+  .stale-mark{font-size:11px;}
+  .artifact-tab{font-size:11px;}
+  .open-full{font-size:11px;}
+  .liveitem .lq{font-size:11px;}
+  .liveitem .go{font-size:11px;}
+  .secnote{font-size:11px;}
+  .tokenlinks a{font-size:11px;}
+  .wrday{font-size:11px;}
+  .outrow .chip{font-size:11px;}
+  .outbadge{font-size:11px;}
+  .reader-prov .chip{font-size:11px;}
+}
