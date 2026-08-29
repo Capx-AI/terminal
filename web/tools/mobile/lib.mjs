@@ -510,6 +510,8 @@ export async function tableCheck(page) {
         };
       }
       wrap.scrollLeft = wrap.scrollWidth;
+      // the scroll event is asynchronous; market.js listens for it, so fire it before reading the attribute
+      wrap.dispatchEvent(new Event("scroll"));
       const dataMoreAtEnd = wrap.getAttribute("data-more");
       wrap.scrollLeft = 0;
       tables.push({

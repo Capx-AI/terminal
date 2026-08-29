@@ -632,6 +632,8 @@ a:focus-visible, button:focus-visible, [tabindex]:focus-visible, .fchip:focus-vi
   .prov{text-align:left; width:100%;}
   .provrow{justify-content:flex-start;}
 
+  /* tap targets (R12): header links and the no-bind CTA are text-height links on desktop */
+  .back,.nobind-actions a{padding:10px 0; min-height:24px;}
   .label{font-size:11px;}
   .pill{font-size:11px;}
   .back{font-size:11px;}

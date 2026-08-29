@@ -43,19 +43,26 @@ test("phone block covers every stylesheet font below 11px", () => {
   const [appOutsidePhone, phoneBlock] = parts;
   assert.match(phoneBlock, /^\s*@media \(max-width:700px\)\{[\s\S]*\}\s*$/);
 
-  const inventory = [
-    ...smallFontRules(appOutsidePhone),
-    ...smallFontRules(v1),
-  ];
+  // v1.css loads after app.css, so a small size declared in v1.css can only be
+  // raised by a block inside v1.css; app.css rules are raised in the app block.
+  const v1Marker = "/* ===== phone type floor, v1 sheet (plan 2026-08-29-002, R11) ===== */";
+  const v1Parts = v1.split(v1Marker);
+  assert.equal(v1Parts.length, 2, "v1 phone type-floor marker must appear exactly once");
+  const [v1OutsidePhone, v1PhoneBlock] = v1Parts;
   const phoneRules = leafRules(phoneBlock);
+  const v1PhoneRules = leafRules(v1PhoneBlock);
 
-  for (const { selector } of inventory) {
-    const overrides = phoneRules.filter((rule) => rule.selector === selector);
-    assert.ok(
-      overrides.some(({ declarations }) => /font-size\s*:\s*11px\b/.test(declarations)),
-      `${selector} needs font-size:11px in the phone type-floor block`,
-    );
-  }
+  const check = (inventory, rules, where) => {
+    for (const { selector } of inventory) {
+      const overrides = rules.filter((rule) => rule.selector === selector);
+      assert.ok(
+        overrides.some(({ declarations }) => /font-size\s*:\s*11px\b/.test(declarations)),
+        `${selector} needs font-size:11px in the ${where} phone type-floor block`,
+      );
+    }
+  };
+  check(smallFontRules(appOutsidePhone), phoneRules, "app.css");
+  check(smallFontRules(v1OutsidePhone), v1PhoneRules, "v1.css");
 });
 
 test("both token chart axis fonts use the phone matchMedia floor", () => {

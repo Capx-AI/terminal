@@ -240,3 +240,22 @@
   .liveitems,.attfeed{flex-wrap:nowrap; min-width:0; overflow-x:auto; -webkit-overflow-scrolling:touch; scroll-snap-type:x proximity; scrollbar-width:thin;}
   .liveitems > *,.attfeed > *{flex:none; scroll-snap-align:start;}
 }
+
+/* ===== phone type floor, v1 sheet (plan 2026-08-29-002, R11) ===== */
+/* v1.css loads after app.css, so its own small sizes must be raised here; the app.css block cannot reach them. */
+@media (max-width:700px){
+  .stale-mark{font-size:11px;}
+  .artifact-tab{font-size:11px;}
+  .open-full{font-size:11px;}
+  .liveitem .lq{font-size:11px;}
+  .liveitem .go{font-size:11px;}
+  .secnote{font-size:11px;}
+  .tokenlinks a{font-size:11px;}
+  .wrday{font-size:11px;}
+  .outrow .chip{font-size:11px;}
+  .outbadge{font-size:11px;}
+  .reader-prov .chip{font-size:11px;}
+  /* tap targets (R12): the plain Open links have no padding of their own */
+  .open-full{display:inline-block; padding:8px 0; min-height:24px;}
+  .artifact-open{padding:7px 9px;}
+}
