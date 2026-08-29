@@ -437,6 +437,26 @@ test("mobile and desktop fixtures keep overflow, contrast, and keyboard chrome",
   assert.match(app, /\.chartbox\{min-height:0; height:clamp\(240px,45vh,360px\);\}/);
   assert.match(app, /\.planes\.tight\{flex:0 1 auto; min-width:0;\}/);
   assert.match(app, /\.hrow\{height:auto; min-height:50px; flex-wrap:wrap/);
+  // plan 2026-08-29-002 W2: real table widths, pinned phone columns, and a live scroll cue
+  assert.equal((index.match(/<colgroup>/g) || []).length, 3);
+  assert.match(index, /<colgroup>\s*<col class="c-rank">\s*<col>\s*<col class="c-px">\s*<col class="c-chg">\s*<col class="c-vol">\s*<col class="c-fdv">\s*<col class="c-spark">\s*<col class="c-ver">\s*<col class="c-work">\s*<col class="c-cal">\s*<col class="c-att">\s*<\/colgroup>/);
+  assert.match(index, /<colgroup>\s*<col class="c-rank">\s*<col>\s*<col class="c-px">\s*<col class="c-chg">\s*<col class="c-vol">\s*<col class="c-liq">\s*<col class="c-fdv">\s*<col class="c-spark">\s*<col class="c-ver">\s*<\/colgroup>/);
+  assert.match(index, /<colgroup>\s*<col class="c-rank">\s*<col>\s*<col class="c-ver">\s*<col class="c-work">\s*<col class="c-cal">\s*<col class="c-bm">\s*<col class="c-cov">\s*<col class="c-chain">\s*<col class="c-att">\s*<col class="c-fdv">\s*<\/colgroup>/);
+  assert.match(app, /\/\* ===== phone tables \(plan 2026-08-29-002, R5\) ===== \*\//);
+  assert.match(app, /\.tbl-scroll\[data-more="1"\]::after\{content:""; position:absolute; top:0; right:0; bottom:0; width:48px;/);
+  assert.match(app, /\.tbl-scroll thead th:first-child,\s*\.tbl-scroll thead th:nth-child\(2\)\{position:sticky; background:#0d0e10; z-index:4;\}/);
+  assert.match(app, /\.tbl-scroll tbody td:first-child,\s*\.tbl-scroll tbody td:nth-child\(2\)\{position:sticky; background:var\(--phone-row-bg\); z-index:2;\}/);
+  assert.match(app, /\.tbl-scroll thead th:first-child,\s*\.tbl-scroll tbody td:first-child\{left:0;\}/);
+  assert.match(app, /\.tbl-scroll thead th:nth-child\(2\),\s*\.tbl-scroll tbody td:nth-child\(2\)\{left:44px;\}/);
+  assert.match(app, /td\.l\{position:relative;\}/);
+  assert.match(app, /\.tok \.nm::after\{content:""; position:absolute; inset:0;\}/);
+  assert.match(app, /\.tbl-scroll thead th\[data-k\]\{padding:14px 14px;\}/);
+  assert.match(app, /#tokens-note::after,\s*#companies-note::after,\s*#bound-note::after\{content:" \\00b7  swipe for more";\}/);
+  assert.match(marketJs, /function syncScrollCue\(el\)/);
+  assert.match(marketJs, /el\.dataset\.more = "1"/);
+  assert.match(marketJs, /delete el\.dataset\.more/);
+  assert.match(marketJs, /el\.addEventListener\("scroll"/);
+  assert.match(marketJs, /window\.addEventListener\("resize", syncTableScrollCues\)/);
   // no v1.css tile span may fire against the six-column phone grid: every span 12 sits under a min-width query
   const v1Blocks = v1.split(/(?=@media)/);
   for (const block of v1Blocks) {

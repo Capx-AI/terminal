@@ -152,6 +152,34 @@ col.c-cov{width:98px;}    col.c-chain{width:76px;} col.c-att{width:108px;}
 .tbl-scroll thead th.co{color:var(--capx2);}
 .tbl-scroll tbody td{padding:13px 14px; border-bottom:1px solid var(--line); font-size:12px; color:var(--t300); text-align:right; white-space:nowrap; overflow:hidden;}
 .tbl-scroll tbody td.l{text-align:left;}
+/* ===== phone tables (plan 2026-08-29-002, R5) ===== */
+@media (max-width:700px){
+  .tbl-scroll{position:relative;}
+  .tbl-scroll[data-more="1"]::after{content:""; position:absolute; top:0; right:0; bottom:0; width:48px; background:linear-gradient(to right,transparent,var(--bg)); pointer-events:none; z-index:5;}
+  .tbl-scroll tbody tr{--phone-row-bg:#0d0e10;}
+  .tbl-scroll tbody tr:hover{--phone-row-bg:linear-gradient(rgba(255,255,255,.025),rgba(255,255,255,.025)),#0d0e10;}
+  .tbl-scroll tbody tr:focus-within{--phone-row-bg:linear-gradient(rgba(197,220,107,.05),rgba(197,220,107,.05)),#0d0e10;}
+  td.l{position:relative;}
+  .tok .nm::after{content:""; position:absolute; inset:0;}
+  .tbl-scroll thead th:first-child,
+  .tbl-scroll thead th:nth-child(2){position:sticky; background:#0d0e10; z-index:4;}
+  .tbl-scroll tbody td:first-child,
+  .tbl-scroll tbody td:nth-child(2){position:sticky; background:var(--phone-row-bg); z-index:2;}
+  .tbl-scroll tbody tr.faded > td:first-child,
+  .tbl-scroll tbody tr.faded > td:nth-child(2){opacity:1;}
+  .tbl-scroll tbody tr.faded > td:first-child > *,
+  .tbl-scroll tbody tr.faded > td:nth-child(2) > *{opacity:.5;}
+  .tbl-scroll tbody tr.faded:hover > td:first-child > *,
+  .tbl-scroll tbody tr.faded:hover > td:nth-child(2) > *{opacity:1;}
+  .tbl-scroll thead th:first-child,
+  .tbl-scroll tbody td:first-child{left:0;}
+  .tbl-scroll thead th:nth-child(2),
+  .tbl-scroll tbody td:nth-child(2){left:44px;}
+  .tbl-scroll thead th[data-k]{padding:14px 14px;}
+  #tokens-note::after,
+  #companies-note::after,
+  #bound-note::after{content:" \00b7  swipe for more";}
+}
 /* .dn/.lit lose to the td selector on specificity, so restate them here */
 .tbl-scroll tbody td.dn{color:var(--danger);}
 .tbl-scroll tbody td.lit{color:var(--capx);}

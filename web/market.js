@@ -14,6 +14,15 @@ var ENDED_STATES = { REFUNDED: true, UNFUNDED_EXPIRED: true };
 var DATA = null;
 var MARKET_KEYS = ["price_usd", "fdv_usd", "volume_24h_usd", "liquidity_usd", "change_24h_percent"];
 
+function syncScrollCue(el) {
+  if (el.scrollLeft + el.clientWidth < el.scrollWidth - 4) el.dataset.more = "1";
+  else delete el.dataset.more;
+}
+
+function syncTableScrollCues() {
+  document.querySelectorAll(".tbl-scroll").forEach(syncScrollCue);
+}
+
 var LEVEL_NAMES = [
   "Ideation and validation",
   "Commit and incorporate",
@@ -771,6 +780,7 @@ function render() {
     : vis.length + " of " + all.length + " rows";
   paintSortArrows();
   drawCals();
+  syncTableScrollCues();
 }
 
 /* Latest published outputs across the registry, from the slim market sidecar. */
@@ -910,6 +920,11 @@ function bindSort(tableId, key) {
 bindSort("table-bound", "bound");
 bindSort("table-tokens", "tokens");
 bindSort("table-companies", "companies");
+
+document.querySelectorAll(".tbl-scroll").forEach(function (el) {
+  el.addEventListener("scroll", function () { syncScrollCue(el); });
+});
+window.addEventListener("resize", syncTableScrollCues);
 
 function openRow(e) {
   if (e.target.closest("a")) return;
