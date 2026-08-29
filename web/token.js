@@ -244,6 +244,7 @@ function paintIdentity(token, doc) {
     mission = String(token.description).split("\n")[0].slice(0, 180);
   }
   $("id-mission").textContent = mission;
+  bindMore(mission);
 
   paintProvenance(token, doc);
 }
@@ -328,6 +329,7 @@ function paintMarket(token, capx) {
   $("m-fdv").textContent = mp && mp.currentMarketCapUsd != null ? F.usdCompact(mp.currentMarketCapUsd) : "--";
   $("m-liq").textContent = mp && mp.liquidityUsd != null ? F.usdCompact(mp.liquidityUsd) : "--";
   $("m-vol").textContent = mp && mp.volume24hUsd != null ? F.usdCompact(mp.volume24hUsd) : "--";
+  paintKeysMarket(token, mp, price);
 
   show("raise-row", true);
   $("m-state").textContent = token.state ? stateLabel(token.state) : "--";
@@ -337,6 +339,60 @@ function paintMarket(token, capx) {
     ? new Date(token.fundraisingDeadlineAt).toISOString().replace("T", " ").replace(/\.\d+Z$/, " UTC")
     : "--";
   paintTokenLinks(token);
+}
+
+// Phone key-numbers strip (plan 2026-08-29-003). Same facts as the market tile,
+// six cells under the header; CSS hides the tile above 700px.
+function setKey(id, html, cls) {
+  var el = $(id);
+  if (!el) return;
+  el.innerHTML = html;
+  el.className = "v" + (el.className.indexOf("lit") >= 0 ? " lit" : "") + (cls ? " " + cls : "");
+}
+
+function paintKeysMarket(token, mp, price) {
+  var tile = $("tile-keys");
+  if (!tile) return;
+  tile.hidden = false;
+  setKey("k-price", price == null ? "not launched" : F.usdPx(price));
+  var chg = mp && mp.priceChange24hPercent;
+  setKey("k-chg", typeof chg === "number" ? F.pct(chg) : "--", typeof chg === "number" ? (chg >= 0 ? "up" : "dn") : "");
+  setKey("k-fdv", mp && mp.currentMarketCapUsd != null ? F.usdCompact(mp.currentMarketCapUsd) : "--");
+  setKey("k-liq", mp && mp.liquidityUsd != null ? F.usdCompact(mp.liquidityUsd) : "--");
+  setKey("k-vol", mp && mp.volume24hUsd != null ? F.usdCompact(mp.volume24hUsd) : "--");
+  // launch valuation to current market cap, a Launchpad market fact
+  var roi = mp && typeof mp.roiMultiple === "number" && isFinite(mp.roiMultiple) ? mp.roiMultiple : null;
+  setKey("k-roi", roi == null ? "--" : (roi >= 10 ? roi.toFixed(0) : roi.toFixed(2)) + "x", roi == null ? "" : (roi >= 1 ? "up" : "dn"));
+}
+
+function paintKeysCasa(doc) {
+  var row = $("keys-casa");
+  if (!row) return;
+  var a = doc && doc.attestation, p = doc && doc.progress, r = doc && doc.reproduced;
+  if (!doc || !(a || p)) { row.hidden = true; return; }
+  row.hidden = false;
+  setKey("k-health", a && typeof a.health_score === "number" ? String(a.health_score) : "--");
+  var lv = p && typeof p.level === "number" ? "L" + p.level + (Array.isArray(p.levels) && p.levels.length ? " of " + (p.levels.length - 1) : "") : "--";
+  setKey("k-level", F.esc(lv));
+  setKey("k-tasks", p && p.work && typeof p.work.tasks_7d === "number" ? F.ci(p.work.tasks_7d) : "--");
+  setKey("k-cov", r && typeof r.coverage_bp === "number" ? F.bp(r.coverage_bp) : "--");
+  setKey("k-chain", r ? (r.chain_intact === true ? "intact" : (r.chain_intact === false ? "broken" : "--")) : "--", r && r.chain_intact === false ? "dn" : "");
+  setKey("k-att", a && typeof a.hours_since === "number" ? F.esc(F.hoursAgo(a.hours_since)) : (a && a.freshness ? F.esc(a.freshness) : "--"));
+}
+
+// Description clamp: two lines on phones, a "more" toggle when there is more to read.
+function bindMore(text) {
+  var btn = $("id-more");
+  if (!btn) return;
+  var tile = btn.closest(".t-id");
+  btn.hidden = !(text && text.length > 90);
+  if (btn._bound) return;
+  btn._bound = true;
+  btn.addEventListener("click", function () {
+    var open = tile.classList.toggle("open");
+    btn.textContent = open ? "less" : "more";
+    btn.setAttribute("aria-expanded", open ? "true" : "false");
+  });
 }
 
 function paintTokenLinks(token) {
@@ -1622,6 +1678,7 @@ function paintCasa(token, doc) {
   loadCalendar(doc, token);
   show("tile-chart", true);
   paintWork(doc);
+  paintKeysCasa(doc);
   paintConstraint(doc);
   paintVitals(doc);
   paintRepro(doc);

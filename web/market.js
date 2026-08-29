@@ -436,6 +436,36 @@ function drawSpark(c) {
   ctx.fill();
 }
 
+// Phone-only second line under the name (plan 2026-08-29-003): the two or three
+// numbers a visitor wants first, so the first screen answers before a swipe.
+function mobileLine(row) {
+  var bits = [];
+  var s = "<span class='s'> · </span>";
+  var stale = row.market && row.market.stale;
+  if (row.kind === "company_without_token") {
+    var h = healthOf(row);
+    if (h != null) bits.push("<span class='lit'>" + h + " health</span>");
+    var t7 = tasks7dOf(row);
+    if (t7 != null) bits.push(F.ci(t7) + " tasks 7d");
+    var hs = hoursSinceOf(row);
+    if (hs != null) bits.push("attested " + F.esc(F.hoursAgo(hs)));
+    else if (row.freshness) bits.push(F.esc(row.freshness));
+  } else {
+    var p = priceOf(row);
+    bits.push(p == null ? "--" : F.usdPx(p) + (stale ? " stale" : ""));
+    var c = chgOf(row);
+    if (c != null) bits.push("<span class='" + (c >= 0 ? "up" : "dn") + "'>" + F.pct(c) + "</span>");
+    if (row.kind === "company_with_token") {
+      var h2 = healthOf(row);
+      if (h2 != null) bits.push("<span class='lit'>" + h2 + " health</span>");
+    } else {
+      var m = mcapOf(row);
+      if (m != null) bits.push("FDV " + F.usdCompact(m));
+    }
+  }
+  return bits.join(s);
+}
+
 function tokenCell(row) {
   var mark = (row.symbol || (row.slug || "?")).slice(0, 2);
   var logo = row.logoUrl
@@ -462,6 +492,7 @@ function tokenCell(row) {
   return "<div class='tok'>" + logo + "<span>" + nameEl
     + "<div class='tk'>" + ticker + "</div>"
     + (tells ? "<div class='tells'>" + tells + "</div>" : "")
+    + "<div class='ml'>" + mobileLine(row) + "</div>"
     + "</span></div>";
 }
 

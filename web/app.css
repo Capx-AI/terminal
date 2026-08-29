@@ -719,3 +719,55 @@ a:focus-visible, button:focus-visible, [tabindex]:focus-visible, .fchip:focus-vi
   .outbadge{font-size:11px;}
   .reader-prov .chip{font-size:11px;}
 }
+
+/* ===== phone density (plan 2026-08-29-003) =====
+   Same facts, tighter first screen: key-numbers strip, one-row identity with a clamped
+   description, market facts as key-value rows, four-up stat strip, podium rows, a second
+   line under table names. Nothing here renders above 700px. */
+@media (min-width:701px){ .t-keys, .idmore, .tok .ml{display:none !important;} }
+@media (max-width:700px){
+  .t-keys{border:0; background:transparent; overflow:visible; gap:6px;}
+  .keys{display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--line); border:1px solid var(--line); border-radius:var(--tr); overflow:hidden;}
+  .keys .key{background:#0d0e10; padding:8px 9px; min-width:0;}
+  .keys .k{font-family:var(--mono); font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--t500); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .keys .k.lit{color:var(--capx);}
+  .keys .v{margin-top:3px; font-family:var(--mono); font-variant-numeric:tabular-nums; font-size:14px; color:var(--fg); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:fit-content; max-width:100%;}
+  .keys .v.lit{color:var(--capx);}
+  .keys .v.up{color:var(--ok);} .keys .v.dn{color:var(--danger);}
+  .t-id{padding:10px 12px; gap:10px;}
+  .idmark, .idmark img{width:32px; height:32px;}
+  .idname{font-size:15px;}
+  .idmission{margin-top:2px; font-size:12.5px; line-height:1.45; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;}
+  .t-id.open .idmission{display:block; -webkit-line-clamp:unset;}
+  .idmore{display:inline-block; flex:0 0 100%; background:none; border:0; padding:6px 0; margin:-4px 0 0; min-height:24px; text-align:left; color:var(--capx); font-family:var(--mono); font-size:11px; letter-spacing:.06em; text-transform:uppercase; cursor:pointer;}
+  .idmeta .pv{padding:2px 6px;}
+  .t-price, .t-work{padding:10px 12px;}
+  .tile.pad, .t-cons .tb, .t-repro .tb.pad, .t-attest .tb.pad, .t-ladder .tb, .t-dept .tb{padding:12px 13px;}
+  .th{padding:8px 10px;}
+  .big{margin-top:6px; font-size:24px;}
+  .bigcapx{margin-top:4px;} .bigsub{margin-top:4px;}
+  .minirow{display:block; margin-top:6px; padding-top:4px;}
+  .minirow + .minirow{padding-top:0; margin-top:0;}
+  .mini{display:flex; justify-content:flex-start; align-items:baseline; gap:6px; padding:6px 0; border-top:1px solid var(--line);}
+  .mini .k{flex:none; margin-right:auto; font-size:11px;}
+  .mini .v{margin-top:0; font-size:12px; text-align:right; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .mini .v2{margin-top:0; font-size:11px; flex:none;}
+  .aggrow .ag{flex:1 1 calc(25% - 1px); padding:7px 8px;}
+  .ag .v{font-size:15px; margin-top:4px; white-space:normal;}
+  .ag .v .u{display:block; margin:3px 0 0; font-size:11px;}
+  .ag .v .chg{display:block; margin:3px 0 0;}
+  .ag .v2{display:none;}
+  .thesis p{padding:8px var(--gut); display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;}
+  .sb{padding-top:10px; padding-bottom:10px;}
+  .sbhead{margin-bottom:8px;}
+  .sbnote{display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;}
+  .podium{gap:4px;}
+  .pod{padding:7px 10px; gap:10px; border-radius:var(--radius);}
+  .podmark{width:26px; height:26px; font-size:11px;}
+  .podmain{gap:1px;} .podname{font-size:12.5px;}
+  .podbits{border-bottom:0; padding-bottom:0; margin-top:0;}
+  .podscore em{font-size:17px;} .podbar{display:none;}
+  .tbl-scroll tbody td{padding:9px 14px;}
+  .tok .ml{display:block; font-family:var(--mono); font-size:11px; color:var(--t400); margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .tok .ml .up{color:var(--ok);} .tok .ml .dn{color:var(--danger);} .tok .ml .lit{color:var(--capx);} .tok .ml .s{color:var(--t600);}
+}

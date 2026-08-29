@@ -6,8 +6,8 @@
 <title>Capx Terminal</title>
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/favicon-180.png">
-<link rel="stylesheet" href="/app.css?v=26082903">
-<link rel="stylesheet" href="/v1.css?v=26082903">
+<link rel="stylesheet" href="/app.css?v=26082904">
+<link rel="stylesheet" href="/v1.css?v=26082904">
 </head>
 <body>
 
@@ -38,6 +38,25 @@
 
   <div class="bento" id="page" hidden>
 
+    <section class="tile t-keys" id="tile-keys" hidden>
+      <div class="keys" id="keys-market">
+        <div class="key"><div class="k">Price</div><div class="v" id="k-price">--</div></div>
+        <div class="key"><div class="k">24h</div><div class="v" id="k-chg">--</div></div>
+        <div class="key"><div class="k">FDV</div><div class="v" id="k-fdv">--</div></div>
+        <div class="key"><div class="k">Liquidity</div><div class="v" id="k-liq">--</div></div>
+        <div class="key"><div class="k">24h volume</div><div class="v" id="k-vol">--</div></div>
+        <div class="key"><div class="k">Launch to now</div><div class="v" id="k-roi">--</div></div>
+      </div>
+      <div class="keys keys-casa" id="keys-casa" hidden>
+        <div class="key"><div class="k lit">Health</div><div class="v lit v-rep" id="k-health">--</div></div>
+        <div class="key"><div class="k lit">Level</div><div class="v lit v-clm" id="k-level">--</div></div>
+        <div class="key"><div class="k lit">Tasks 7d</div><div class="v lit v-clm" id="k-tasks">--</div></div>
+        <div class="key"><div class="k lit">Coverage</div><div class="v lit v-rep" id="k-cov">--</div></div>
+        <div class="key"><div class="k lit">Chain</div><div class="v lit v-rep" id="k-chain">--</div></div>
+        <div class="key"><div class="k lit">Attested</div><div class="v lit v-rep" id="k-att">--</div></div>
+      </div>
+    </section>
+
     <section class="tile t-id">
       <div class="idmark" id="id-mark"></div>
       <div class="idmain">
@@ -50,6 +69,7 @@
         </div>
       </div>
       <p class="idmission" id="id-mission"></p>
+      <button type="button" class="idmore" id="id-more" hidden aria-expanded="false">more</button>
       <div class="idmeta">
         <div class="prov" id="prov"></div>
       </div>
@@ -234,8 +254,8 @@
   </footer>
 </main>
 
-<script src="/fmt.js?v=26082903"></script>
-<script src="/stars.js?v=26082903"></script>
-<script src="/token.js?v=26082903"></script>
+<script src="/fmt.js?v=26082904"></script>
+<script src="/stars.js?v=26082904"></script>
+<script src="/token.js?v=26082904"></script>
 </body>
 </html>

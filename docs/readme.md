@@ -19,3 +19,4 @@ Contracts and notes for Capx Terminal v1.
 - **2026-08-24** — Company pages paint Casa lime tiles minus price. Market company columns read `company_surfaces`.
 - **2026-08-29** — `plans/2026-08-29-002-fix-mobile-plan.md`: phone layout plan (founder ask). Proposes contract section 20 (phone layout) once Phase 1 ships.
 - **2026-08-29 (later)** — Contract 20a (Phase 1 shipped) and 20b (Phase 2 shipped) appended.
+- **2026-08-29 (density)** — Contract 20c (phone density) appended.

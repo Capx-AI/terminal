@@ -323,8 +323,10 @@ export const baselineScript = () => {
   const pathOf = (el) => {
     const parts = [];
     for (let e = el; e && e !== document.body; e = e.parentElement) {
-      // index among same-tag siblings, so inserting a colgroup does not renumber thead and tbody
-      const idx = e.parentElement ? [...e.parentElement.children].filter((c) => c.tagName === e.tagName).indexOf(e) : 0;
+      // index among RENDERED same-tag siblings: a colgroup, a hidden phone-only tile, or a
+      // display:none node inserted anywhere must not renumber the elements around it
+      const rendered = (c) => { const r = c.getBoundingClientRect(); return r.width > 0 || r.height > 0; };
+      const idx = e.parentElement ? [...e.parentElement.children].filter((c) => c.tagName === e.tagName && (c === e || rendered(c))).indexOf(e) : 0;
       parts.unshift(e.tagName.toLowerCase() + (e.id ? "#" + e.id : "") + ":" + idx);
     }
     return parts.join(">");
@@ -340,6 +342,10 @@ export const baselineScript = () => {
     if (el.closest("#live-rail")) continue;
     // col and colgroup are not rendered boxes; they only carry widths that the cells already reflect
     if (el.tagName === "COL" || el.tagName === "COLGROUP") continue;
+    // unrendered nodes (hidden tiles, phone-only markup) are not part of the desktop picture;
+    // two adjacent hidden siblings would also share a path key, so they are skipped outright
+    const box0 = el.getBoundingClientRect();
+    if (box0.width === 0 && box0.height === 0) continue;
     const cs = getComputedStyle(el);
     const props = [];
     for (let i = 0; i < cs.length; i++) { const n = cs[i]; props.push(n + ":" + cs.getPropertyValue(n)); }
@@ -727,5 +733,30 @@ export async function tileWidths(page) {
       pair: (vw - 30) / 2,
       tiles,
     };
+  });
+}
+
+
+// Density (plan 2026-08-29-003): how many visible text nodes above the fold carry a number.
+// The same count DexScreener was measured with; the phase 3 test holds the floor.
+export async function factCensus(page) {
+  return page.evaluate(() => {
+    const vh = window.innerHeight, vw = window.innerWidth;
+    const visible = (el) => {
+      const cs = getComputedStyle(el);
+      if (cs.display === "none" || cs.visibility === "hidden" || parseFloat(cs.opacity) === 0) return false;
+      const b = el.getBoundingClientRect();
+      return b.width > 0 && b.height > 0 && b.bottom > 0 && b.top < vh && b.right > 0 && b.left < vw;
+    };
+    let textNodes = 0, numeric = 0;
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    let n;
+    while ((n = walker.nextNode())) {
+      const t = n.textContent.replace(/\s+/g, " ").trim();
+      if (!t || !n.parentElement || !visible(n.parentElement)) continue;
+      textNodes += 1;
+      if (/\d/.test(t)) numeric += 1;
+    }
+    return { innerWidth: vw, innerHeight: vh, textNodes, numeric, docH: document.documentElement.scrollHeight };
   });
 }

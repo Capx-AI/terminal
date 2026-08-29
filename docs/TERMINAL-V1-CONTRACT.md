@@ -570,3 +570,30 @@ desktop is unchanged, proved by the harness baseline diff at 1024 and
   are the release gate alongside the phase 1 gates; the desktop baseline
   excludes the time-dependent heatmap cells and tolerates additions that
   are not rendered on desktop.
+
+## 20c. Amendment 2026-08-29: phone density
+
+Founder ask the same afternoon: DexScreener fits about a hundred numbers on
+the first phone screen of a pair page, Terminal fit ten. Plan
+`docs/plans/2026-08-29-003-mobile-density-plan.md`. Phones only (700px and
+under); desktop unchanged by the harness baseline diff.
+
+- A key-numbers strip is the first tile on token and company pages: six
+  market cells (price, 24h, FDV, liquidity, 24h volume, and launch-to-now on
+  tokens or the token symbol on companies) and, when Casa has a record, six
+  lime cells (health, level, tasks 7d, coverage, chain, attested). Same
+  facts as the tiles below, same provenance colours; launch-to-now is the
+  Launchpad launch valuation to current market cap and is labelled as a
+  market fact.
+- The identity tile is one row with the description clamped to two lines
+  and a "more" toggle.
+- Market and work facts render as key-value rows (label left, value right)
+  instead of a two-column grid.
+- Home: the stat strip is four cards per row with units under the values,
+  the thesis is clamped to two lines, the podium is three list rows, table
+  rows are 9px padded, and every name cell carries a second line with the
+  first numbers a visitor wants (price, 24h, FDV; or health, tasks 7d,
+  attested; or price, 24h, health for bound pairs).
+- Harness: `npm run test:phase3` holds density floors (numbers above the
+  fold at 390 on the SAMPLE fixtures) and page-height caps; the desktop
+  baseline keys paths by rendered siblings and skips unrendered nodes.

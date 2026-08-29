@@ -86,6 +86,7 @@ function paintIdentity(company) {
   $("id-level").textContent = level;
   $("id-founded").textContent = fmtFounded(company.created_at || company.published_at);
   $("id-mission").textContent = company.description || "";
+  bindMore(company.description || "");
 }
 
 function paintProvenance(company) {
@@ -117,6 +118,8 @@ function paintMarket(payload) {
   if (!hasToken) {
     // Collapse: no dashed-out market grid and no empty chart while the
     // company has no token. One line plus the attach route instead.
+    var keysM = $("keys-market");
+    if (keysM) keysM.hidden = true;
     $("m-price").textContent = "No token yet";
     $("m-price-note").textContent =
       "This company attests work without a market. Market data appears the moment a token launches and binds.";
@@ -147,6 +150,55 @@ function paintMarket(payload) {
   $("m-liq").textContent = finite(m.liquidity_usd) ? F.usdCompact(m.liquidity_usd) : "--";
   $("m-vol").textContent = finite(m.volume_24h_usd) ? F.usdCompact(m.volume_24h_usd) : "--";
   $("m-chg2").textContent = finite(chg) ? F.pct(chg) : "--";
+  var keysM2 = $("keys-market");
+  if (keysM2) {
+    keysM2.hidden = false;
+    setKey("k-price", price == null ? "--" : F.usdPx(price));
+    setKey("k-chg", finite(chg) ? F.pct(chg) : "--", finite(chg) ? (chg >= 0 ? "up" : "dn") : "");
+    setKey("k-fdv", finite(m.fdv_usd) ? F.usdCompact(m.fdv_usd) : "--");
+    setKey("k-liq", finite(m.liquidity_usd) ? F.usdCompact(m.liquidity_usd) : "--");
+    setKey("k-vol", finite(m.volume_24h_usd) ? F.usdCompact(m.volume_24h_usd) : "--");
+    setKey("k-token", payload.token && payload.token.symbol ? "$" + F.esc(payload.token.symbol) : "--");
+  }
+}
+
+// Phone key-numbers strip (plan 2026-08-29-003); CSS hides the tile above 700px.
+function setKey(id, html, cls) {
+  var el = $(id);
+  if (!el) return;
+  el.innerHTML = html;
+  el.className = "v" + (el.className.indexOf("lit") >= 0 ? " lit" : "") + (cls ? " " + cls : "");
+}
+
+function paintKeysCasa(company) {
+  var tile = $("tile-keys");
+  if (tile) tile.hidden = false;
+  var row = $("keys-casa");
+  if (!row) return;
+  var a = company && company.attestation, p = company && company.progress, r = company && company.reproduced;
+  if (!(a || p)) { row.hidden = true; return; }
+  row.hidden = false;
+  setKey("k-health", a && finite(a.health_score) ? String(a.health_score) : "--");
+  var lv = p && typeof p.level === "number" ? "L" + p.level + (Array.isArray(p.levels) && p.levels.length ? " of " + (p.levels.length - 1) : "") : "--";
+  setKey("k-level", F.esc(lv));
+  setKey("k-tasks", p && p.work && finite(p.work.tasks_7d) ? F.ci(p.work.tasks_7d) : "--");
+  setKey("k-cov", r && finite(r.coverage_bp) ? F.bp(r.coverage_bp) : "--");
+  setKey("k-chain", r ? (r.chain_intact === true ? "intact" : (r.chain_intact === false ? "broken" : "--")) : "--", r && r.chain_intact === false ? "dn" : "");
+  setKey("k-att", a && finite(a.hours_since) ? F.esc(F.hoursAgo(a.hours_since)) : (a && a.freshness ? F.esc(a.freshness) : "--"));
+}
+
+function bindMore(text) {
+  var btn = $("id-more");
+  if (!btn) return;
+  var tile = btn.closest(".t-id");
+  btn.hidden = !(text && text.length > 90);
+  if (btn._bound) return;
+  btn._bound = true;
+  btn.addEventListener("click", function () {
+    var open = tile.classList.toggle("open");
+    btn.textContent = open ? "less" : "more";
+    btn.setAttribute("aria-expanded", open ? "true" : "false");
+  });
 }
 
 function paintProgress(company) {
@@ -172,6 +224,7 @@ function paintProgress(company) {
   }
   $("c-ready").textContent = p && finite(p.playbooks_ready) ? String(p.playbooks_ready) : "--";
   $("c-fresh").textContent = a && a.freshness ? a.freshness : "--";
+  paintKeysCasa(company);
   var w = p && p.work;
   var extra = $("work-extra");
   if (extra) extra.hidden = !w;

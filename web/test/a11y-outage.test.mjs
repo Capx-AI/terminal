@@ -459,6 +459,17 @@ test("mobile and desktop fixtures keep overflow, contrast, and keyboard chrome",
   assert.match(app, /\.chartbox\{min-height:0; height:clamp\(240px,45vh,360px\);\}/);
   assert.match(app, /\.planes\.tight\{flex:0 1 auto; min-width:0;\}/);
   assert.match(app, /\.hrow\{height:auto; min-height:50px; flex-wrap:wrap/);
+  // plan 2026-08-29-003: phone density block, hidden above 700px
+  assert.match(app, /\/\* ===== phone density \(plan 2026-08-29-003\) =====/);
+  assert.match(app, /@media \(min-width:701px\)\{ \.t-keys, \.idmore, \.tok \.ml\{display:none !important;\} \}/);
+  assert.match(app, /\.keys\{display:grid; grid-template-columns:repeat\(3,1fr\)/);
+  assert.match(app, /\.tok \.ml\{display:block;/);
+  assert.match(marketJs, /function mobileLine\(row\)/);
+  for (const html of [readFileSync(join(webRoot, "token.html"), "utf8"), company]) {
+    assert.match(html, /<section class="tile t-keys" id="tile-keys" hidden>/);
+    assert.match(html, /id="keys-casa" hidden/);
+    assert.match(html, /<button type="button" class="idmore" id="id-more" hidden aria-expanded="false">more<\/button>/);
+  }
   assert.match(app, /\/\* ===== phone type floor \(plan 2026-08-29-002, R11\) ===== \*\//);
   assert.match(app, /\.ag\{flex:1 1 calc\(50% - 1px\);\}/);
   assert.match(app, /\.chips\{flex-wrap:nowrap/);
