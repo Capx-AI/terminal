@@ -144,7 +144,8 @@ export const baselineScript = () => {
   const pathOf = (el) => {
     const parts = [];
     for (let e = el; e && e !== document.body; e = e.parentElement) {
-      const idx = e.parentElement ? [...e.parentElement.children].indexOf(e) : 0;
+      // index among same-tag siblings, so inserting a colgroup does not renumber thead and tbody
+      const idx = e.parentElement ? [...e.parentElement.children].filter((c) => c.tagName === e.tagName).indexOf(e) : 0;
       parts.unshift(e.tagName.toLowerCase() + (e.id ? "#" + e.id : "") + ":" + idx);
     }
     return parts.join(">");
@@ -155,6 +156,8 @@ export const baselineScript = () => {
     // Heatmap cells are time-dependent (the current UTC hour bucket moves), so they
     // cannot be part of a stable baseline; the phone tests cover them separately.
     if (el.closest("#ghgrid")) continue;
+    // col and colgroup are not rendered boxes; they only carry widths that the cells already reflect
+    if (el.tagName === "COL" || el.tagName === "COLGROUP") continue;
     const cs = getComputedStyle(el);
     const props = [];
     for (let i = 0; i < cs.length; i++) { const n = cs[i]; props.push(n + ":" + cs.getPropertyValue(n)); }
