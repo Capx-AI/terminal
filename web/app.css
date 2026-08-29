@@ -139,11 +139,15 @@ header{position:sticky; top:0; z-index:30; background:rgba(8,9,10,.86); backdrop
 /* c-co is deliberately width-less. Under table-layout:fixed the leftover width is
    split across every SIZED column, which opens dead air between the data columns.
    Leaving exactly one column unsized sends all the slack there instead. */
-col.c-rank{width:44px;}                            col.c-ver{width:120px;}
-col.c-px{width:108px;}    col.c-chg{width:78px;}   col.c-vol{width:114px;}
-col.c-liq{width:108px;}   col.c-fdv{width:98px;}   col.c-spark{width:110px;}
-col.c-work{width:112px;}  col.c-cal{width:152px;}  col.c-bm{width:108px;}
-col.c-cov{width:98px;}    col.c-chain{width:76px;} col.c-att{width:108px;}
+/* col widths apply on phones only, where the pinned rank column needs a known 44px width; desktop keeps
+   the layout it has always had (the tables never carried a colgroup until plan 2026-08-29-002) */
+@media (max-width:700px){
+  col.c-rank{width:44px;}                            col.c-ver{width:120px;}
+  col.c-px{width:108px;}    col.c-chg{width:78px;}   col.c-vol{width:114px;}
+  col.c-liq{width:108px;}   col.c-fdv{width:98px;}   col.c-spark{width:110px;}
+  col.c-work{width:112px;}  col.c-cal{width:152px;}  col.c-bm{width:108px;}
+  col.c-cov{width:98px;}    col.c-chain{width:76px;} col.c-att{width:108px;}
+}
 .tbl-scroll thead th{position:sticky; top:0; background:#0d0e10; text-align:right; font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--t500); font-weight:400; padding:11px 14px; border-bottom:1px solid var(--line2); white-space:nowrap; cursor:pointer; user-select:none; overflow:hidden; text-overflow:ellipsis;}
 .tbl-scroll thead th.l{text-align:left;}
 .tbl-scroll thead th.nosort{cursor:default;}
