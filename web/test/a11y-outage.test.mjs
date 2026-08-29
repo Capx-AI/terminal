@@ -437,6 +437,9 @@ test("mobile and desktop fixtures keep overflow, contrast, and keyboard chrome",
   assert.match(app, /\.chartbox\{min-height:0; height:clamp\(240px,45vh,360px\);\}/);
   assert.match(app, /\.planes\.tight\{flex:0 1 auto; min-width:0;\}/);
   assert.match(app, /\.hrow\{height:auto; min-height:50px; flex-wrap:wrap/);
+  assert.match(app, /\/\* ===== phone type floor \(plan 2026-08-29-002, R11\) ===== \*\//);
+  assert.match(app, /\.ag\{flex:1 1 calc\(50% - 1px\);\}/);
+  assert.match(app, /\.chips\{flex-wrap:nowrap/);
   // no v1.css tile span may fire against the six-column phone grid: every span 12 sits under a min-width query
   const v1Blocks = v1.split(/(?=@media)/);
   for (const block of v1Blocks) {

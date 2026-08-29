@@ -1072,7 +1072,7 @@ function drawCandleChart() {
   function PX(i) { return plotL + (i + 0.5) * slot; }
   function PY(v) { return priceTop + (1 - (v - pmin) / (pmax - pmin)) * (priceBot - priceTop); }
 
-  cctx.font = "10px ui-monospace, SF Mono, Menlo, monospace";
+  cctx.font = (window.matchMedia("(max-width:700px)").matches ? "11px" : "10px") + " ui-monospace, SF Mono, Menlo, monospace";
   var gi;
   for (gi = 0; gi <= 4; gi++) {
     var gv = pmin + (pmax - pmin) * gi / 4;
@@ -1177,7 +1177,7 @@ function drawChart() {
   function PX(idx) { return g.padL + (n <= 1 ? 0 : idx / (n - 1)) * (g.W - g.padL - g.padR); }
   function PY(v) { return priceTop + (1 - (v - pmin) / (pmax - pmin)) * (priceBot - priceTop); }
 
-  cctx.font = "10px ui-monospace, SF Mono, Menlo, monospace";
+  cctx.font = (window.matchMedia("(max-width:700px)").matches ? "11px" : "10px") + " ui-monospace, SF Mono, Menlo, monospace";
   cctx.textAlign = "left";
   if (drawPrice) {
     for (i = 0; i <= 3; i++) {
