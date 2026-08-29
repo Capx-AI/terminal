@@ -335,6 +335,9 @@ export const baselineScript = () => {
     // Heatmap cells are time-dependent (the current UTC hour bucket moves), so they
     // cannot be part of a stable baseline; the phone tests cover them separately.
     if (el.closest("#ghgrid")) continue;
+    // The live-presales rail shows a countdown against the server clock, which the pinned
+    // page clock cannot freeze; its text width drifts, so the rail stays out of the baseline.
+    if (el.closest("#live-rail")) continue;
     // col and colgroup are not rendered boxes; they only carry widths that the cells already reflect
     if (el.tagName === "COL" || el.tagName === "COLGROUP") continue;
     const cs = getComputedStyle(el);

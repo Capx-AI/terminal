@@ -39,6 +39,8 @@ for (const fx of fixtures.pages) {
         for (const [k, b] of Object.entries({ brand: m.header.brand, actions: m.header.actions })) {
           if (!b) continue;
           assert.ok(b.x >= 0 && b.x + b.w <= device, `${tag}: header ${k} outside viewport (${b.x}..${b.x + b.w})`);
+          // the header keeps its 10px gutter on phones; flush-to-edge links are a regression (found 2026-08-29 at 390 and 500)
+          assert.ok(b.x >= 8 && b.x + b.w <= device - 8, `${tag}: header ${k} has no gutter (${b.x}..${b.x + b.w} of ${device})`);
         }
         if (fx.kind === "detail") {
           assert.ok(m.tiles.length > 0, `${tag}: no visible tiles`);

@@ -594,7 +594,7 @@ footer{border-top:1px solid var(--line); padding:16px 0 26px;}
 }
 @media (max-width:700px){
   /* the header row may wrap when the sample pill is showing; on production it stays one line (F2, R2) */
-  .hrow{height:auto; min-height:50px; flex-wrap:wrap; row-gap:2px; padding:6px 0;}
+  .hrow{height:auto; min-height:50px; flex-wrap:wrap; row-gap:2px; padding:6px var(--gut);}
   .hactions{flex-wrap:wrap; justify-content:flex-end; row-gap:6px; min-width:0; margin-left:auto;}
   .brand .label:not(.lit){display:none;}
   .search input{font-size:16px;}
