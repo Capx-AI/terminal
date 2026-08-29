@@ -318,6 +318,9 @@ test("broken artifact preview falls back and keeps the open-full link", () => {
   assert.match(src, /tabIndex = -1/);
   assert.doesNotMatch(src, /allow-same-origin|allow-top-navigation|allow-popups/);
   assert.match(html, /id="artifact-open"/);
+  assert.match(html, /id="artifact-open-below"/);
+  assert.match(html, /id="stage-gate"/);
+  assert.match(html, /id="stage-done"/);
   assert.match(html, /Open in new tab/);
   assert.match(html, /id="artifact-empty"/);
   assert.match(html, /id="artifact-tabs"/);
@@ -326,14 +329,20 @@ test("broken artifact preview falls back and keeps the open-full link", () => {
   const els = {
     "artifact-frame": { hidden: false, tabIndex: 0, href: null, getAttribute() { return null; }, removeAttribute(name) { if (name === "src") this.src = undefined; } },
     "artifact-empty": { hidden: true, textContent: "No public website." },
-    "artifact-open": { hidden: true, href: "https://northstar-labs.casa.capx.ai", getAttribute(name) { return name === "href" ? this.href : null; } },
+    "artifact-open": { hidden: true, href: "https://northstar-labs.casa.capx.ai", getAttribute(name) { return name === "href" ? this.href : null; }, removeAttribute(name) { if (name === "href") this.href = ""; } },
+    "artifact-open-below": { hidden: true, href: "", getAttribute(name) { return name === "href" ? this.href : null; }, removeAttribute(name) { if (name === "href") this.href = ""; } },
+    "artifact-stage": { classList: { remove() {}, add() {} } },
+    "stage-gate": { hidden: false },
+    "stage-done": { hidden: false },
   };
   const api = vm.runInNewContext(
     `"use strict";
 var $ = function (id) { return els[id] || null; };
+${extractFunction(src, "function paintArtifactOpen(href)")}
+${extractFunction(src, "function resetStageGate(previewOn)")}
 ${extractFunction(src, "function previewFallbackCopy(kind)")}
 ${extractFunction(src, "function applyPreviewFallback(kind)")}
-({ previewFallbackCopy, applyPreviewFallback });`,
+({ paintArtifactOpen, resetStageGate, previewFallbackCopy, applyPreviewFallback });`,
     { els },
   );
   assert.equal(api.previewFallbackCopy("site"), "Preview failed. Open the full site.");
@@ -346,7 +355,20 @@ ${extractFunction(src, "function applyPreviewFallback(kind)")}
   assert.equal(els["artifact-empty"].textContent, "Preview failed. Open the full site.");
   assert.equal(els["artifact-open"].hidden, false);
   assert.equal(els["artifact-open"].href, "https://northstar-labs.casa.capx.ai");
+  assert.equal(els["artifact-open-below"].hidden, false);
+  assert.equal(els["artifact-open-below"].href, "https://northstar-labs.casa.capx.ai");
+  assert.equal(els["stage-gate"].hidden, true);
+  assert.equal(els["stage-done"].hidden, true);
   assert.equal(JSON.stringify(els).includes("file-store"), false);
+
+  api.paintArtifactOpen("https://northstar-labs.casa.capx.ai/deck");
+  assert.equal(els["artifact-open"].href, "https://northstar-labs.casa.capx.ai/deck");
+  assert.equal(els["artifact-open-below"].href, "https://northstar-labs.casa.capx.ai/deck");
+  assert.equal(els["artifact-open"].hidden, false);
+  assert.equal(els["artifact-open-below"].hidden, false);
+  api.paintArtifactOpen(null);
+  assert.equal(els["artifact-open"].hidden, true);
+  assert.equal(els["artifact-open-below"].hidden, true);
 });
 
 test("/register and /c/{slug} have labels and keyboard-focusable controls", async (t) => {
@@ -446,6 +468,10 @@ test("mobile and desktop fixtures keep overflow, contrast, and keyboard chrome",
   }
   assert.match(app, /\.tbl-scroll\{overflow-x:auto/);
   assert.match(v1, /\.artifact-stage\{[^}]*height:clamp\(420px,57vh,660px\)/);
+  const v1Phone = (v1.split("@media (max-width:700px)")[1] || "").split("@media")[0];
+  assert.match(v1Phone, /\.artifact-stage\{height:clamp\(220px,34vh,320px\)/);
+  assert.match(v1, /#artifact-open-below/);
+  assert.match(v1, /\.stage-gate\{[^}]*position:absolute; inset:0/);
   assert.match(v1, /\.t-showcase\{grid-column:span 6/);
   assert.match(v1, /\.artifact-tabs\{[^}]*overflow-x:auto/);
   assert.match(app, /:focus-visible/);

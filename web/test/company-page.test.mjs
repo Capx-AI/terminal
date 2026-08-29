@@ -297,6 +297,11 @@ test("GET /c/{slug} is Terminal chrome with one large sandboxed artifact stage",
   assert.match(page.text, /data-artifact="deck"/);
   assert.match(page.text, /id="artifact-frame"/);
   assert.match(page.text, /id="artifact-stage" role="tabpanel"/);
+  assert.match(page.text, /<a class="open-full artifact-open artifact-open-below" id="artifact-open-below" target="_blank" rel="noopener noreferrer" hidden>Open in new tab<\/a>/);
+  assert.match(page.text, /<button type="button" class="stage-gate" id="stage-gate" hidden>Tap to use the preview<\/button>/);
+  assert.match(page.text, /<button type="button" class="stage-done" id="stage-done" hidden>Done<\/button>/);
+  assert.ok(page.text.indexOf('id="artifact-stage"') < page.text.indexOf('id="artifact-open-below"'), "Open below must sit after the stage");
+  assert.ok(page.text.indexOf('id="artifact-frame"') < page.text.indexOf('id="stage-gate"'), "gate must sit after the iframe");
   assert.ok(page.text.indexOf('id="tile-showcase"') < page.text.indexOf('id="tile-price"'), "artifact stage must be near the top, before market tiles");
   assert.match(page.text, /sandbox="allow-scripts"/);
   assert.match(page.text, /loading="lazy"/);
