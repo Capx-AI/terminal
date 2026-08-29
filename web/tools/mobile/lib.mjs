@@ -180,7 +180,11 @@ export function diffBaseline(before, after, tolerance = 1) {
   const problems = [];
   for (const e of after) {
     const prev = byPath.get(e.p);
-    if (!prev) { problems.push({ path: e.p, why: "new element" }); continue; }
+    if (!prev) {
+      // an element that is not rendered on desktop (display:none, zero box) is not a desktop change
+      if (!(e.b[2] === 0 && e.b[3] === 0)) problems.push({ path: e.p, cls: e.c, why: "new element" });
+      continue;
+    }
     byPath.delete(e.p);
     if (prev.s !== e.s) problems.push({ path: e.p, cls: e.c, why: "computed style changed" });
     const moved = prev.b.some((v, i) => Math.abs(v - e.b[i]) > tolerance);
