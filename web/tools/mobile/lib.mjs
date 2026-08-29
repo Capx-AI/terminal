@@ -40,11 +40,140 @@ function launchpadStub(req, res) {
   json(res, 404, { error: "NOT_FOUND" });
 }
 
-// Casa: empty directory, every detail 404, so SAMPLE_COMPANY_DOCS answer.
+// Extra company documents served only by this stub (not SAMPLE_COMPANY_DOCS).
+// Directory listing stays empty so the home-page join, and the Phase 1 desktop
+// baseline, keep using SAMPLE rows only.
+function readyCompany({ slug, name, description, category, outputs }) {
+  const host = `https://${slug}.casa.capx.ai`;
+  const artifacts = {
+    site: { url: `${host}/`, version_id: "ver_site_1", visibility: "public" },
+    one_pager: { url: `${host}/one-pager/`, version_id: "ver_pager_1", visibility: "public" },
+    deck: { url: `${host}/deck/`, version_id: "ver_deck_1", visibility: "public" },
+  };
+  return {
+    company_id: `fixture-${slug}`,
+    company_pubkey: `fixture-key-${slug}`,
+    slug,
+    name,
+    description,
+    logo: `${host}/logo.png`,
+    category,
+    visibility: "public",
+    published_at: "2026-08-21T11:00:00Z",
+    agent_mint: null,
+    launchpad_project_id: null,
+    readiness: {
+      ready: true,
+      missing: [],
+      website: true,
+      one_pager: true,
+      deck: true,
+      name: true,
+      description: true,
+      logo: true,
+      category: true,
+      completed_playbook: true,
+    },
+    artifact_visibility: { site: "public", one_pager: "public", deck: "public" },
+    active_artifact_versions: { site: "ver_site_1", one_pager: "ver_pager_1", deck: "ver_deck_1" },
+    created_at: "2026-08-10T09:00:00Z",
+    updated_at: "2026-08-21T11:00:00Z",
+    canonical_url: host,
+    progress: {
+      plane: "claimed",
+      level: 0,
+      level_name: "Ideation and Validation",
+      playbooks_total: 42,
+      playbooks_done: 4,
+      playbooks_ready: 2,
+      playbooks_blocked: 0,
+      done_nodes: [{ node_id: "opportunity-scan", title: "Opportunity Scan" }],
+      constraint: { archetype: "no_users", lead_departments: ["Growth"] },
+      north_star: { band: "validation", metric_id: "validated_demand", label: "validated demand" },
+      work: { tasks_7d: 4, tasks_total: 4, artifacts_total: 3, rubric_pins: 2, in_flight: 0 },
+    },
+    attestation: {
+      attested: true,
+      health_score: 64,
+      freshness: "aging",
+      observed_at: "2026-08-19T18:00:00Z",
+      sequence: 1,
+    },
+    calendar: {
+      plane: "reproduced",
+      days: [
+        { date: "2026-08-19", events: 4, attestation: true, decision: false },
+        { date: "2026-08-20", events: 0, attestation: false, decision: false },
+        { date: "2026-08-21", events: 0, attestation: false, decision: false },
+      ],
+    },
+    ledger: {
+      plane: "claimed",
+      window_events: 4,
+      shown: [
+        { ts: "2026-08-19T18:00:00Z", kind: "playbook", status: "done", node_id: "phase0-website", title: "Phase 0 Website", department: "Brand", committed: true, has_rubric: true },
+      ],
+    },
+    token: null,
+    artifacts,
+    outputs: outputs || [],
+  };
+}
+
+const CASA_DOCS = {
+  "broken-preview": readyCompany({
+    slug: "broken-preview",
+    name: "Broken Preview",
+    description: "Harness fixture. Artifact URLs 404 so the preview falls back to copy.",
+    category: "developer-tools",
+  }),
+  "output-reader": readyCompany({
+    slug: "output-reader",
+    name: "Output Reader",
+    description: "Harness fixture. Published outputs sidecar so the library and reader render.",
+    category: "productivity",
+    outputs: [
+      {
+        id: "phase0-website.md",
+        node_id: "phase0-website",
+        title: "Phase 0 Website",
+        path: "phase0-website.md",
+        sha256: "0d5c7cbecd0ac3b4114e0089a4b87d15c2f5c2b0ac1e2f6a9b8c7d6e5f4a3b2c",
+        bytes: 1810,
+        url: "https://output-reader.casa.capx.ai/outputs/phase0-website.md",
+        published_at: "2026-08-24T09:00:00.000Z",
+      },
+      {
+        id: "brand-positioning/statement.md",
+        node_id: "brand-positioning",
+        title: "Brand Positioning Statement",
+        path: "brand-positioning/statement.md",
+        sha256: "1e6d8dcfde1bd4c5225f119ab5c98e26d3a6d3c1bd2f3a7bacbdcecfa5b4c3d1",
+        bytes: 942,
+        url: "https://output-reader.casa.capx.ai/outputs/brand-positioning/statement.md",
+        published_at: "2026-08-25T18:30:00.000Z",
+      },
+    ],
+  }),
+};
+
+const OUTPUT_FIXTURE_MD = "# Phase 0 Website\n\nHarness fixture output. Founder claimed.\n";
+
+// Company pulse cells after "now" are .hc.pad. Pin the page clock to the
+// committed desktop baseline so that cell does not drift hour to hour.
+const SAMPLE_NOW_MS = Date.parse("2026-08-29T07:49:33.669Z");
+
+// Casa: empty directory so SAMPLE_COMPANY_DOCS still answer for inboxpilot /
+// northstar-labs. Extra Phase 2 slugs are served as real Casa documents.
 function casaStub(req, res) {
   const url = new URL(req.url ?? "/", "http://127.0.0.1");
   if (url.pathname === "/v1/companies") {
     return json(res, 200, { companies: [], next_cursor: null, generated_at: "2026-08-21T12:00:00Z" });
+  }
+  const detail = url.pathname.match(/^\/v1\/companies\/([^/]+)$/);
+  if (detail) {
+    const slug = decodeURIComponent(detail[1]);
+    if (CASA_DOCS[slug]) return json(res, 200, CASA_DOCS[slug]);
   }
   json(res, 404, { error: "NOT_FOUND", message: "fixture" });
 }
@@ -94,17 +223,67 @@ export async function startStack() {
   };
 }
 
-export async function openPage(stack, context, fixture, width) {
+export async function openPage(stack, context, fixture, width, height) {
   const opts = { ...context };
-  if (width) opts.viewport = { width, height: context.viewport ? context.viewport.height : 800 };
+  if (width || height) {
+    const prev = context.viewport || { width: 800, height: 800 };
+    opts.viewport = { width: width || prev.width, height: height || prev.height };
+  }
   const ctx = await stack.browser.newContext(opts);
   const page = await ctx.newPage();
-  await page.goto(stack.url + fixture.path, { waitUntil: "networkidle", timeout: 30000 });
-  await page.waitForSelector(fixture.ready, { timeout: 15000 });
-  await page.evaluate(() => document.fonts.ready);
-  await page.waitForTimeout(250);
-  return { page, ctx };
+  try {
+    await page.addInitScript((ms) => { Date.now = () => ms; }, SAMPLE_NOW_MS);
+    if (fixture.artifactFailure) {
+      await page.route(/https:\/\/broken-preview\.casa\.capx\.ai(?:\/|$)/, (route) => route.abort());
+    }
+    if (fixture.openReader || fixture.serveOutputs) {
+      await page.route(/https:\/\/[a-z0-9-]+\.casa\.capx\.ai\/outputs\//, (route) => route.fulfill({
+        status: 200,
+        contentType: "text/markdown; charset=utf-8",
+        body: OUTPUT_FIXTURE_MD,
+      }));
+    }
+    await page.goto(stack.url + fixture.path, { waitUntil: "networkidle", timeout: 30000 });
+    await page.waitForSelector(fixture.ready, { timeout: 15000 });
+    await page.evaluate(() => document.fonts.ready);
+    await page.waitForTimeout(250);
+    if (fixture.openReader) {
+      try {
+        await page.click(".outrow", { timeout: 4000 });
+        await page.waitForTimeout(250);
+      } catch {
+        // Reader stays closed; Phase 2 assertions name the miss.
+      }
+    }
+    return { page, ctx };
+  } catch (err) {
+    await ctx.close().catch(() => {});
+    throw err;
+  }
 }
+
+export const HIT_SELECTORS = [
+  ".back",
+  ".fchip",
+  ".tf",
+  ".artifact-tab",
+  ".open-full",
+  ".artifact-open",
+  "#artifact-open-below",
+  ".tokenlinks a",
+  "th[data-k]",
+  ".nobind-actions a",
+  ".outrow",
+  ".reader-head button",
+  ".liveitem",
+  ".attfeed .att",
+  ".pod a",
+  ".regbtn",
+  ".tok .nm",
+  ".stage-gate",
+];
+
+export const TYPE_EXCEPTIONS = [".sr-only", ".skip", ".hc", "canvas"];
 
 // Layout facts the acceptance gates read.
 export const measureScript = () => {
@@ -192,4 +371,356 @@ export function diffBaseline(before, after, tolerance = 1) {
   }
   for (const p of byPath.keys()) problems.push({ path: p, why: "element gone" });
   return problems;
+}
+
+export async function typeCensus(page) {
+  return page.evaluate((exceptions) => {
+    const skipSel = exceptions.join(",");
+    const under = [];
+    const skipTag = new Set(["SCRIPT", "STYLE", "NOSCRIPT", "CANVAS", "SVG", "PATH"]);
+    for (const el of document.querySelectorAll("*")) {
+      if (skipTag.has(el.tagName)) continue;
+      if (el.closest(skipSel)) continue;
+      if (el.closest("[hidden]")) continue;
+      const cs = getComputedStyle(el);
+      if (cs.display === "none" || cs.visibility === "hidden") continue;
+      let direct = false;
+      for (const n of el.childNodes) {
+        if (n.nodeType === 3 && String(n.textContent || "").trim()) { direct = true; break; }
+      }
+      if (!direct) continue;
+      const px = parseFloat(cs.fontSize);
+      if (!Number.isFinite(px) || px >= 11 - 0.05) continue;
+      const id = el.id ? "#" + el.id : "";
+      const cls = typeof el.className === "string" && el.className.trim()
+        ? "." + el.className.trim().split(/\s+/).join(".")
+        : "";
+      under.push({
+        selector: el.tagName.toLowerCase() + id + cls,
+        fontSize: Math.round(px * 100) / 100,
+        text: String(el.textContent || "").trim().slice(0, 48),
+      });
+    }
+    return { innerWidth: window.innerWidth, under };
+  }, TYPE_EXCEPTIONS);
+}
+
+export async function hitAreaCensus(page, selectors) {
+  const list = Array.isArray(selectors) && selectors.length ? selectors : HIT_SELECTORS;
+  return page.evaluate((sels) => {
+    const visible = (el) => {
+      if (!el || el.closest("[hidden]")) return false;
+      const cs = getComputedStyle(el);
+      if (cs.display === "none" || cs.visibility === "hidden") return false;
+      const b = el.getBoundingClientRect();
+      return b.width > 0 || b.height > 0;
+    };
+    const hitsTarget = (at, el, cell) => {
+      if (!at) return false;
+      if (el === at || el.contains(at)) return true;
+      if (cell && (cell === at || cell.contains(at))) return true;
+      return false;
+    };
+    const hitHeight = (el, cell) => {
+      const box = (cell || el).getBoundingClientRect();
+      const pad = 12;
+      const step = 4;
+      const left = box.left - pad;
+      const right = box.right + pad;
+      const top = box.top - pad;
+      const bottom = box.bottom + pad;
+      const xs = [];
+      for (let x = left + step / 2; x < right; x += step) xs.push(x);
+      if (!xs.length) xs.push((left + right) / 2);
+      let best = 0;
+      let run = 0;
+      for (let y = top + step / 2; y < bottom; y += step) {
+        let hit = false;
+        for (const x of xs) {
+          const vx = Math.min(Math.max(0, x), window.innerWidth - 1);
+          const vy = Math.min(Math.max(0, y), window.innerHeight - 1);
+          const at = document.elementFromPoint(vx, vy);
+          if (hitsTarget(at, el, cell)) { hit = true; break; }
+        }
+        if (hit) {
+          run += step;
+          if (run > best) best = run;
+        } else {
+          run = 0;
+        }
+      }
+      return best;
+    };
+    const out = [];
+    for (const selector of sels) {
+      const query = selector === ".pod a" ? "a.pod, .pod a" : selector;
+      const nodes = [...document.querySelectorAll(query)].filter(visible);
+      if (!nodes.length) {
+        out.push({ selector, skipped: true, reason: "no match" });
+        continue;
+      }
+      nodes.forEach((el, index) => {
+        if (el.closest(".reader-body, .nobind-copy, .tblnote")) return;
+        if (el.closest(".hc") || el.classList.contains("hc")) return;
+        if (el.closest(".evtip") || (el.classList.contains("pin"))) return;
+        const cell = selector === ".tok .nm" ? el.closest("td.l") : null;
+        const target = cell || el;
+        try { target.scrollIntoView({ block: "center", inline: "nearest" }); } catch { /* layout */ }
+        const box = target.getBoundingClientRect();
+        const hitH = hitHeight(el, cell);
+        out.push({
+          selector,
+          index,
+          hitH,
+          boxH: Math.round(box.height),
+          skipped: false,
+        });
+      });
+    }
+    return { innerWidth: window.innerWidth, items: out };
+  }, list);
+}
+
+export async function tableCheck(page) {
+  return page.evaluate(() => {
+    const visible = (el) => {
+      if (!el || el.closest("[hidden]")) return false;
+      const cs = getComputedStyle(el);
+      return cs.display !== "none" && cs.visibility !== "hidden";
+    };
+    const tables = [];
+    for (const wrap of document.querySelectorAll(".tbl-scroll")) {
+      const table = wrap.querySelector("table");
+      const id = (table && table.id) || wrap.id || "(anonymous)";
+      const shown = visible(wrap);
+      const hasColgroup = !!(table && table.querySelector("colgroup"));
+      const dataMoreOnLoad = wrap.getAttribute("data-more");
+      const row = table && table.querySelector("tbody tr");
+      const tds = row ? [...row.querySelectorAll(":scope > td")] : [];
+      let pin = null;
+      if (shown && tds.length >= 2) {
+        wrap.scrollLeft = 300;
+        const c = wrap.getBoundingClientRect();
+        const a = tds[0].getBoundingClientRect();
+        const b = tds[1].getBoundingClientRect();
+        pin = {
+          containerLeft: Math.round(c.left * 100) / 100,
+          td0Left: Math.round(a.left * 100) / 100,
+          td1Left: Math.round(b.left * 100) / 100,
+        };
+      }
+      wrap.scrollLeft = wrap.scrollWidth;
+      const dataMoreAtEnd = wrap.getAttribute("data-more");
+      wrap.scrollLeft = 0;
+      tables.push({
+        id,
+        shown,
+        hasColgroup,
+        dataMoreOnLoad,
+        dataMoreAtEnd,
+        pin,
+        canScroll: wrap.scrollWidth - wrap.clientWidth > 20,
+      });
+    }
+    return { innerWidth: window.innerWidth, tables };
+  });
+}
+
+export async function railCheck(page) {
+  return page.evaluate(() => {
+    const visible = (el) => {
+      if (!el || el.closest("[hidden]")) return false;
+      const cs = getComputedStyle(el);
+      return cs.display !== "none" && cs.visibility !== "hidden";
+    };
+    const measureAll = (selector, itemSel) => {
+      const els = [...document.querySelectorAll(selector)];
+      const shown = els.filter(visible);
+      if (!shown.length) return [{ selector, skipped: true, reason: "not visible" }];
+      return shown.map((el) => {
+        const name = selector + (el.id ? "#" + el.id : "");
+        const item = el.querySelector(itemSel) || el.firstElementChild;
+        if (!item) return { selector: name, skipped: false, reason: "no item", itemH: null, scrollH: el.scrollHeight };
+        const itemH = item.getBoundingClientRect().height;
+        return {
+          selector: name,
+          skipped: false,
+          reason: null,
+          itemH: Math.round(itemH * 100) / 100,
+          scrollH: el.scrollHeight,
+        };
+      });
+    };
+    return {
+      innerWidth: window.innerWidth,
+      rails: [
+        ...measureAll(".chips", ".fchip"),
+        ...measureAll(".liveitems", ".liveitem"),
+        ...measureAll(".attfeed", ".att"),
+      ],
+    };
+  });
+}
+
+export async function tapChart(page) {
+  return page.evaluate(() => {
+    const chart = document.querySelector("#chart");
+    const dateEl = document.querySelector("#ro-date");
+    const visible = (el) => {
+      if (!el || el.hidden || el.closest("[hidden]")) return false;
+      const cs = getComputedStyle(el);
+      return cs.display !== "none" && cs.visibility !== "hidden";
+    };
+    if (!chart || !visible(chart)) {
+      return { skipped: true, reason: "#chart is hidden (no series)" };
+    }
+    if (!dateEl) {
+      return { skipped: false, reason: "#ro-date missing", placeholder: "--", afterFirst: null, afterLeave: null, afterSecond: null };
+    }
+    const box = chart.getBoundingClientRect();
+    if (box.width < 8 || box.height < 8) {
+      return { skipped: true, reason: "#chart is hidden (no series)" };
+    }
+    const placeholder = "--";
+    const before = dateEl.textContent;
+    const y = box.top + box.height / 2;
+    const tap = (x) => {
+      const down = { pointerType: "touch", bubbles: true, cancelable: true, isPrimary: true, pointerId: 1, clientX: x, clientY: y };
+      chart.dispatchEvent(new PointerEvent("pointerdown", down));
+      chart.dispatchEvent(new PointerEvent("pointerup", { ...down, clientX: x + 2, clientY: y + 1 }));
+    };
+    tap(box.left + box.width * 0.28);
+    const afterFirst = dateEl.textContent;
+    chart.dispatchEvent(new PointerEvent("pointerleave", { pointerType: "touch", bubbles: true, pointerId: 1 }));
+    const afterLeave = dateEl.textContent;
+    tap(box.left + box.width * 0.72);
+    const afterSecond = dateEl.textContent;
+    return {
+      skipped: false,
+      reason: null,
+      placeholder,
+      before,
+      afterFirst,
+      afterLeave,
+      afterSecond,
+      firstPinned: !!(afterFirst && afterFirst.trim() && afterFirst.trim() !== placeholder),
+      held: afterLeave === afterFirst,
+      moved: afterSecond !== afterFirst,
+      changed: afterFirst !== before || afterSecond !== before,
+    };
+  });
+}
+
+export async function tapHeatmap(page) {
+  return page.evaluate(() => {
+    const tile = document.querySelector("#tile-pulse");
+    const grid = document.querySelector(".ghgrid");
+    const read = document.querySelector("#gh-read");
+    const visible = (el) => {
+      if (!el || el.hidden || el.closest("[hidden]")) return false;
+      const cs = getComputedStyle(el);
+      return cs.display !== "none" && cs.visibility !== "hidden";
+    };
+    if (!tile || !visible(tile) || !grid || !visible(grid)) {
+      return { skipped: true, reason: "heatmap not shown" };
+    }
+    if (!read) {
+      return { skipped: false, reason: "#gh-read missing", defaultText: null, afterClick: null, afterLeave: null };
+    }
+    const cell = grid.querySelector(".hc[data-d]");
+    if (!cell) {
+      return { skipped: false, reason: "no .ghgrid .hc[data-d] cell", defaultText: read.textContent, afterClick: null, afterLeave: null };
+    }
+    const defaultText = read.textContent;
+    try { cell.scrollIntoView({ block: "center", inline: "nearest" }); } catch { /* layout */ }
+    cell.click();
+    const afterClick = read.textContent;
+    grid.dispatchEvent(new MouseEvent("mouseleave", { bubbles: true, cancelable: true }));
+    const afterLeave = read.textContent;
+    return {
+      skipped: false,
+      reason: null,
+      defaultText,
+      afterClick,
+      afterLeave,
+      painted: afterClick !== defaultText,
+      held: afterLeave === afterClick && afterClick !== defaultText,
+    };
+  });
+}
+
+export async function stageCheck(page) {
+  return page.evaluate(() => {
+    const visible = (el) => {
+      if (!el || el.hidden || el.closest("[hidden]")) return false;
+      const cs = getComputedStyle(el);
+      if (cs.display === "none" || cs.visibility === "hidden") return false;
+      return true;
+    };
+    const displayOf = (el) => (el ? getComputedStyle(el).display : null);
+    const stage = document.querySelector(".artifact-stage");
+    const gate = document.querySelector("#stage-gate");
+    const below = document.querySelector("#artifact-open-below");
+    const open = document.querySelector("#artifact-open");
+    const frame = document.querySelector("#artifact-frame");
+    const empty = document.querySelector("#artifact-empty");
+    const previewShowing = !!(frame && visible(frame) && (frame.getAttribute("src") || frame.src));
+    const fallbackShowing = !!(empty && visible(empty));
+    const stageH = stage ? Math.round(stage.getBoundingClientRect().height) : null;
+    const before = {
+      gatePresent: !!gate,
+      gateVisible: !!(gate && visible(gate)),
+      gateDisplay: displayOf(gate),
+      belowPresent: !!below,
+      belowVisible: !!(below && visible(below)),
+      belowDisplay: displayOf(below),
+      belowHref: below ? (below.getAttribute("href") || below.href || "") : null,
+      openHref: open ? (open.getAttribute("href") || open.href || "") : null,
+      live: !!(stage && stage.classList.contains("live")),
+    };
+    let afterTap = null;
+    if (gate && visible(gate)) {
+      gate.click();
+      afterTap = {
+        live: !!(stage && stage.classList.contains("live")),
+        gateVisible: visible(gate),
+      };
+    }
+    return {
+      innerWidth: window.innerWidth,
+      stagePresent: !!stage,
+      stageH,
+      previewShowing,
+      fallbackShowing,
+      before,
+      afterTap,
+    };
+  });
+}
+
+export async function tileWidths(page) {
+  return page.evaluate(() => {
+    const visible = (el) => {
+      if (!el || el.hidden || el.closest("[hidden]")) return false;
+      const cs = getComputedStyle(el);
+      return cs.display !== "none" && cs.visibility !== "hidden";
+    };
+    const vw = window.innerWidth;
+    const bento = document.querySelector(".bento");
+    const tiles = [...document.querySelectorAll(".bento > .tile")].filter(visible).map((t) => ({
+      cls: [...t.classList].find((c) => c.startsWith("t-")) || t.className,
+      wide: t.classList.contains("wide"),
+      w: Math.round(t.getBoundingClientRect().width),
+    }));
+    return {
+      innerWidth: vw,
+      clientWidth: document.documentElement.clientWidth,
+      media700: window.matchMedia("(max-width:700px)").matches,
+      media880: window.matchMedia("(max-width:880px)").matches,
+      bentoCols: bento ? getComputedStyle(bento).gridTemplateColumns.split(" ").filter(Boolean).length : null,
+      full: vw - 20,
+      pair: (vw - 30) / 2,
+      tiles,
+    };
+  });
 }

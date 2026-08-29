@@ -1,5 +1,5 @@
 {
-  "note": "Pages and states the phone harness measures. All served by web/server.mjs with SAMPLE=1 and stubbed upstreams, so every run is deterministic and offline. Mints and slugs come from SAMPLE_ROWS and SAMPLE_COMPANY_DOCS in the server.",
+  "note": "Pages and states the phone harness measures. All served by web/server.mjs with SAMPLE=1 and stubbed upstreams, so every run is deterministic and offline. Mints and slugs come from SAMPLE_ROWS and SAMPLE_COMPANY_DOCS in the server, plus two extra Casa-stub companies for Phase 2.",
   "pages": [
     { "key": "home", "path": "/", "ready": "#rows-tokens tr", "kind": "home" },
     { "key": "token-only", "path": "/t/FixLiveProg111111111111111111capx", "ready": "#page:not([hidden])", "kind": "detail" },
@@ -8,10 +8,25 @@
     { "key": "company-without-token", "path": "/c/northstar-labs", "ready": "#page:not([hidden])", "kind": "detail" },
     { "key": "register", "path": "/register", "ready": "form", "kind": "register" }
   ],
+  "phase2Pages": [
+    {
+      "key": "company-artifact-failure",
+      "path": "/c/broken-preview",
+      "ready": "#page:not([hidden])",
+      "kind": "detail",
+      "company": true,
+      "artifactFailure": true
+    },
+    {
+      "key": "company-outputs",
+      "path": "/c/output-reader",
+      "ready": "#outlist .outrow",
+      "kind": "detail",
+      "company": true,
+      "openReader": true,
+      "serveOutputs": true
+    }
+  ],
   "phoneWidths": [360, 390, 430],
-  "desktopWidths": [1024, 1440],
-  "pending": [
-    "company with failing artifact URLs (Phase 2: stage gate)",
-    "company with a published outputs sidecar and the reader open (Phase 2: reader)"
-  ]
+  "desktopWidths": [1024, 1440]
 }
