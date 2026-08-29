@@ -222,6 +222,19 @@ function paintLadder(company) {
  * last attestation landed gets the ring. The daily claimed-task counts have
  * no hourly truth, so they are never spread across hours.
  */
+function paintHeatRead(i) {
+  var grid = $("ghgrid");
+  var read = $("gh-read");
+  if (!grid || !read || !grid._buckets || i < 0 || i >= grid._buckets.length) return;
+  var when = new Date(grid._start + i * 3600000).toLocaleString("en-US", {
+    month: "short", day: "numeric", hour: "2-digit", hour12: false, timeZone: "UTC",
+  }) + ":00 UTC";
+  var v = grid._buckets[i] || 0;
+  read.innerHTML = "<span class='lit'>" + F.esc(when) + "</span> · "
+    + v + " disclosed event" + (v === 1 ? "" : "s")
+    + (i === grid._attHour ? " · <span class='lit'>attestation landed</span>" : "");
+}
+
 function paintPulse(company) {
   var ledger = company && company.ledger && Array.isArray(company.ledger.shown)
     ? company.ledger.shown : [];
@@ -282,9 +295,13 @@ function paintPulse(company) {
     var lvl = v === 0 ? "" : " l" + Math.min(4, Math.max(1, Math.ceil(v / max * 4)));
     var t2 = when + " · " + v + " disclosed event" + (v === 1 ? "" : "s")
       + (i === attHour ? " · attestation landed" : "");
-    cells += "<span class='hc" + lvl + ring + "' title='" + F.esc(t2) + "'></span>";
+    cells += "<span class='hc" + lvl + ring + "' data-d='" + i + "' title='" + F.esc(t2) + "'></span>";
   }
   grid.innerHTML = cells;
+  grid._buckets = buckets;
+  grid._start = start;
+  grid._attHour = attHour;
+  grid._held = null;
   if (mo) {
     mo.style.gridTemplateColumns = "repeat(" + HOURS + ", var(--cell))";
     var labels = "";
@@ -307,9 +324,35 @@ function paintPulse(company) {
   if (pl) pl.textContent = "Work attested per hour · last 7 days";
   var read = $("gh-read");
   if (read) {
-    read.textContent = inWindow
+    grid._defaultRead = inWindow
       ? "fill is disclosed ledger events per hour; a ringed cell is the hour the last attestation landed"
       : "no disclosed events in the last 7 days; a ringed cell is the hour the last attestation landed";
+    read.textContent = grid._defaultRead;
+  }
+  if (!grid._bound) {
+    grid._bound = true;
+    grid.addEventListener("mouseover", function (e) {
+      var c = e.target.closest(".hc[data-d]");
+      if (!c || grid._held != null) return;
+      paintHeatRead(parseInt(c.getAttribute("data-d"), 10));
+    });
+    grid.addEventListener("click", function (e) {
+      var c = e.target.closest(".hc[data-d]");
+      if (!c) return;
+      var i2 = parseInt(c.getAttribute("data-d"), 10);
+      if (grid._held === i2) {
+        grid._held = null;
+        var read2 = $("gh-read");
+        if (read2) read2.textContent = grid._defaultRead;
+        return;
+      }
+      grid._held = i2;
+      paintHeatRead(i2);
+    });
+    grid.addEventListener("mouseleave", function () {
+      var read2 = $("gh-read");
+      if (read2 && grid._held == null) read2.textContent = grid._defaultRead;
+    });
   }
   var hz = $("pulse-hz");
   if (hz) {
