@@ -156,9 +156,8 @@ header{position:sticky; top:0; z-index:30; background:rgba(8,9,10,.86); backdrop
 .capx-analytics-consent p{max-width:500px;margin:7px 0 0;color:var(--t400);font-size:12px;line-height:1.55}
 .capx-analytics-consent a{color:var(--capx);text-decoration:underline;text-underline-offset:3px}
 .capx-analytics-consent-actions{display:flex;flex:0 0 auto;gap:8px}
-.capx-analytics-consent-actions button,.capx-analytics-settings{min-height:38px;padding:0 13px;border:1px solid var(--line);border-radius:9px;background:#181918;color:#deded8;cursor:pointer;font:600 9px/1 var(--mono);letter-spacing:.04em}
+.capx-analytics-consent-actions button{min-height:38px;padding:0 13px;border:1px solid var(--line);border-radius:9px;background:#181918;color:#deded8;cursor:pointer;font:600 9px/1 var(--mono);letter-spacing:.04em}
 .capx-analytics-consent-actions .allow{border-color:var(--capx);background:var(--capx);color:#11120d}
-.capx-analytics-settings{position:fixed;z-index:999;left:max(12px,env(safe-area-inset-left));bottom:max(12px,env(safe-area-inset-bottom));min-height:30px;padding:0 10px;background:rgba(14,15,16,.9);opacity:.76}
 @media (max-width:640px){.capx-analytics-consent{align-items:stretch;flex-direction:column;gap:14px}.capx-analytics-consent-actions{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
 .tbl-scroll thead th{position:sticky; top:0; background:#0d0e10; text-align:right; font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--t500); font-weight:400; padding:11px 14px; border-bottom:1px solid var(--line2); white-space:nowrap; cursor:pointer; user-select:none; overflow:hidden; text-overflow:ellipsis;}
 .tbl-scroll thead th.l{text-align:left;}

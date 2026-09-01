@@ -102,14 +102,6 @@
     return button;
   }
 
-  function showSettingsButton() {
-    if (document.querySelector(".capx-analytics-settings")) return;
-    document.body.appendChild(createButton("Cookie settings", "capx-analytics-settings", () => {
-      document.querySelector(".capx-analytics-settings")?.remove();
-      showConsentDialog();
-    }));
-  }
-
   function showConsentDialog() {
     if (document.querySelector(".capx-analytics-consent")) return;
 
@@ -133,19 +125,15 @@
     actions.className = "capx-analytics-consent-actions";
     actions.append(
       createButton("No thanks", "", () => {
-        const wasGranted = readConsent() === "granted";
+        dialog.remove();
         writeConsent("denied");
         window.gtag?.("consent", "update", { analytics_storage: "denied" });
         removeGoogleAnalyticsCookies();
-        dialog.remove();
-        if (wasGranted) window.location.reload();
-        else showSettingsButton();
       }),
       createButton("Allow analytics", "allow", () => {
-        writeConsent("granted");
         dialog.remove();
+        writeConsent("granted");
         loadGoogleAnalytics();
-        showSettingsButton();
       }),
     );
 
@@ -156,5 +144,4 @@
   const consent = readConsent();
   if (consent === "granted") loadGoogleAnalytics();
   if (consent === null) showConsentDialog();
-  else showSettingsButton();
 })();
