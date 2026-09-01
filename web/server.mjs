@@ -33,7 +33,13 @@ const launchpadApi = (process.env.LAUNCHPAD_API ?? "https://api.launchpad.capx.a
 // (the August test wave) stay hidden; live presales and everything after show.
 const OFFICIAL_LAUNCH_VISIBLE_FROM_MS = Date.parse("2026-08-31T18:30:00.000Z");
 
+// Withdrawn or refunded launches hidden pending relaunch.
+const HIDDEN_PROJECT_IDS = new Set([
+  "6b3e9f95-833a-4d5f-978c-ad8d69a1ef60", // ARBTR: 2026-09-01 refund incident
+]);
+
 function isOfficialLaunchVisible(item) {
+  if (item?.id && HIDDEN_PROJECT_IDS.has(item.id)) return false;
   const finalizedAtMs = Date.parse(item?.fundingFinalizedAt ?? "");
   return Number.isFinite(finalizedAtMs) && finalizedAtMs >= OFFICIAL_LAUNCH_VISIBLE_FROM_MS;
 }
