@@ -27,6 +27,16 @@ import {
 const root = fileURLToPath(new URL(".", import.meta.url));
 const port = Number(process.env.PORT ?? 4200);
 const launchpadApi = (process.env.LAUNCHPAD_API ?? "https://api.launchpad.capx.ai").replace(/\/$/, "");
+
+// September 1, 2026 at 00:00 IST: the fixed official-launch boundary, mirrored
+// from the launchpad's launch-visibility rule. Launches finalized before it
+// (the August test wave) stay hidden; live presales and everything after show.
+const OFFICIAL_LAUNCH_VISIBLE_FROM_MS = Date.parse("2026-08-31T18:30:00.000Z");
+
+function isOfficialLaunchVisible(item) {
+  const finalizedAtMs = Date.parse(item?.fundingFinalizedAt ?? "");
+  return Number.isFinite(finalizedAtMs) && finalizedAtMs >= OFFICIAL_LAUNCH_VISIBLE_FROM_MS;
+}
 const casaApi = (process.env.CASA_API ?? "http://127.0.0.1:4201").replace(/\/$/, "");
 const sample = process.env.SAMPLE === "1";
 
@@ -334,7 +344,7 @@ async function loadDirectory() {
   } catch (err) {
     error = err.name === "AbortError" ? "Launchpad directory timed out" : String(err.message || err);
   }
-  listCache = { at: now, value: items, error };
+  listCache = { at: now, value: items.filter(isOfficialLaunchVisible), error };
   return listCache;
 }
 
