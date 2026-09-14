@@ -1322,7 +1322,7 @@ function ensureMermaid() {
 
 /* A scriptless frame document around a rendered SVG string (or the source when rendering failed). */
 function diagramFrameDoc(svg, source) {
-  return '<!doctype html><html><head><meta name="viewport" content="width=device-width, initial-scale=1"><style>body{margin:12px;background:#08090a;color:#C5DC6B;font:14px system-ui;overflow:auto}pre{white-space:pre-wrap;overflow-wrap:anywhere;color:#b8c0b0}svg{display:block;max-width:none !important}</style></head><body>'
+  return '<!doctype html><html><head><meta name="viewport" content="width=device-width, initial-scale=1"><style>body{margin:12px;background:#08090a;color:#C5DC6B;font:14px system-ui;overflow:auto}pre{white-space:pre-wrap;overflow-wrap:anywhere;color:#b8c0b0}svg{display:block;max-width:100%;height:auto}</style></head><body>'
     + (svg ? svg : '<p>diagram did not render</p><pre>' + F.esc(source) + '</pre>') + '</body></html>';
 }
 
@@ -1348,7 +1348,8 @@ function selectDiagram(key) {
       var doc = new DOMParser().parseFromString(result.svg, "text/html"), svg = doc.querySelector("svg");
       if (!svg) return mount(null);
       var box = svg.viewBox && svg.viewBox.baseVal;
-      if (box && box.width > 0) { svg.setAttribute("width", Math.ceil(box.width)); svg.setAttribute("height", Math.ceil(box.height)); svg.style.maxWidth = "none"; }
+      // Natural size when it fits, scaled down to the frame width when it does not.
+      if (box && box.width > 0) { svg.setAttribute("width", Math.ceil(box.width)); svg.setAttribute("height", Math.ceil(box.height)); svg.removeAttribute("style"); }
       mount(new XMLSerializer().serializeToString(svg));
     });
   }).catch(function () { mount(null); });
