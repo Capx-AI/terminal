@@ -87,6 +87,7 @@ window.CAPX_FMT = (function () {
       .replace(/'/g, "&#39;");
   }
   function tokenPriceUsd(row) {
+    if (row && row.marketPerformance && Object.prototype.hasOwnProperty.call(row.marketPerformance, "priceUsd")) return typeof row.marketPerformance.priceUsd === "number" ? row.marketPerformance.priceUsd : null;
     var mcap = row && row.marketPerformance && row.marketPerformance.currentMarketCapUsd;
     if (mcap == null || !isFinite(mcap)) return null;
     return mcap / 1e9;

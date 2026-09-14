@@ -304,6 +304,7 @@ export function liveDocument() {
   const hours_since = 6.2;
   return {
     mint: MINTS.live,
+    face: sampleFace(),
     company: company("dGVzdC1saXZlLXByb2ctcHVia2V5LTEyMzQ", "fixture-live", "Fixture Live"),
     creator_wallet: "CapxTermFixCreator1111111111111111111111",
     binding: binding("live"),
@@ -315,7 +316,7 @@ export function liveDocument() {
       hours_since,
     }),
     reproduced: reproducedLive(),
-    progress: progressLive({ hours_since }),
+    progress: { ...progressLive({ hours_since }), agents: sampleFace().agents },
     calendar: calendar180({ seed: 7, attestedThroughAgo: 0, density: 0.6, pushEvery: 6 }),
     ledger: ledgerShown(),
     envelope: envelope(),
@@ -479,3 +480,19 @@ export const FIXTURES = {
   [MINTS.rebind]: rebindDocument(),
   [MINTS.aging]: agingDocument(),
 };
+
+export function sampleFace() {
+  return {
+    plane: "claimed", face_version: 1, generated_at: isoDaysAgo(0),
+    company: { name: "Fixture Live", one_liner: "Forecast restaurant orders.", category: "saas", website: null, links: {} }, token: null,
+    brief: { summary: "Forecast weekly restaurant orders to reduce wasted food.", sections: [{ title: "Product", body: "## Who it serves\nIndependent restaurants.\n## What it does\nTurns order history into a weekly purchasing plan." }] },
+    diagrams: { architecture: "flowchart LR\nOrders --> Forecast --> Kitchen", product_flow: "sequenceDiagram\nRestaurant->>Forecast: Upload orders\nForecast->>Restaurant: Weekly plan", data_model: "erDiagram\nRESTAURANT ||--o{ ORDER : places", org_chart: "flowchart TD\nCompany --> Engineer\nCompany --> Operator", token_flow: null },
+    roadmap: [{ id: "pilot", title: "Restaurant pilot", target: "2026-10", status: "in_progress", playbooks: [] }],
+    plan: [{ id: "forecast", title: "Build forecasting pipeline", milestone: "pilot", playbook: null, status: "done" }, { id: "onboard", title: "Onboard pilot restaurants", milestone: "pilot", playbook: null, status: "doing" }],
+    agents: [{ name: "casa-engineer", department: "Engineering", mandate: "Build and maintain the forecast service.", playbooks: [], events: [{ ts: isoDaysAgo(0), task: "Built forecasting pipeline", status: "done", node_id: null }] }],
+    collateral: { site: true, one_pager: true, deck: true }, sources: {},
+  };
+}
+
+export const FACE_READINESS = { brief: true, architecture: true, product_flow: true, data_model: true, roadmap: true, plan: true, org_chart: true, complete: true, missing: [] };
+export const TOKENLESS_FACE = { ...sampleFace(), company: { name: "Northstar Labs", one_liner: "Keep the founder focused.", category: "productivity", website: null, links: {} } };

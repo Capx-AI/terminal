@@ -4,7 +4,8 @@ import { extname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { codexConfigured, fetchCloses, fetchSparklines, fetchCapxSolChart, fetchOhlcv, rangeForResolution, SOLANA_NETWORK_ID } from "./codex.mjs";
 import { buildHeatmap } from "./timegrid.mjs";
-import { isMint, joinDirectory, publicRow } from "./join.mjs";
+import { isMint, joinDirectory, publicRow, launchpadV2Row, marketFromLaunchpad, sortMarketCap } from "./join.mjs";
+import { companyRoute, proxyTarget, proxyCompany, safePath } from "./routes.mjs";
 import {
   codeFromBody,
   parseRegisterBody,
@@ -22,11 +23,13 @@ import {
   probeArtifacts,
   publicCompanyView,
   marketSurface,
+  resolveCompanyIdentifier,
 } from "./company.mjs";
 
 const root = fileURLToPath(new URL(".", import.meta.url));
 const port = Number(process.env.PORT ?? 4200);
 const launchpadApi = (process.env.LAUNCHPAD_API ?? "https://api.launchpad.capx.ai").replace(/\/$/, "");
+const launchpadV2 = process.env.LAUNCHPAD_V2_API ?? (process.env.LAUNCHPAD_API ? `${launchpadApi}/api/v1/tokens` : "https://launchpadv2.capx.ai/api/v1/tokens");
 
 // September 1, 2026 at 00:00 IST: the fixed official-launch boundary, mirrored
 // from the launchpad's launch-visibility rule. Launches finalized before it
@@ -163,6 +166,7 @@ async function handleRegister(request, response) {
 }
 
 const SAMPLE_ROWS = [
+  { id: "sample-unbound", agentMint: "FixUnbound1111111111111111111capx", name: "Fixture Unbound", symbol: "SOLO", description: "Localhost fixture. No company connected.", state: "COMPLETED", marketPerformance: { currentMarketCapUsd: 10000 }, sample: true },
   {
     id: "sample-live-prog",
     agentMint: "FixLiveProg111111111111111111capx",
@@ -333,6 +337,15 @@ async function loadDirectory() {
   const items = [];
   let cursor = null;
   let error = null;
+  let primary = [];
+  let primaryError = null;
+  try {
+    const res = await fetchJson(launchpadV2);
+    const data = res.data;
+    const rows = Array.isArray(data) ? data : data?.items ?? data?.tokens ?? data?.data?.tokens ?? data?.data;
+    if (!res.ok || !Array.isArray(rows)) throw new Error("Launchpad v2 unavailable");
+    primary = rows.map(launchpadV2Row).map(publicRow).filter(Boolean);
+  } catch (err) { primaryError = String(err.message || err); }
   try {
     for (let i = 0; i < 20; i++) {
       const qs = new URLSearchParams({ filter: "all", limit: "100" });
@@ -350,13 +363,16 @@ async function loadDirectory() {
   } catch (err) {
     error = err.name === "AbortError" ? "Launchpad directory timed out" : String(err.message || err);
   }
-  listCache = { at: now, value: items.filter(isOfficialLaunchVisible), error };
+  const seen = new Set(primary.map((row) => row.mint));
+  const secondary = items.filter(isOfficialLaunchVisible).filter((row) => !seen.has(row.mint || row.agentMint));
+  listCache = { at: now, value: primary.concat(secondary), error: primary.length ? null : error,
+    sources: { launchpadv2: primaryError, launchpad: error } };
   return listCache;
 }
 
 async function loadCompanies() {
   const now = Date.now();
-  if (companiesCache.value && now - companiesCache.at < LIST_TTL_MS) return companiesCache;
+  if (companiesCache.value && now - companiesCache.at < (companiesCache.error ? 30_000 : LIST_TTL_MS)) return companiesCache;
   const items = [];
   let cursor = null;
   let error = null;
@@ -434,7 +450,7 @@ async function loadCompanySurface(slug) {
   if (!isValidSlug(slug)) return null;
   const now = Date.now();
   const hit = companySurfaceCache.get(slug);
-  if (hit && now - hit.at < LIST_TTL_MS) return hit.value;
+  if (hit && now - hit.at < (hit.value ? LIST_TTL_MS : 30_000)) return hit.value;
   let value = null;
   try {
     const casa = await loadCompanyBySlug(slug);
@@ -476,7 +492,7 @@ async function loadCompanySurfaces(rows) {
 async function loadCasa(mint) {
   const now = Date.now();
   const hit = casaCache.get(mint);
-  if (hit && now - hit.at < CASA_TTL_MS) return hit;
+  if (hit && now - hit.at < (hit.status === 200 ? CASA_TTL_MS : 30_000)) return hit;
   let result;
   try {
     const res = await fetchJson(`${casaApi}/v1/tokens/${encodeURIComponent(mint)}`);
@@ -641,7 +657,7 @@ async function marketPayload() {
   const companies = sample
     ? [...(casaDir.value || []), ...SAMPLE_COMPANIES]
     : (casaDir.value || []);
-  const rows = joinDirectory(companies, launchpad);
+  const rows = sortMarketCap(joinDirectory(companies, launchpad));
   const company_surfaces = await loadCompanySurfaces(rows);
   const sparks = await loadSparks(launchpad);
   const tokens = launchpad.map((row) => ({
@@ -654,6 +670,7 @@ async function marketPayload() {
     capx: quote.value,
     capxError: quote.error,
     directoryError: dir.error,
+    tokenSources: dir.sources,
     casaError: casaDir.error,
     casaOrigin: casaApi,
     codex: {
@@ -673,6 +690,18 @@ async function launchpadRows() {
 }
 
 async function companyPayload(slug) {
+  if (isMint(slug)) {
+    const market = await marketPayload();
+    const resolved = resolveCompanyIdentifier(slug, market.rows);
+    if (!resolved) return { status: 404, body: { error: "TOKEN_NOT_LISTED", message: "No public Launchpad row for this mint" } };
+    if (resolved.slug) return companyPayload(resolved.slug);
+    const result = await tokenPayload(slug);
+    if (result.status !== 200) return result;
+    const token = result.body.token;
+    return { status: 200, body: { ...result.body, kind: "token_without_company", company: null,
+      face: token.casa?.document?.face || null, market: marketFromLaunchpad(token),
+      priceSeries: token.priceSeries, heatmap: token.heatmap } };
+  }
   if (!isValidSlug(slug)) {
     return { status: 404, body: companyErrorResponse("NOT_FOUND").body };
   }
@@ -718,6 +747,7 @@ async function companyPayload(slug) {
       casaOrigin: casaApi,
       kind: joined.kind,
       company: view,
+      face: view.face,
       token: joined.token,
       market: joined.market,
       token_href: joined.token_href,
@@ -736,7 +766,7 @@ async function tokenPayload(mint) {
   if (!row) {
     return { status: 404, body: { error: "TOKEN_NOT_LISTED", message: "No public Launchpad row for this mint" } };
   }
-  const [detail, casa] = await Promise.all([loadDetail(row.id), loadCasa(mint)]);
+  const [detail, casa] = await Promise.all([row.source === "launchpadv2" ? null : loadDetail(row.id), loadCasa(mint)]);
   if (detail) {
     row = {
       ...row,
@@ -778,11 +808,22 @@ async function tokenPayload(mint) {
 }
 
 const server = createServer(async (request, response) => {
+  if (!safePath(request.url || "/")) { response.writeHead(400).end("bad path"); return; }
   const url = new URL(request.url ?? "/", `http://127.0.0.1:${port}`);
   if (url.pathname.includes("..")) {
     response.writeHead(400).end("bad path");
     return;
   }
+
+  const target = proxyTarget(request.method, request.url || "/");
+  if (target) {
+    // A trailing slash lets relative collateral assets resolve under the proxy.
+    if (/^\/[^/]+\/(site|one-pager|deck)$/.test(url.pathname)) {
+      response.writeHead(301, { location: url.pathname + "/" + url.search }).end();
+    } else await proxyCompany(target, response);
+    return;
+  }
+  if (proxyTarget("GET", request.url || "/")) { response.writeHead(405, { allow: "GET" }).end(); return; }
 
   if (url.pathname === "/api/register") {
     if (request.method !== "POST") {
@@ -843,7 +884,7 @@ const server = createServer(async (request, response) => {
     const mint = decodeURIComponent(tokenApi[1]);
     try {
       const result = await tokenPayload(mint);
-      sendJson(response, result.status, result.body, 300);
+      sendJson(response, result.status, result.body, result.body.token?.casa?.status === 200 ? 300 : 30);
     } catch (err) {
       sendJson(response, 500, { error: "TOKEN_FAILED", message: String(err.message || err) }, 5);
     }
@@ -861,7 +902,7 @@ const server = createServer(async (request, response) => {
     }
     try {
       const result = await companyPayload(slug);
-      const maxAge = result.status === 200 ? 60 : 5;
+      const maxAge = result.body.company === null ? 30 : 60;
       sendJson(response, result.status, result.body, result.status === 200 ? maxAge : "no-store");
     } catch (err) {
       sendJson(response, 500, { error: "COMPANY_FAILED", message: String(err.message || err) }, 5);
@@ -881,10 +922,11 @@ const server = createServer(async (request, response) => {
   }
 
   let relative = url.pathname === "/" ? "index.html" : url.pathname.slice(1);
-  if (/^t\/[^/]+$/.test(relative)) relative = "token.html";
-  if (/^c\/[a-z0-9-]{1,32}$/.test(relative)) relative = "company.html";
+  const route = companyRoute(url.pathname);
+  if (route?.redirect) { response.writeHead(301, { location: route.redirect + url.search }).end(); return; }
+  if (route) relative = "company.html";
   if (relative === "register" || relative === "register/") relative = "register.html";
-  if (relative === "server.mjs" || relative === "codex.mjs" || relative === "timegrid.mjs" || relative === "join.mjs" || relative === "register.mjs" || relative === "company.mjs" || relative.endsWith(".md")) {
+  if (relative.endsWith(".mjs") || relative.endsWith(".md")) {
     response.writeHead(404).end("not found");
     return;
   }

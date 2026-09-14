@@ -132,6 +132,7 @@ function mockLaunchpadOk() {
             symbol: withToken.token.symbol,
             logoUrl: withToken.token.logo_url,
             state: withToken.token.state,
+            fundingFinalizedAt: "2026-09-14T00:00:00Z",
             marketPerformance: {
               currentMarketCapUsd: withToken.market.fdv_usd,
               volume24hUsd: withToken.market.volume_24h_usd,
@@ -146,6 +147,7 @@ function mockLaunchpadOk() {
             symbol: tokenOnly.token.symbol,
             logoUrl: tokenOnly.token.logo_url,
             state: tokenOnly.token.state,
+            fundingFinalizedAt: "2026-09-14T00:00:00Z",
             marketPerformance: null,
           },
         ],

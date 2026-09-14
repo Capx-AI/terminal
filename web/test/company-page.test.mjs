@@ -63,6 +63,7 @@ function launchpadItem(row) {
     logoUrl: row.token.logo_url,
     description: row.company ? row.company.description : "",
     state: row.token.state,
+    fundingFinalizedAt: "2026-09-14T00:00:00Z",
     marketPerformance: {
       currentMarketCapUsd: m.fdv_usd,
       volume24hUsd: m.volume_24h_usd,
@@ -555,7 +556,7 @@ test("joined token company payload and /t/{mint} link to /c/{slug}", async (t) =
 
   const tokenHtml = await getText(`${terminal.url}/t/${withToken.agent_mint}`);
   assert.equal(tokenHtml.status, 200);
-  assert.match(tokenHtml.text, /id="company-link"/);
+  assert.match(tokenHtml.text, /id="token-link"/);
 });
 
 test("company payload does not use the five-minute Casa mint cache", () => {

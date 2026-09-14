@@ -50,3 +50,27 @@ Unbound (404): no Casa panel. Bound never pushed: `progress` is null, `attestati
 ## Company page (`/c/{slug}`)
 
 Same lime tiles as the token page, minus price. Source is `GET /v1/companies/{slug}` (`payload.company`), not `GET /v1/tokens/{mint}`. Hide a tile when its block is absent or empty. Keep Market/Price and the chart as empty chrome when `kind === company_without_token`. Market table company columns read `GET /api/market` `company_surfaces[slug]`, not the join row.
+
+## Company face (2026-09-14, WP4)
+
+`/<slug>` and `/<mint>` use the company page; `/c/` and `/t/` redirect with 301.
+`GET /api/companies/{slug-or-mint}` resolves mints through the market join. An
+unbound token retains its market row with `company: null` and a zero readiness meter.
+Casa company GET supplies `face`, `face_updated_at`, and `readiness.face.missing`.
+Token-only faces come from Casa token GET. Positive token cache remains 300 s;
+negative Casa caches last 30 s. The directory never fetches per-mint Casa documents.
+
+All face fields are **claimed**, displayed at full contrast with "company authored":
+`brief.summary`, `brief.sections[].{title,body}`, `diagrams.{architecture,product_flow,data_model,org_chart,token_flow}`,
+`roadmap[].{id,title,target,status,playbooks}`, `plan[].{id,title,milestone,playbook,status}`,
+`agents[].{name,department,mandate,playbooks,events[].{ts,task,status,node_id}}`,
+`collateral.{site,one_pager,deck}`, company/token identity and source digests.
+Readiness counts the seven required parts; optional token flow is excluded. The
+URL-free market sidecar carries readiness and agent count. Neither is attested.
+Brief text only recognizes `## ` headings. Mermaid runs inside an opaque sandbox;
+parse failures show escaped source. Hosted collateral and output bytes pass through
+the GET-only Terminal proxy with an 8 s deadline and a 60 s public cache. Collateral
+root URLs redirect to a trailing slash so relative assets resolve under the proxy.
+Attestation subpages hold the envelope, checks, ledger and data-plane explanation.
+V2 Launchpad is primary, legacy Launchpad secondary. USD price and market cap are
+CAPX values multiplied by `capxUsd`; market tables sort by USD cap with nulls last.

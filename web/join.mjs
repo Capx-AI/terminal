@@ -13,6 +13,7 @@ export function isMint(mint) {
 }
 
 export function publicRow(item) {
+  if (Object.hasOwn(item, "capxUsd")) item = launchpadV2Row(item);
   const mint = item.mint || item.agentMint;
   if (!mint || !isMint(mint)) return null;
   return {
@@ -22,6 +23,8 @@ export function publicRow(item) {
     symbol: item.symbol,
     logoUrl: item.logoUrl,
     description: item.description ?? "",
+    creator: item.creator ?? null,
+    source: item.source ?? "launchpad",
     state: item.state,
     fundraisingDeadlineAt: item.fundraisingDeadlineAt ?? null,
     fundingFinalizedAt: item.fundingFinalizedAt ?? null,
@@ -53,12 +56,27 @@ export function marketFromLaunchpad(item) {
   if (!mp || typeof mp !== "object") return nullMarket();
   const fdv = numOrNull(mp.currentMarketCapUsd);
   return {
-    price_usd: fdv == null ? null : fdv / 1e9,
+    price_usd: Object.hasOwn(mp, "priceUsd") ? numOrNull(mp.priceUsd) : (fdv == null ? null : fdv / 1e9),
     fdv_usd: fdv,
     volume_24h_usd: numOrNull(mp.volume24hUsd),
     liquidity_usd: numOrNull(mp.liquidityUsd),
     change_24h_percent: numOrNull(mp.priceChange24hPercent),
   };
+}
+
+export function launchpadV2Row(item) {
+  const quote = numOrNull(item.capxUsd);
+  const usd = (value) => quote == null || numOrNull(value) == null ? null : numOrNull(value * quote);
+  return { ...item, id: item.mint, logoUrl: item.image, source: "launchpadv2",
+    state: String(item.stage || "listed").toUpperCase(),
+    marketPerformance: { priceUsd: usd(item.price), currentMarketCapUsd: usd(item.marketCap) } };
+}
+
+export function sortMarketCap(rows) {
+  return rows.sort((a, b) => {
+    const x = numOrNull(a.market?.fdv_usd), y = numOrNull(b.market?.fdv_usd);
+    return x == null ? (y == null ? 0 : 1) : y == null ? -1 : y - x;
+  });
 }
 
 export function companySummary(company) {

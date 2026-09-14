@@ -17,7 +17,7 @@ const market = await get(`${base}/api/market`);
 assert(market.status === 200, "market 200");
 assert(market.data.sample === true, "SAMPLE pill payload");
 assert(Array.isArray(market.data.tokens) && market.data.tokens.length >= 7, "live + fixtures");
-assert(market.data.capx && typeof market.data.capx.capxUsd === "number", "CAPX quote");
+assert(market.data.capx || market.data.capxError, "CAPX quote or explicit outage");
 assert(market.data.codex && typeof market.data.codex.configured === "boolean", "codex flag");
 
 assert(Array.isArray(market.data.rows), "composite rows");
@@ -37,17 +37,17 @@ for (const row of tokenless) {
 }
 
 const bySym = Object.fromEntries(market.data.tokens.map((t) => [t.symbol, t]));
-assert(bySym.XY, "XY listed");
-assert(bySym.XX && bySym.XX.state === "REFUNDED", "XX refunded listed");
+assert(bySym.SOLO, "unbound fixture listed");
+
 assert(bySym.LIVE && bySym.LIVE.sample === true, "LIVE fixture listed");
 assert(bySym.NONE && bySym.NONE.sample === true, "NONE fixture listed");
 assert(bySym.REL && bySym.REL.sample === true, "REL fixture listed");
 assert(bySym.BIND && bySym.BIND.sample === true, "BIND fixture listed");
 assert(bySym.AGE && bySym.AGE.sample === true, "AGE fixture listed");
 
-const xy = await get(`${base}/api/tokens/${bySym.XY.mint}`);
-assert(xy.status === 200 && xy.data.token.casa.status === 404, "XY token page data, no Casa");
-assert(xy.data.token.qualifyingNetCapxBase, "XY raise facts");
+const xy = await get(`${base}/api/tokens/${bySym.SOLO.mint}`);
+assert(xy.status === 200 && xy.data.token.casa.status === 404, "unbound token page data, no Casa");
+assert(xy.data.token.marketPerformance.currentMarketCapUsd === 10000, "unbound market facts");
 assert(xy.data.token.heatmap && xy.data.token.heatmap.spec, "heatmap spec");
 assert(["1h", "4h", "1d"].includes(xy.data.token.heatmap.spec.kind), "heatmap kind");
 if (xy.data.token.heatmap.spec.kind === "1h") {
@@ -63,7 +63,7 @@ if (firstLive) {
 if (xy.data.token.priceSeries.preview) {
   assert(xy.data.token.priceSeries.points.length >= 2, "preview series has points");
 } else if (xy.data.codex && xy.data.codex.configured === false) {
-  assert(xy.data.token.priceSeries.error === "CODEX_API_KEY_MISSING", "missing key is explicit");
+  assert(xy.data.token.priceSeries.error === (xy.data.token.sample ? "SAMPLE_MINT" : "CODEX_API_KEY_MISSING"), "missing series is explicit");
 }
 
 const live = await get(`${base}/api/tokens/${bySym.LIVE.mint}`);
@@ -93,7 +93,7 @@ assert(bind.data.token.casa.document.binding.continuity_break === true, "BIND br
 const age = await get(`${base}/api/tokens/${bySym.AGE.mint}`);
 assert(age.data.token.casa.document.attestation.freshness === "aging", "AGE aging");
 
-const missing = await get(`${casa}/v1/tokens/${bySym.XY.mint}`);
+const missing = await get(`${casa}/v1/tokens/${bySym.SOLO.mint}`);
 assert(missing.status === 404 && missing.data.error === "TOKEN_NOT_BOUND", "mock 404");
 
 const bad = await get(`${casa}/v1/tokens/nope`);
@@ -107,7 +107,7 @@ assert(String(home.data).includes("Sample data"), "pill chrome");
 assert(!String(home.data).includes("win_definition"), "no win_definition");
 assert(!/yield|profit|equity/i.test(String(home.data)), "no yield copy on market");
 
-const page = await get(`${base}/t/${bySym.XY.mint}`);
+const page = await get(`${base}/t/${bySym.SOLO.mint}`);
 assert(page.status === 200 && String(page.data).includes("Back to market"), "token html");
 assert(String(page.data).includes("tile-work"), "token has work tile chrome");
 assert(String(page.data).includes("ghgrid"), "token has heatmap chrome");
@@ -144,4 +144,25 @@ assert(market.data.company_surfaces["northstar-labs"].document.progress.work.tas
 const missingCo = await get(`${base}/api/companies/no-such-company`);
 assert(missingCo.status === 404 && missingCo.data.error === "NOT_FOUND", "missing company 404");
 
+const facePage = await get(`${base}/api/companies/${bySym.LIVE.mint}`);
+assert(facePage.data.company.slug === "fixture-live", "mint resolves to bound slug");
+assert(facePage.data.face.brief.summary && facePage.data.face.agents.length, "bound face exposed");
+assert(liveDoc.face.plane === "claimed", "token face stays claimed");
+assert(companyApi.data.face.diagrams.architecture, "tokenless face exposed");
+assert(companyApi.data.company.readiness.face.missing.length === 0, "face readiness complete");
+const noFace = await get(`${base}/api/companies/inboxpilot`);
+assert(noFace.data.face === null, "company without face stays empty");
+const unbound = await get(`${base}/api/companies/${bySym.SOLO.mint}`);
+assert(unbound.data.company === null && unbound.data.token.mint === bySym.SOLO.mint, "unbound resolver retains market row");
+assert(unbound.data.market.fdv_usd === 10000, "unbound page market");
+for (const path of [`/t/${bySym.LIVE.mint}`, "/c/northstar-labs"]) {
+  const redirect = await fetch(base + path, { redirect: "manual" });
+  assert(redirect.status === 301 && redirect.headers.get("location") === path.slice(2), "legacy redirect");
+}
+for (const view of ["architecture", "flow", "data-model", "roadmap", "plan", "agents", "activity", "attestation"]) {
+  const page = await get(`${base}/northstar-labs/${view}`);
+  assert(page.status === 200 && page.data.includes('id="tile-brief"'), "section page " + view);
+}
+const caps = market.data.rows.map((row) => row.market.fdv_usd);
+assert(caps.every((value, i) => !i || (value == null || (caps[i - 1] != null && caps[i - 1] >= value))), "market cap sort, nulls last");
 process.stdout.write("e2e ok\n");

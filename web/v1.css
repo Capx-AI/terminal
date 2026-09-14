@@ -259,3 +259,23 @@
   .open-full{display:inline-block; padding:8px 0; min-height:24px;}
   .artifact-open{padding:7px 9px;}
 }
+
+/* Company authored face, with the existing theme and full claimed contrast. */
+.bento > .face-tile,.bento > .face-nav{grid-column:1 / -1;color:var(--capx);min-width:0;}
+.face-tile .label,.face-tile .face-line,.face-tile li,.face-tile p{color:var(--capx);opacity:1;}
+.face-tile h3{font-size:16px;margin:14px 0 6px;}
+.face-line{white-space:pre-wrap;min-height:1em;overflow-wrap:anywhere;}
+.face-nav{display:flex;flex-wrap:wrap;gap:8px;padding:12px 18px;}
+.face-nav a{min-height:24px;display:inline-flex;align-items:center;}
+.face-list{padding-left:22px;margin:10px 0;}
+.face-list li{padding:6px 0;overflow-wrap:anywhere;}
+.face-list p{margin:4px 0;}
+.face-tile progress{width:100%;accent-color:var(--capx);}
+.face-tile meter{accent-color:var(--capx);vertical-align:middle;}
+#diagram-tabs{flex-wrap:wrap;margin-bottom:10px;}
+.diagram-frame{display:block;width:100%;height:360px;border:1px solid var(--line);overflow:auto;touch-action:pan-x pan-y pinch-zoom;}
+.view-hidden{display:none!important;}
+.face-focused > .tile[data-view]{grid-column:1 / -1;}
+.face-focused .scroll{max-height:none;}
+.face-meter{display:block;color:var(--capx);font-size:11px;white-space:normal;}
+.face-meter meter{width:48px;vertical-align:middle;accent-color:var(--capx);}

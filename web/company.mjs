@@ -1,6 +1,6 @@
 /** Company page helpers. Public GET only. Hidden artifact URLs never leave. */
 
-import { marketFromLaunchpad, nullMarket, tokenSummary } from "./join.mjs";
+import { isMint, marketFromLaunchpad, nullMarket, tokenSummary } from "./join.mjs";
 
 export const SLUG_RE = /^[a-z0-9-]{1,32}$/;
 export const ARTIFACT_TYPES = ["site", "one_pager", "deck"];
@@ -24,6 +24,14 @@ const CASA_ERRORS = new Set(["NOT_FOUND", "PRIVATE", "NOT_READY"]);
 
 export function isValidSlug(slug) {
   return typeof slug === "string" && SLUG_RE.test(slug);
+}
+
+export function resolveCompanyIdentifier(id, rows) {
+  if (isMint(id)) {
+    const row = rows.find((r) => r.token?.mint === id);
+    return row ? { slug: row.company?.slug || null, token: row.token } : null;
+  }
+  return isValidSlug(id) ? { slug: id, token: null } : null;
 }
 
 export function publicHostForSlug(slug) {
@@ -197,6 +205,8 @@ export function publicCompanyView(doc) {
     agent_mint: doc.agent_mint ?? null,
     launchpad_project_id: doc.launchpad_project_id ?? null,
     readiness: copyIfObject(doc.readiness),
+    face: doc.face ? { ...doc.face, plane: "claimed" } : null,
+    face_updated_at: doc.face_updated_at ?? null,
     artifact_visibility: vis,
     active_artifact_versions: sanitizeVersions(doc.active_artifact_versions, artifacts),
     created_at: doc.created_at ?? null,
@@ -238,6 +248,8 @@ export function marketSurface(view) {
   const progress = view.progress && typeof view.progress === "object" ? view.progress : null;
   const work = progress && progress.work && typeof progress.work === "object" ? progress.work : null;
   return {
+    readiness: view.readiness || null,
+    agents: Array.isArray(view.face?.agents) ? view.face.agents.length : 0,
     attestation: att
       ? {
         attested: att.attested === true,

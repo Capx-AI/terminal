@@ -9,7 +9,7 @@ var artifactPreviewState = { artifacts: {}, slug: "", canonical: "", active: "si
 var CASA_HOST = /^https:\/\/[a-z0-9-]{1,32}\.casa\.capx\.ai(\/.*)?$/;
 
 function slugFromPath() {
-  var m = location.pathname.match(/^\/c\/([a-z0-9-]{1,32})$/);
+  var m = location.pathname.match(/^\/(?:c\/|t\/)?([^/]+)(?:\/[^/]+)?$/);
   return m ? m[1] : "";
 }
 
@@ -64,7 +64,7 @@ function paintIdentity(company) {
   mark.replaceChildren();
   if (company.logo && isCasaUrl(company.logo, company.slug)) {
     var img = document.createElement("img");
-    img.src = company.logo;
+    img.src = "/" + company.slug + "/site" + new URL(company.logo).pathname;
     img.alt = "";
     mark.appendChild(img);
   } else {
@@ -99,11 +99,13 @@ function paintProvenance(company) {
     var st = a.freshness === "fresh" ? "st-fresh" : (a.freshness === "stale" || a.freshness === "aging" ? "st-stale" : "");
     parts.push("<span class='pv " + st + "'>" + F.esc(a.freshness) + "</span>");
   }
-  if (a && a.attested) parts.push("<span class='pv ok'>attested</span>");
+  if (a && a.attested === true) parts.push("<span class='pv ok'>attested</span>");
   else if (a) parts.push("<span class='pv bad'>not attested</span>");
   if (a && finite(a.health_score)) parts.push("<span class='pv'>health " + a.health_score + "</span>");
   if (R && R.chain_intact === true) parts.push("<span class='pv ok'>chain intact</span>");
   if (company && company.category) parts.push("<span class='pv'>" + F.esc(company.category) + "</span>");
+  if (company.binding && company.binding.status === "released") parts.push("<span class='pv warn'>Casa was connected. This launch ended. Not an active company.</span>");
+  if (company.binding && company.binding.continuity_break) parts.push("<span class='pv warn'>The live Casa key for this mint changed once.</span>");
   var sub = "";
   if (a && finite(a.hours_since)) sub = "Last attestation " + F.hoursAgo(a.hours_since);
   else if (a && a.observed_at) sub = "Last attestation " + F.ago(a.observed_at);
@@ -113,7 +115,7 @@ function paintProvenance(company) {
 
 function paintMarket(payload) {
   var m = payload.market || {};
-  var hasToken = payload.kind === "company_with_token" && payload.token;
+  var hasToken = !!payload.token;
   var price = hasToken && finite(m.price_usd) ? m.price_usd : null;
   if (!hasToken) {
     // Collapse: no dashed-out market grid and no empty chart while the
@@ -141,7 +143,7 @@ function paintMarket(payload) {
   $("m-price").textContent = price == null ? "--" : F.usdPx(price);
   $("m-price-note").textContent = price == null
     ? "Token listed. No pool snapshot yet."
-    : "USD from Launchpad mcap / 1,000,000,000";
+    : "Reproduced from Launchpad";
   var chg = m.change_24h_percent;
   $("m-chg").innerHTML = finite(chg)
     ? "<span class='" + (chg >= 0 ? "up" : "dn") + "'>" + F.pct(chg) + "</span> 24h"
@@ -502,7 +504,7 @@ function paintPreview(kind, artifact, slug, canonical) {
     resetStageGate(false);
     return;
   }
-  frame.src = art.url;
+  frame.src = "/" + slug + "/" + (kind === "one_pager" ? "one-pager" : kind) + "/";
   frame.hidden = false;
   if (empty) empty.hidden = true;
   if (kind !== "site") paintArtifactOpen(art.url);
@@ -610,7 +612,7 @@ function paintPreviews(company) {
 function paintChart(payload) {
   var empty = $("chart-empty");
   var canvas = $("chart");
-  var hasToken = payload.kind === "company_with_token" && payload.token;
+  var hasToken = !!payload.token;
   var series = payload.priceSeries;
   var points = series && Array.isArray(series.points) ? series.points : [];
   if (!hasToken) {
@@ -712,7 +714,7 @@ function chkRow(ok, k, v) {
   var cls = ok === true ? "ok" : (ok === false ? "bad" : "warn");
   var glyph = ok === true ? "+" : (ok === false ? "x" : "!");
   return "<div class='chk " + cls + "'><span class='g'>" + glyph + "</span>"
-    + "<span class='ck'>" + F.esc(k) + "</span><span class='cv'>" + v + "</span></div>";
+    + "<span class='ck'>" + F.esc(k) + "</span><span class='cv'>" + F.esc(v) + "</span></div>";
 }
 
 function violationText(v) {
@@ -1043,7 +1045,7 @@ function paintDepts(doc) {
     return "<div class='dp" + (d.events ? "" : " zero") + "'>"
       + "<span class='dn2'>" + F.esc(d.department || "") + "</span>"
       + "<span class='db'><i style='width:" + w.toFixed(1) + "%'></i></span>"
-      + "<span class='dv'>" + (d.events || 0) + "</span></div>";
+      + "<span class='dv'>" + (Number(d.events) || 0) + "</span></div>";
   }).join("");
 }
 
@@ -1092,12 +1094,14 @@ function boot(payload) {
     paintUnavailable(payload.error, payload.message);
     return;
   }
-  if (!payload.company) {
+  if (!payload.company && !payload.token) {
     paintUnavailable("NOT_FOUND", "No such company");
     return;
   }
   $("page").hidden = false;
-  var company = payload.company;
+  var token = payload.token || {};
+  if (token.casa && token.casa.error === "CASA_UNAVAILABLE") { $("err").hidden = false; $("err").textContent = "Casa is unavailable. Company connection could not be checked."; }
+  var company = payload.company || Object.assign({}, token.casa && token.casa.document || {}, { name: token.name, description: token.description, face: payload.face, slug: "" });
   paintIdentity(company);
   paintProvenance(company);
   paintMarket(payload);
@@ -1110,10 +1114,13 @@ function boot(payload) {
   paintChart(payload);
   paintAttest(company, payload);
   paintOutputs(company);
-  if (payload.token_href) {
+  paintFace(company, payload);
+  applyFaceView();
+  if (!payload.company) { show("tile-work", !!company.progress); show("tile-ladder", !!company.progress); show("tile-showcase", false); }
+  if (payload.company && token.mint && slugFromPath() !== payload.company.slug) {
     var link = $("token-link");
     if (link) {
-      link.href = payload.token_href;
+      link.href = "/" + payload.company.slug;
       link.hidden = false;
     }
   }
@@ -1222,7 +1229,7 @@ function openReader(entry) {
   ].filter(Boolean).join("");
   $("reader-verdict").textContent = "fetching from the company host…";
   $("reader-body").innerHTML = "";
-  fetch(entry.url, { cache: "no-store" })
+  fetch("/" + artifactPreviewState.slug + "/site" + new URL(entry.url).pathname, { cache: "no-store" })
     .then(function (res) {
       if (!res.ok) throw new Error("HTTP " + res.status);
       return res.arrayBuffer();
@@ -1271,3 +1278,137 @@ function closeReader() {
   var back = $("reader-back");
   if (back) back.addEventListener("click", closeReader);
 })();
+
+/* Company authored face: text only in the parent; Mermaid stays in an opaque frame. */
+var FACE_PARTS = ["brief", "architecture", "product_flow", "data_model", "roadmap", "plan", "org_chart"];
+var FACE_PLAYS = ["company-brief", "architecture", "product-flow", "data-model", "roadmap", "task-plan", "org-chart"];
+var DIAGRAM_LABELS = { architecture: "Architecture", product_flow: "Product flow", data_model: "Data model", org_chart: "Org chart", token_flow: "Token flow" };
+var DIAGRAMS = {};
+
+function faceText(text) {
+  return String(text || "").split(/\r?\n/).map(function (line) {
+    return line.indexOf("## ") === 0 ? "<h3>" + F.esc(line.slice(3)) + "</h3>" : "<div class='face-line'>" + F.esc(line) + "</div>";
+  }).join("");
+}
+
+function faceMissing(company) {
+  var readiness = company.readiness && company.readiness.face;
+  if (readiness && Array.isArray(readiness.missing)) return FACE_PARTS.filter(function (part) { return readiness.missing.indexOf(part) >= 0; });
+  var face = company.face || {}, diagrams = face.diagrams || {};
+  return FACE_PARTS.filter(function (part) {
+    if (part === "brief") return !(face.brief && (face.brief.summary || (face.brief.sections || []).length));
+    if (part === "roadmap" || part === "plan") return !Array.isArray(face[part]) || !face[part].length;
+    return !diagrams[part];
+  });
+}
+
+// This function is serialized into srcdoc. It has no access to the parent page.
+function diagramRuntime() {
+  var source = document.getElementById("source"), host = document.getElementById("diagram");
+  function failed() { host.replaceChildren(); source.hidden = false; document.getElementById("failure").hidden = false; }
+  function fit(svg) {
+    var zoom = 1, start = 0, initial = 1, box = svg.viewBox.baseVal, width = Math.max(280, box.width), height = box.height || 300;
+    function size() { svg.style.maxWidth = "none"; svg.style.width = width * zoom + "px"; svg.style.height = height * zoom + "px"; }
+    function distance(t) { return Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY); }
+    size();
+    document.addEventListener("touchstart", function (e) { if (e.touches.length === 2) { start = distance(e.touches); initial = zoom; } }, { passive: true });
+    document.addEventListener("touchmove", function (e) {
+      if (e.touches.length === 2 && start) { e.preventDefault(); zoom = Math.max(0.25, Math.min(4, initial * distance(e.touches) / start)); size(); }
+    }, { passive: false });
+  }
+  // Text is measured during render; a frame that is not laid out yet measures zero and draws empty boxes, so retry until the drawing has a real width.
+  function draw(attempt) {
+    mermaid.render("face-diagram-" + attempt, source.textContent).then(function (result) {
+      host.innerHTML = result.svg;
+      var svg = host.querySelector("svg");
+      if (!svg) return failed();
+      if (svg.viewBox.baseVal.width < 40 && attempt < 6) return setTimeout(function () { draw(attempt + 1); }, 200 * (attempt + 1));
+      fit(svg);
+    }).catch(failed);
+  }
+  try {
+    mermaid.initialize({ startOnLoad: false, securityLevel: 'strict', theme: 'dark', fontFamily: 'ui-sans-serif, system-ui, sans-serif', flowchart: { htmlLabels: false } });
+    // A dynamically created srcdoc frame has not laid out when its script runs, and Mermaid measures text against that empty layout. Force one layout pass first.
+    var probe = document.createElementNS("http://www.w3.org/2000/svg", "svg"), probeText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    probeText.textContent = "measure"; probe.appendChild(probeText); document.body.appendChild(probe); void probeText.getComputedTextLength(); probe.remove();
+    (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(function () { setTimeout(function () { draw(0); }, 0); }, function () { draw(0); });
+  } catch (err) { failed(); }
+}
+
+function selectDiagram(key) {
+  var stage = $("diagram-stage");
+  stage.replaceChildren();
+  document.querySelectorAll("#diagram-tabs button").forEach(function (tab) {
+    var active = tab.getAttribute("data-diagram") === key;
+    tab.setAttribute("aria-selected", String(active)); tab.tabIndex = active ? 0 : -1;
+  });
+  stage.setAttribute("aria-labelledby", "diagram-tab-" + key);
+  if (!DIAGRAMS[key]) { stage.textContent = "No diagram published yet."; return; }
+  var frame = document.createElement("iframe");
+  frame.className = "diagram-frame"; frame.title = DIAGRAM_LABELS[key]; frame.setAttribute("sandbox", "allow-scripts");
+  frame.srcdoc = '<!doctype html><html><head><meta name="viewport" content="width=device-width, initial-scale=1"><style>body{margin:8px;background:#0d0e10;color:#f6f7f7;font:14px ui-sans-serif,system-ui,sans-serif}#diagram{overflow:auto}pre{white-space:pre-wrap;color:#b8c0b0}</style>'
+    + '<style>body{margin:12px;background:#08090a;color:#C5DC6B;font:14px system-ui;overflow:auto}pre{white-space:pre-wrap;overflow-wrap:anywhere}svg{display:block}</style></head><body>'
+    + '<p id="failure" hidden>diagram did not render</p><pre id="source" hidden>' + F.esc(DIAGRAMS[key]) + '</pre><div id="diagram"></div>'
+    + '<script src="/vendor/mermaid.min.js"></script><script>(' + diagramRuntime.toString() + ')();</script></body></html>';
+  stage.appendChild(frame);
+}
+
+function paintFace(company, payload) {
+  var face = company.face || {}, missing = faceMissing(company), done = 7 - missing.length;
+  var connected = !!(payload.company || (payload.token && payload.token.casa && payload.token.casa.document));
+  if (!connected) { done = 0; missing = FACE_PARTS.slice(); }
+  $("face-readiness").innerHTML = '<span>Face ' + done + ' of 7</span> <meter min="0" max="7" value="' + done + '" aria-label="Face completeness">' + done + ' of 7</meter>';
+  $("face-missing").innerHTML = connected ? missing.map(function (part) {
+    return '<p>' + F.esc(part.replace(/_/g, " ")) + ': run <code>phase0-' + FACE_PLAYS[FACE_PARTS.indexOf(part)] + '</code></p>';
+  }).join("") : '<p>No company connected yet</p><p>Run Capx Casa for your company, register it, then bind this mint on Capx Launchpad and publish its face.</p><a class="back" href="/register">Register your company</a> <a class="back" href="https://launchpadv2.capx.ai/" target="_blank" rel="noopener noreferrer">Bind on Launchpad</a>';
+  var brief = face.brief || {};
+  $("face-brief").innerHTML = faceText(brief.summary) + (Array.isArray(brief.sections) ? brief.sections : []).map(function (section) {
+    return '<h3>' + F.esc(section.title || "") + '</h3>' + faceText(section.body);
+  }).join("");
+  DIAGRAMS = face.diagrams || {};
+  var keys = Object.keys(DIAGRAM_LABELS).filter(function (key) { return typeof DIAGRAMS[key] === "string" && DIAGRAMS[key]; });
+  show("tile-diagrams", !!keys.length);
+  $("diagram-tabs").innerHTML = keys.map(function (key) { return '<button type="button" class="artifact-tab" id="diagram-tab-' + key + '" role="tab" aria-controls="diagram-stage" data-diagram="' + key + '">' + DIAGRAM_LABELS[key] + '</button>'; }).join("");
+  var view = location.pathname.split("/")[2], diagramKey = { architecture: "architecture", flow: "product_flow", "data-model": "data_model" }[view];
+  if (keys.length || diagramKey) selectDiagram(diagramKey || keys[0]);
+  ["roadmap", "plan", "agents"].forEach(function (part) {
+    var items = Array.isArray(face[part]) ? face[part] : [], count = items.filter(function (item) { return item.status === "done"; }).length;
+    show("tile-" + part, !!items.length);
+    var html = part === "plan" ? '<p>' + count + ' of ' + items.length + ' done</p><progress max="' + (items.length || 1) + '" value="' + count + '" aria-label="Plan completion"></progress>' : '';
+    html += '<ol class="face-list">' + items.map(function (item) {
+      var title = part === "agents" ? item.name : item.title;
+      var meta = part === "agents" ? item.department : [item.target, item.status].filter(Boolean).join(" · ");
+      var events = part === "agents" && Array.isArray(item.events) ? item.events.slice(-10) : [];
+      return '<li><b>' + F.esc(title || "") + '</b> · ' + F.esc(meta || "") + (item.mandate ? '<p>' + F.esc(item.mandate) + '</p>' : '')
+        + events.map(function (event) { return '<p>' + F.esc([event.ts, event.task, event.status].filter(Boolean).join(" · ")) + '</p>'; }).join("") + '</li>';
+    }).join("") + '</ol>';
+    $("face-" + part).innerHTML = items.length ? html : 'No ' + part + ' published yet.';
+  });
+  var slug = payload.company && payload.company.slug;
+  var nav = [["", "Company"], ["architecture", "Architecture"], ["flow", "Flow"], ["data-model", "Data model"], ["roadmap", "Roadmap"], ["plan", "Plan"], ["agents", "Agents"], ["activity", "Activity"], ["attestation", "Attestation"]];
+  $("face-nav").innerHTML = slug ? nav.map(function (item) { return '<a class="back" href="/' + F.esc(slug) + (item[0] ? '/' + item[0] : '') + '">' + item[1] + '</a>'; }).join("") : '';
+  show("face-nav", !!slug); show("tile-attestation-summary", !!slug);
+  var att = company.attestation || {};
+  $("attestation-link").textContent = (att.attested === true ? "attested" : "not attested") + (att.freshness ? " · " + att.freshness : "") + " · View attestation";
+  if (slug) $("attestation-link").href = "/" + slug + "/attestation";
+  $("diagram-tabs").onclick = function (event) { var button = event.target.closest("button"); if (button) selectDiagram(button.getAttribute("data-diagram")); };
+  $("diagram-tabs").onkeydown = function (event) {
+    var index = keys.indexOf(event.target.getAttribute("data-diagram"));
+    if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") return;
+    event.preventDefault(); var key = keys[(index + (event.key === "ArrowRight" ? 1 : keys.length - 1)) % keys.length];
+    selectDiagram(key); $("diagram-tab-" + key).focus();
+  };
+}
+
+function applyFaceView() {
+  var view = location.pathname.split("/")[2] || "";
+  if (["architecture", "flow", "data-model"].indexOf(view) >= 0) view = "diagrams";
+  if (["diagrams", "roadmap", "plan", "agents", "activity", "attestation"].indexOf(view) < 0) view = "";
+  $("page").classList.toggle("face-focused", !!view);
+  $("tile-keys").classList.toggle("view-hidden", !!view);
+  document.querySelectorAll("#page > [data-view]").forEach(function (tile) {
+    var groups = tile.getAttribute("data-view").split(" ");
+    tile.classList.toggle("view-hidden", view ? groups.indexOf(view) < 0 : groups.indexOf("attestation") >= 0);
+    if (view && groups.indexOf(view) >= 0) tile.hidden = false;
+  });
+}

@@ -6,9 +6,9 @@ var FILTER = "all";
 var KIND = "all";
 var SHOW_ENDED = false;
 var SORT = {
-  bound: { k: "health", dir: -1 },
+  bound: { k: "fdv", dir: -1 },
   tokens: { k: "fdv", dir: -1 },
-  companies: { k: "health", dir: -1 },
+  companies: { k: "fdv", dir: -1 },
 };
 var ENDED_STATES = { REFUNDED: true, UNFUNDED_EXPIRED: true };
 var DATA = null;
@@ -105,6 +105,7 @@ function fromComposite(row) {
     sample: !!(src && src.sample),
     marketPerformance: hasMarket ? {
       currentMarketCapUsd: fdv,
+      priceUsd: px,
       volume24hUsd: vol,
       liquidityUsd: liq,
       priceChange24hPercent: chg,
@@ -493,7 +494,14 @@ function tokenCell(row) {
     + "<div class='tk'>" + ticker + "</div>"
     + (tells ? "<div class='tells'>" + tells + "</div>" : "")
     + "<div class='ml'>" + mobileLine(row) + "</div>"
-    + "</span></div>";
+    + faceMeter(row) + "</span></div>";
+}
+
+function faceMeter(row) {
+  var doc = casaDoc(row), ready = doc && doc.readiness && doc.readiness.face;
+  var n = row.company && ready && Array.isArray(ready.missing) ? Math.max(0, 7 - ready.missing.length) : 0;
+  var agents = doc && typeof doc.agents === "number" ? doc.agents : 0;
+  return "<span class='face-meter'>Face " + n + " of 7 <meter min='0' max='7' value='" + n + "' aria-label='Face completeness'></meter> · " + agents + " agents</span>";
 }
 
 function sortVal(row, k) {

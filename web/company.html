@@ -6,8 +6,8 @@
 <title>Capx Terminal</title>
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/favicon-180.png">
-<link rel="stylesheet" href="/app.css?v=26090103">
-<link rel="stylesheet" href="/v1.css?v=26082904">
+<link rel="stylesheet" href="/app.css?v=26091401">
+<link rel="stylesheet" href="/v1.css?v=26091401">
 </head>
 <body>
 <a class="skip" href="#page">Skip to company</a>
@@ -20,7 +20,7 @@
         <a href="/"><img class="logo" src="/brand/capx-logo.png" alt="Capx"></a>
         <span class="sep"></span>
         <a class="back" href="/">Back to market</a>
-        <a class="back" id="token-link" hidden>Token page</a>
+        <a class="back" id="token-link" hidden>Company page</a>
       </div>
       <span class="pill" id="sample-pill" hidden><span class="dot"></span>Sample data</span>
     </div>
@@ -75,7 +75,27 @@
 
 
 
+    <nav class="tile face-nav" id="face-nav" aria-label="Company sections"></nav>
+    <section class="tile face-tile" data-plane="claimed" data-view="brief" id="tile-brief">
+      <div class="th"><span class="label lit">Company brief</span><span class="label lit">company authored</span></div>
+      <div class="tb pad"><div id="face-readiness"></div><div id="face-brief"></div><div id="face-missing"></div></div>
+    </section>
+    <section class="tile face-tile" data-plane="claimed" data-view="diagrams" id="tile-diagrams" hidden>
+      <div class="th"><span class="label lit">Diagrams</span><span class="label lit">company authored</span></div>
+      <div class="tb pad"><div class="artifact-tabs" id="diagram-tabs" role="tablist" aria-label="Company diagrams"></div><div id="diagram-stage" role="tabpanel"></div></div>
+    </section>
+    <section class="tile face-tile" data-plane="claimed" data-view="roadmap" id="tile-roadmap" hidden>
+      <div class="th"><span class="label lit">Roadmap</span><span class="label lit">company authored</span></div><div class="tb pad" id="face-roadmap"></div>
+    </section>
+    <section class="tile face-tile" data-plane="claimed" data-view="plan" id="tile-plan" hidden>
+      <div class="th"><span class="label lit">Plan</span><span class="label lit">company authored</span></div><div class="tb pad" id="face-plan"></div>
+    </section>
+    <section class="tile face-tile" data-plane="claimed" data-view="agents" id="tile-agents" hidden>
+      <div class="th"><span class="label lit">Agents</span><span class="label lit">company authored</span></div><div class="tb pad" id="face-agents"></div>
+    </section>
+
     <section class="tile t-showcase" data-view="overview" id="tile-showcase">
+      <div class="th"><span class="label lit">Collateral</span><span class="label lit">company authored</span></div>
       <div class="showcase-head">
         <div class="artifact-tabs" id="artifact-tabs" role="tablist" aria-label="Company artifacts">
           <button class="artifact-tab" id="artifact-tab-site" type="button" role="tab" aria-controls="artifact-stage" aria-selected="true" data-artifact="site">Website</button>
@@ -92,6 +112,8 @@
       </div>
       <a class="open-full artifact-open artifact-open-below" id="artifact-open-below" target="_blank" rel="noopener noreferrer" hidden>Open in new tab</a>
     </section>
+
+    <section class="tile face-nav" data-view="summary" id="tile-attestation-summary"><a class="pv" id="attestation-link"></a></section>
 
     <section class="tile t-price" data-view="overview market" id="tile-price">
       <div class="halfhead"><span class="label">Market</span><span class="label">Price</span></div>
@@ -128,7 +150,7 @@
       <div class="digest" id="c-digest"></div>
     </section>
 
-    <section class="tile t-pulse" data-view="work" id="tile-pulse" hidden>
+    <section class="tile t-pulse" data-view="activity" id="tile-pulse" hidden>
       <div class="pulsehead">
         <span class="pulsemeta"><span class="dot" id="pulse-dot"></span><span class="label lit" id="pulse-label">Work attested per day</span></span>
         <span class="pulsehz" id="pulse-hz"></span>
@@ -185,7 +207,7 @@
       <div class="tb" id="cons-body"></div>
     </section>
 
-    <section class="tile t-vitals casa-only" data-view="verification" id="tile-vitals" hidden>
+    <section class="tile t-vitals casa-only" data-view="attestation" id="tile-vitals" hidden>
       <div class="th"><span class="label lit">What arrived in attest/</span><span class="label">claimed plus reproduced</span></div>
       <div class="vitals">
         <div class="vit star"><span class="label">North star</span><div class="v v-clm" id="v-ns">--</div></div>
@@ -197,7 +219,7 @@
       </div>
     </section>
 
-    <section class="tile t-repro casa-only" data-view="verification" id="tile-repro" hidden>
+    <section class="tile t-repro casa-only" data-view="attestation" id="tile-repro" hidden>
       <div class="th"><span class="label lit">What Capx re-ran</span><span class="label" id="repro-count"></span></div>
       <div class="tb pad">
         <div class="checks" id="checks"></div>
@@ -209,12 +231,12 @@
       </div>
     </section>
 
-    <section class="tile t-wire casa-only" data-view="work" id="tile-wire" hidden>
+    <section class="tile t-wire casa-only" data-view="attestation activity" id="tile-wire" hidden>
       <div class="th"><span class="label lit">Disclosed ledger</span><span class="label" id="wire-count"></span></div>
       <div class="tb scroll wire" id="wire"></div>
     </section>
 
-    <section class="tile t-env casa-only" data-view="verification" id="tile-env" hidden>
+    <section class="tile t-env casa-only" data-view="attestation" id="tile-env" hidden>
       <div class="th"><span class="label lit">The envelope</span><span class="label">attestation.json</span></div>
       <div class="tb scroll" id="env"></div>
     </section>
@@ -227,17 +249,17 @@
       </div>
     </section>
 
-    <section class="tile t-judge casa-only" data-view="work" id="tile-judge" hidden>
+    <section class="tile t-judge casa-only" data-view="activity" id="tile-judge" hidden>
       <div class="th"><span class="label lit">Judgment</span><span class="label">founder claimed</span></div>
       <div class="tb scroll" id="judge"></div>
     </section>
 
-    <section class="tile t-dept casa-only" data-view="work" id="tile-dept" hidden>
+    <section class="tile t-dept casa-only" data-view="activity" id="tile-dept" hidden>
       <div class="th"><span class="label lit">Where work went</span><span class="label">30d</span></div>
       <div class="tb"><div class="deptboard" id="deptboard"></div></div>
     </section>
 
-    <section class="tile t-attest" data-view="verification">
+    <section class="tile t-attest" data-view="attestation">
       <div class="th"><span class="label">Five data planes</span><span class="label">provenance</span></div>
       <div class="tb pad">
         <div class="planes">
@@ -261,10 +283,10 @@
   </footer>
 </main>
 
-<script src="/fmt.js?v=26082904"></script>
-<script src="/stars.js?v=26082904"></script>
-<script src="/md.js?v=26082904"></script>
-<script src="/company.js?v=26082904"></script>
-<script src="/analytics-consent.js?v=26090103"></script>
+<script src="/fmt.js?v=26091401"></script>
+<script src="/stars.js?v=26091401"></script>
+<script src="/md.js?v=26091401"></script>
+<script src="/company.js?v=26091401"></script>
+<script src="/analytics-consent.js?v=26091401"></script>
 </body>
 </html>

@@ -11,7 +11,7 @@ The browser never calls Codex. Price buckets follow project age (1h / 4h / 1d), 
 
 Browser talks only to this process. This process GETs Launchpad
 (`https://api.launchpad.capx.ai`) and Casa (`CASA_API`). Casa responses cache
-300 seconds.
+300 seconds for positive token responses; negative Casa responses cache 30 seconds.
 
 Visual source: `~/Documents/july/capx/capx-terminal-demo/` (`app.css` copied
 intact). `v1.css` only covers missing-tile layout.
@@ -91,3 +91,16 @@ invalidation.
 - **2026-08-29** — Phone layout Phase 1 (plan 2026-08-29-002): every tile full width below 880px, chart box phone height, shrinkable legend, wrapping header under 700px; v1.css tile spans moved under `min-width:881px`. Harness in `tools/mobile/` with the desktop baseline. Stamp 26082901.
 - **2026-08-29 (later)** — Phone layout Phase 2 (plan 2026-08-29-002, contract 20b): 11px type floor enforced by `test/type-floor.test.mjs` (app.css and v1.css blocks, the latter because v1.css loads last), 24px tap targets, colgroups with pinned rank and name cells and a scroll cue, one-row rails, token chart tap-to-pin, heatmap tap readouts on both pages, gated artifact stage with Open below. Harness gains `npm run test:phase2` (9 checks) and a pinned page clock. Stamp 26082902.
 - **2026-08-29 (density)** — Phone density (plan 2026-08-29-003, contract 20c): key-numbers strip on detail pages, one-row identity with clamped description, key-value market rows, four-up stat strip, podium rows, second line under table names. Harness `test:phase3` holds density floors. Stamp 26082904.
+
+- **2026-09-14 (WP4)** - Canonical slug/mint company pages, legacy 301s, hosted
+  collateral proxy, face brief/diagrams/roadmap/plan/agents and focused subpages.
+  V2 Launchpad is primary; USD cap sorts nulls last. Company readiness and agent
+  counts appear in directory rows. Mermaid uses the vendored script in an opaque
+  sandbox. Stamp 26091401. No dependencies added, commit or deployment performed.
+  Local face fixtures: `/fixture-live`, `/northstar-labs`; `/inboxpilot` has no face;
+  `/FixUnbound1111111111111111111capx` has no company. `LAUNCHPAD_V2_API` can override
+  the primary tokens endpoint for local tests.
+  Validation: 88/88 tests and e2e passed using an in-memory HTTP test transport.
+  The normal test run had 70 passes and 18 socket permission failures; local e2e
+  and the installed phone harness were blocked by `EPERM` on loopback sockets.
+  Chromium also failed macOS Mach port registration. Visual QA remains pending.

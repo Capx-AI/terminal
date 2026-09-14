@@ -1,6 +1,11 @@
 import { createServer } from "node:http";
 import { SAMPLE_COMPANY_DOCS } from "../web/company.mjs";
-import { FIXTURES } from "./fixtures.mjs";
+import { FIXTURES, MINTS, FACE_READINESS, TOKENLESS_FACE } from "./fixtures.mjs";
+
+const COMPANY_DOCS = { ...SAMPLE_COMPANY_DOCS,
+  "fixture-live": { ...SAMPLE_COMPANY_DOCS.inboxpilot, ...FIXTURES[MINTS.live], company_id: "fixture-live", slug: "fixture-live", name: "Fixture Live", agent_mint: MINTS.live, artifacts: {}, readiness: { ready: true, face: FACE_READINESS } },
+  "northstar-labs": { ...SAMPLE_COMPANY_DOCS["northstar-labs"], face: TOKENLESS_FACE, face_updated_at: TOKENLESS_FACE.generated_at, readiness: { ...SAMPLE_COMPANY_DOCS["northstar-labs"].readiness, face: FACE_READINESS } },
+};
 
 const port = Number(process.env.MOCK_CASA_PORT ?? 4201);
 const BASE58 = /^[1-9A-HJ-NP-Za-km-z]+$/;
@@ -26,7 +31,7 @@ function json(response, status, body, maxAge = 300) {
 }
 
 function directoryRows() {
-  return Object.values(SAMPLE_COMPANY_DOCS).map((doc) => ({
+  return Object.values(COMPANY_DOCS).map((doc) => ({
     company_id: doc.company_id,
     slug: doc.slug,
     name: doc.name,
@@ -78,7 +83,7 @@ const server = createServer((request, response) => {
       json(response, 404, { error: "NOT_READY", message: "Company is not ready" }, 5);
       return;
     }
-    const doc = SAMPLE_COMPANY_DOCS[slug];
+    const doc = COMPANY_DOCS[slug];
     if (!doc) {
       json(response, 404, { error: "NOT_FOUND", message: "No such company" }, 5);
       return;
