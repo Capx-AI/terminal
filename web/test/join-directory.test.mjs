@@ -359,7 +359,7 @@ test("GET /api/market joins in parallel and does not per-mint Casa GET", async (
 
   const launchpad = await listen((req, res) => {
     const url = new URL(req.url ?? "/", "http://127.0.0.1");
-    if (url.pathname === "/v1/projects") {
+    if ((url.pathname === "/v1/projects" || url.pathname === "/api/v1/tokens")) {
       hits.projects += 1;
       hits.projectAt.push(Date.now());
       setTimeout(() => {
@@ -394,7 +394,7 @@ test("GET /api/market joins in parallel and does not per-mint Casa GET", async (
       }, 40);
       return;
     }
-    if (url.pathname === "/v1/market-data/capx") {
+    if (url.pathname === "/api/v1/capx") {
       hits.capx += 1;
       res.writeHead(200, { "content-type": "application/json" });
       res.end(JSON.stringify({ capxUsd: 1.25, source: "fixture", asOf: "2026-08-21T12:00:00Z", stale: false }));
@@ -456,7 +456,7 @@ test("Casa companies 404 still lists Launchpad tokens as token_without_company",
   });
   const launchpad = await listen((req, res) => {
     const url = new URL(req.url ?? "/", "http://127.0.0.1");
-    if (url.pathname === "/v1/projects") {
+    if ((url.pathname === "/v1/projects" || url.pathname === "/api/v1/tokens")) {
       res.writeHead(200, { "content-type": "application/json" });
       res.end(JSON.stringify({
         items: [{
@@ -474,7 +474,7 @@ test("Casa companies 404 still lists Launchpad tokens as token_without_company",
       }));
       return;
     }
-    if (url.pathname === "/v1/market-data/capx") {
+    if (url.pathname === "/api/v1/capx") {
       res.writeHead(200, { "content-type": "application/json" });
       res.end(JSON.stringify({ capxUsd: 1.1, source: "fixture", asOf: "2026-08-21T12:00:00Z", stale: false }));
       return;

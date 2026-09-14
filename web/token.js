@@ -404,7 +404,7 @@ function paintTokenLinks(token) {
   }
   if (token.mint) link("https://solscan.io/token/" + token.mint, "Mint");
   if (token.poolAddress) link("https://solscan.io/account/" + token.poolAddress, "Pool");
-  if (token.id) link("https://launchpad.capx.ai/presales/" + token.id, "Launchpad presale");
+  if (token.mint || token.id) link("https://launchpad.capx.ai/token/" + (token.mint || token.id), "Capx Launchpad");
   var links = token.links || {};
   Object.keys(links).forEach(function (key) {
     if (links[key]) link(links[key], key);

@@ -33,8 +33,8 @@ async function listen(handler) {
 // Launchpad: no live projects, a fixed CAPX quote. SAMPLE rows fill the market.
 function launchpadStub(req, res) {
   const url = new URL(req.url ?? "/", "http://127.0.0.1");
-  if (url.pathname === "/v1/projects") return json(res, 200, { items: [] });
-  if (url.pathname === "/v1/market-data/capx") {
+  if ((url.pathname === "/v1/projects" || url.pathname === "/api/v1/tokens")) return json(res, 200, { items: [] });
+  if (url.pathname === "/api/v1/capx") {
     return json(res, 200, { capxUsd: 1.25, source: "fixture", asOf: "2026-08-21T12:00:00Z", stale: false });
   }
   json(res, 404, { error: "NOT_FOUND" });

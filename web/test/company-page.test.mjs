@@ -190,11 +190,11 @@ function mockCasa(state) {
 function mockLaunchpad(state) {
   return (req, res) => {
     const url = new URL(req.url ?? "/", "http://127.0.0.1");
-    if (url.pathname === "/v1/projects") {
+    if ((url.pathname === "/v1/projects" || url.pathname === "/api/v1/tokens")) {
       json(res, 200, { items: state.items.slice(), nextCursor: null }, { cacheControl: "public, max-age=60" });
       return;
     }
-    if (url.pathname === "/v1/market-data/capx") {
+    if (url.pathname === "/api/v1/capx") {
       json(res, 200, { capxUsd: 1.25, source: "fixture", asOf: "2026-08-21T12:00:00Z", stale: false });
       return;
     }

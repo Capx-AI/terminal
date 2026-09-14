@@ -1362,7 +1362,7 @@ function paintFace(company, payload) {
   $("face-readiness").innerHTML = '<span>Face ' + done + ' of 7</span> <meter min="0" max="7" value="' + done + '" aria-label="Face completeness">' + done + ' of 7</meter>';
   $("face-missing").innerHTML = connected ? missing.map(function (part) {
     return '<p>' + F.esc(part.replace(/_/g, " ")) + ': run <code>phase0-' + FACE_PLAYS[FACE_PARTS.indexOf(part)] + '</code></p>';
-  }).join("") : '<p>No company connected yet</p><p>Run Capx Casa for your company, register it, then bind this mint on Capx Launchpad and publish its face.</p><a class="back" href="/register">Register your company</a> <a class="back" href="https://launchpadv2.capx.ai/" target="_blank" rel="noopener noreferrer">Bind on Launchpad</a>';
+  }).join("") : '<p>No company connected yet</p><p>Run Capx Casa for your company, register it, then bind this mint on Capx Launchpad and publish its face.</p><a class="back" href="/register">Register your company</a> <a class="back" href="https://launchpad.capx.ai/" target="_blank" rel="noopener noreferrer">Bind on Launchpad</a>';
   var brief = face.brief || {};
   $("face-brief").innerHTML = faceText(brief.summary) + (Array.isArray(brief.sections) ? brief.sections : []).map(function (section) {
     return '<h3>' + F.esc(section.title || "") + '</h3>' + faceText(section.body);

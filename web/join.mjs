@@ -65,11 +65,13 @@ export function marketFromLaunchpad(item) {
 }
 
 export function launchpadV2Row(item) {
+  // Catalog items carry mint, image, stage, price, marketCap and capxUsd; a row already in directory shape passes through.
   const quote = numOrNull(item.capxUsd);
   const usd = (value) => quote == null || numOrNull(value) == null ? null : numOrNull(value * quote);
-  return { ...item, id: item.mint, logoUrl: item.image, source: "launchpadv2",
-    state: String(item.stage || "listed").toUpperCase(),
-    marketPerformance: { priceUsd: usd(item.price), currentMarketCapUsd: usd(item.marketCap) } };
+  const mint = item.mint ?? item.agentMint;
+  return { ...item, id: item.mint ?? item.id, mint, logoUrl: item.image ?? item.logoUrl ?? null, source: item.source ?? "launchpadv2",
+    state: item.stage ? String(item.stage).toUpperCase() : (item.state ?? "LISTED"),
+    marketPerformance: Object.hasOwn(item, "capxUsd") ? { priceUsd: usd(item.price), currentMarketCapUsd: usd(item.marketCap) } : (item.marketPerformance ?? null) };
 }
 
 export function sortMarketCap(rows) {

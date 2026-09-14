@@ -252,12 +252,12 @@ test("GET /api/market sidecar uses slug GET not mint GET", async (t) => {
 
   const launchpad = await listen((req, res) => {
     const url = new URL(req.url ?? "/", "http://127.0.0.1");
-    if (url.pathname === "/v1/projects") {
+    if ((url.pathname === "/v1/projects" || url.pathname === "/api/v1/tokens")) {
       res.writeHead(200, { "content-type": "application/json" });
       res.end(JSON.stringify({ items: [], nextCursor: null }));
       return;
     }
-    if (url.pathname === "/v1/market-data/capx") {
+    if (url.pathname === "/api/v1/capx") {
       res.writeHead(200, { "content-type": "application/json" });
       res.end(JSON.stringify({ capxUsd: 1, source: "fixture", asOf: "2026-08-24T00:00:00Z", stale: false }));
       return;

@@ -871,7 +871,7 @@ function paintLive() {
   if (!live.length) { el.hidden = true; return; }
   el.hidden = false;
   $("live-items").innerHTML = live.map(function (t) {
-    return "<a class='liveitem' href='https://launchpad.capx.ai/presales/" + F.esc(t.id) + "' target='_blank' rel='noopener noreferrer'>"
+    return "<a class='liveitem' href='https://launchpad.capx.ai/token/" + F.esc(t.mint || t.id) + "' target='_blank' rel='noopener noreferrer'>"
       + "<b>" + F.esc(t.name) + "</b><span class='tk'>$" + F.esc(t.symbol) + "</span>"
       + "<span class='lt'>" + F.esc(fmtCountdown(t.fundraisingDeadlineAt)) + "</span>"
       + "<span class='lq'>" + F.esc(F.capxLabel(t.qualifyingNetCapxBase)) + " qualifying · " + (t.participantCount || 0) + " qualified</span>"

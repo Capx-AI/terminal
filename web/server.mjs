@@ -28,28 +28,13 @@ import {
 
 const root = fileURLToPath(new URL(".", import.meta.url));
 const port = Number(process.env.PORT ?? 4200);
-const launchpadApi = (process.env.LAUNCHPAD_API ?? "https://api.launchpad.capx.ai").replace(/\/$/, "");
-const launchpadV2 = (process.env.LAUNCHPAD_V2_API ?? "https://launchpadv2.capx.ai/api/v1/tokens").replace(/\/$/, "");
+// LAUNCHPAD_API is the launchpad site origin (launchpad.capx.ai since the 2026-09-15 cutover); the token list and the CAPX quote come from its API.
+const launchpadApi = (process.env.LAUNCHPAD_API ?? "https://launchpad.capx.ai").replace(/\/$/, "");
+const launchpadV2 = (process.env.LAUNCHPAD_V2_API ?? `${launchpadApi}/api/v1/tokens`).replace(/\/$/, "");
+const launchpadCapx = `${launchpadApi}/api/v1/capx`;
 
-// September 1, 2026 at 00:00 IST: the fixed official-launch boundary, mirrored
-// from the launchpad's launch-visibility rule. Launches finalized before it
-// (the August test wave) stay hidden; live presales and everything after show.
-const OFFICIAL_LAUNCH_VISIBLE_FROM_MS = Date.parse("2026-08-31T18:30:00.000Z");
+// Which launches are listed is the launchpad catalog's call since the 2026-09-15 cutover; nothing is hidden here.
 
-// Withdrawn or refunded launches hidden pending relaunch.
-const HIDDEN_PROJECT_IDS = new Set([
-  "6b3e9f95-833a-4d5f-978c-ad8d69a1ef60", // ARBTR: 2026-09-01 refund incident
-]);
-// The same launches by mint, for launchpadv2 rows (which carry no project id or finalized-at).
-const HIDDEN_MINTS = new Set([
-  "7Jm8ooey81sdfmKdagkuqCbVrHaetueGPj1FJR5Hcapx", // ARBTR
-]);
-
-function isOfficialLaunchVisible(item) {
-  if (item?.id && HIDDEN_PROJECT_IDS.has(item.id)) return false;
-  const finalizedAtMs = Date.parse(item?.fundingFinalizedAt ?? "");
-  return Number.isFinite(finalizedAtMs) && finalizedAtMs >= OFFICIAL_LAUNCH_VISIBLE_FROM_MS;
-}
 const casaApi = (process.env.CASA_API ?? "http://127.0.0.1:4201").replace(/\/$/, "");
 const sample = process.env.SAMPLE === "1";
 
@@ -338,9 +323,6 @@ const SAMPLE_COMPANIES = [
 async function loadDirectory() {
   const now = Date.now();
   if (listCache.value && now - listCache.at < LIST_TTL_MS) return listCache;
-  const items = [];
-  let cursor = null;
-  let error = null;
   let primary = [];
   let primaryError = null;
   try {
@@ -348,29 +330,9 @@ async function loadDirectory() {
     const data = res.data;
     const rows = Array.isArray(data) ? data : data?.items ?? data?.tokens ?? data?.data?.tokens ?? data?.data;
     if (!res.ok || !Array.isArray(rows)) throw new Error("Launchpad v2 unavailable");
-    primary = rows.map(launchpadV2Row).map(publicRow).filter((row) => row && !HIDDEN_MINTS.has(row.mint));
+    primary = rows.map(launchpadV2Row); // raw rows; marketPayload applies publicRow, the company join reads them as they are
   } catch (err) { primaryError = String(err.message || err); }
-  try {
-    for (let i = 0; i < 20; i++) {
-      const qs = new URLSearchParams({ filter: "all", limit: "100" });
-      if (cursor) qs.set("cursor", cursor);
-      const res = await fetchJson(`${launchpadApi}/v1/projects?${qs}`);
-      if (!res.ok) {
-        error = (res.data && (res.data.message || res.data.error)) || `Launchpad directory HTTP ${res.status}`;
-        break;
-      }
-      const page = Array.isArray(res.data?.items) ? res.data.items : [];
-      items.push(...page);
-      cursor = res.data?.nextCursor ?? null;
-      if (!cursor) break;
-    }
-  } catch (err) {
-    error = err.name === "AbortError" ? "Launchpad directory timed out" : String(err.message || err);
-  }
-  const seen = new Set(primary.map((row) => row.mint));
-  const secondary = items.filter(isOfficialLaunchVisible).filter((row) => !seen.has(row.mint || row.agentMint));
-  listCache = { at: now, value: primary.concat(secondary), error: primary.length ? null : error,
-    sources: { launchpadv2: primaryError, launchpad: error } };
+  listCache = { at: now, value: primary, error: primaryError, sources: { launchpadv2: primaryError } };
   return listCache;
 }
 
@@ -405,15 +367,16 @@ async function loadCapx() {
   const now = Date.now();
   if (capxCache.value && now - capxCache.at < LIST_TTL_MS) return capxCache;
   try {
-    const res = await fetchJson(`${launchpadApi}/v1/market-data/capx`);
-    if (!res.ok) {
+    const res = await fetchJson(launchpadCapx);
+    const usd = res.ok && res.data ? Number(res.data.capxUsd ?? res.data.capx_usd) : NaN;
+    if (!res.ok || !Number.isFinite(usd) || usd <= 0) {
       capxCache = {
         at: now,
         value: null,
-        error: (res.data && (res.data.message || res.data.error)) || `CAPX quote HTTP ${res.status}`,
+        error: (res.data && (res.data.message || res.data.error)) || (res.ok ? "CAPX quote unavailable" : `CAPX quote HTTP ${res.status}`),
       };
     } else {
-      capxCache = { at: now, value: res.data, error: null };
+      capxCache = { at: now, value: { capxUsd: usd, source: res.data.source ?? null, asOf: res.data.asOf ?? res.data.as_of ?? null, stale: Boolean(res.data.stale) }, error: null };
     }
   } catch (err) {
     capxCache = {
@@ -593,16 +556,6 @@ async function loadCapxDemo(resolution = "60") {
   return value;
 }
 
-async function loadDetail(projectId) {
-  if (!projectId || String(projectId).startsWith("sample-")) return null;
-  try {
-    const res = await fetchJson(`${launchpadApi}/v1/projects/${encodeURIComponent(projectId)}`);
-    if (!res.ok) return null;
-    return res.data?.project ?? res.data;
-  } catch {
-    return null;
-  }
-}
 
 function previewPriceSeries(seed) {
   const n = 72;
@@ -771,7 +724,8 @@ async function tokenPayload(mint) {
   if (!row) {
     return { status: 404, body: { error: "TOKEN_NOT_LISTED", message: "No public Launchpad row for this mint" } };
   }
-  const [detail, casa] = await Promise.all([row.source === "launchpadv2" ? null : loadDetail(row.id), loadCasa(mint)]);
+  const detail = null; // every listed row comes from the launchpad API; there is no separate detail source any more
+  const casa = await loadCasa(mint);
   if (detail) {
     row = {
       ...row,
