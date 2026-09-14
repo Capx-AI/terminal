@@ -191,7 +191,7 @@ export async function startStack() {
       HOST: "127.0.0.1",
       PORT: "0",
       PROBE_ARTIFACTS: "0",
-      LAUNCHPAD_API: launchpad.url,
+      LAUNCHPAD_API: launchpad.url, LAUNCHPAD_V2_API: launchpad.url + "/api/v1/tokens",
       CASA_API: casa.url,
     },
     stdio: ["ignore", "pipe", "pipe"],

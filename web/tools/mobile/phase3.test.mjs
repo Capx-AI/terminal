@@ -5,8 +5,9 @@ import assert from "node:assert/strict";
 import { fixtures, CONTEXTS, startStack, openPage, factCensus } from "./lib.mjs";
 
 // Floors are set from the SAMPLE fixtures after the density release; production pages carry more.
-const FLOORS = { home: 18, "token-only": 16, "token-bound": 16, "company-with-token": 14, "company-without-token": 8, register: 0 };
-const HEIGHT_CAPS = { home: 3400, "token-only": 2600, "token-bound": 3200, "company-with-token": 4500, "company-without-token": 4500, register: 700 };
+// token-bound dropped 16 -> 15 and its cap rose 3200 -> 3400 on 2026-09-14: the company face (brief, diagrams, roadmap, plan, agents) now sits on the token page below the market tiles.
+const FLOORS = { home: 18, "token-only": 16, "token-bound": 15, "company-with-token": 14, "company-without-token": 8, register: 0 };
+const HEIGHT_CAPS = { home: 3400, "token-only": 2600, "token-bound": 3400, "company-with-token": 4500, "company-without-token": 4500, register: 700 };
 
 let stack;
 test.before(async () => { stack = await startStack(); });

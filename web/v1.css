@@ -266,6 +266,7 @@
 .face-tile h3{font-size:16px;margin:14px 0 6px;}
 .face-line{white-space:pre-wrap;min-height:1em;overflow-wrap:anywhere;}
 .face-nav{display:flex;flex-wrap:wrap;gap:8px;padding:12px 18px;}
+@media (max-width:700px){ .bento > .face-tile,.bento > .face-nav{order:5;} .diagram-frame{height:240px;} .face-nav{flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch; scroll-snap-type:x proximity; scrollbar-width:thin; padding:8px 12px;} .face-nav a{flex:none; scroll-snap-align:start;} }
 .face-nav a{min-height:24px;display:inline-flex;align-items:center;}
 .face-list{padding-left:22px;margin:10px 0;}
 .face-list li{padding:6px 0;overflow-wrap:anywhere;}

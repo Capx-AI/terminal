@@ -1101,7 +1101,8 @@ function boot(payload) {
   $("page").hidden = false;
   var token = payload.token || {};
   if (token.casa && token.casa.error === "CASA_UNAVAILABLE") { $("err").hidden = false; $("err").textContent = "Casa is unavailable. Company connection could not be checked."; }
-  var company = payload.company || Object.assign({}, token.casa && token.casa.document || {}, { name: token.name, description: token.description, face: payload.face, slug: "" });
+  // An unbound token never merges the raw Casa token document: market plus the face empty state only.
+  var company = payload.company || { name: token.name, description: token.description, face: payload.face, slug: "", readiness: null, progress: null };
   paintIdentity(company);
   paintProvenance(company);
   paintMarket(payload);
@@ -1292,8 +1293,7 @@ function faceText(text) {
 }
 
 function faceMissing(company) {
-  var readiness = company.readiness && company.readiness.face;
-  if (readiness && Array.isArray(readiness.missing)) return FACE_PARTS.filter(function (part) { return readiness.missing.indexOf(part) >= 0; });
+  // Always derived from the face itself; Casa readiness is only a hint.
   var face = company.face || {}, diagrams = face.diagrams || {};
   return FACE_PARTS.filter(function (part) {
     if (part === "brief") return !(face.brief && (face.brief.summary || (face.brief.sections || []).length));

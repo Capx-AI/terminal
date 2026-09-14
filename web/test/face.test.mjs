@@ -44,13 +44,28 @@ test("proxy streams bytes with sandbox, content type, short cache and upstream e
   response.writeHead = (status, headers) => { response.status = status; response.headers = headers; response.headersSent = true; return response; };
   response.on('data', (chunk) => chunks.push(chunk));
   await proxyCompany('https://demo.casa.capx.ai/', response, async (url, init) => {
-    assert.equal(init.method, 'GET'); assert.equal(init.redirect, 'error'); assert.ok(init.signal);
+    assert.equal(init.method, 'GET'); assert.equal(init.redirect, 'manual'); assert.ok(init.signal);
     return new Response('hello streamed face', { headers: { 'content-type': 'text/html' } });
   });
   assert.equal(Buffer.concat(chunks).toString(), 'hello streamed face');
   assert.equal(response.headers['cache-control'], 'public, max-age=60');
   assert.equal(response.headers['content-security-policy'], 'sandbox allow-scripts');
   assert.equal(response.headers['content-type'], 'text/html');
+  // One same-host hop is followed; an off-host redirect and an oversized body are refused.
+  const hop = new PassThrough(), hopChunks = [];
+  hop.writeHead = (status, headers) => { hop.status = status; hop.headers = headers; hop.headersSent = true; return hop; };
+  hop.on('data', (chunk) => hopChunks.push(chunk));
+  let calls = 0;
+  await proxyCompany('https://demo.casa.capx.ai/', hop, async (url) => {
+    calls += 1;
+    if (calls === 1) return new Response('', { status: 302, headers: { location: '/index.html' } });
+    assert.equal(url, 'https://demo.casa.capx.ai/index.html');
+    return new Response('after hop', { headers: { 'content-type': 'text/html' } });
+  });
+  assert.equal(Buffer.concat(hopChunks).toString(), 'after hop');
+  const offHost = { writeHead(status) { this.status = status; return this; }, end() {} };
+  await proxyCompany('https://demo.casa.capx.ai/', offHost, async () => new Response('', { status: 302, headers: { location: 'https://evil.example/' } }));
+  assert.equal(offHost.status, 404);
   for (const upstream of [async () => new Response('', { status: 503 }), async () => { throw new Error('timeout'); }]) {
     const failed = { writeHead(status) { this.status = status; return this; }, end() {} };
     await proxyCompany('https://demo.casa.capx.ai/', failed, upstream);

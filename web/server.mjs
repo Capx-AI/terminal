@@ -29,7 +29,7 @@ import {
 const root = fileURLToPath(new URL(".", import.meta.url));
 const port = Number(process.env.PORT ?? 4200);
 const launchpadApi = (process.env.LAUNCHPAD_API ?? "https://api.launchpad.capx.ai").replace(/\/$/, "");
-const launchpadV2 = process.env.LAUNCHPAD_V2_API ?? (process.env.LAUNCHPAD_API ? `${launchpadApi}/api/v1/tokens` : "https://launchpadv2.capx.ai/api/v1/tokens");
+const launchpadV2 = (process.env.LAUNCHPAD_V2_API ?? "https://launchpadv2.capx.ai/api/v1/tokens").replace(/\/$/, "");
 
 // September 1, 2026 at 00:00 IST: the fixed official-launch boundary, mirrored
 // from the launchpad's launch-visibility rule. Launches finalized before it
@@ -39,6 +39,10 @@ const OFFICIAL_LAUNCH_VISIBLE_FROM_MS = Date.parse("2026-08-31T18:30:00.000Z");
 // Withdrawn or refunded launches hidden pending relaunch.
 const HIDDEN_PROJECT_IDS = new Set([
   "6b3e9f95-833a-4d5f-978c-ad8d69a1ef60", // ARBTR: 2026-09-01 refund incident
+]);
+// The same launches by mint, for launchpadv2 rows (which carry no project id or finalized-at).
+const HIDDEN_MINTS = new Set([
+  "7Jm8ooey81sdfmKdagkuqCbVrHaetueGPj1FJR5Hcapx", // ARBTR
 ]);
 
 function isOfficialLaunchVisible(item) {
@@ -344,7 +348,7 @@ async function loadDirectory() {
     const data = res.data;
     const rows = Array.isArray(data) ? data : data?.items ?? data?.tokens ?? data?.data?.tokens ?? data?.data;
     if (!res.ok || !Array.isArray(rows)) throw new Error("Launchpad v2 unavailable");
-    primary = rows.map(launchpadV2Row).map(publicRow).filter(Boolean);
+    primary = rows.map(launchpadV2Row).map(publicRow).filter((row) => row && !HIDDEN_MINTS.has(row.mint));
   } catch (err) { primaryError = String(err.message || err); }
   try {
     for (let i = 0; i < 20; i++) {
@@ -690,7 +694,8 @@ async function launchpadRows() {
 }
 
 async function companyPayload(slug) {
-  if (isMint(slug)) {
+  // A 32-character slug can also look like a mint: a company that owns the slug wins.
+  if (isMint(slug) && !(await marketPayload()).rows.some((r) => r.company && r.company.slug === slug)) {
     const market = await marketPayload();
     const resolved = resolveCompanyIdentifier(slug, market.rows);
     if (!resolved) return { status: 404, body: { error: "TOKEN_NOT_LISTED", message: "No public Launchpad row for this mint" } };

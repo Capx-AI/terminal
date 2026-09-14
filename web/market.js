@@ -499,7 +499,8 @@ function tokenCell(row) {
 
 function faceMeter(row) {
   var doc = casaDoc(row), ready = doc && doc.readiness && doc.readiness.face;
-  var n = row.company && ready && Array.isArray(ready.missing) ? Math.max(0, 7 - ready.missing.length) : 0;
+  var known = ["brief", "architecture", "product_flow", "data_model", "roadmap", "plan", "org_chart"];
+  var n = row.company && ready && Array.isArray(ready.missing) ? known.filter(function (p) { return ready.missing.indexOf(p) < 0; }).length : 0;
   var agents = doc && typeof doc.agents === "number" ? doc.agents : 0;
   return "<span class='face-meter'>Face " + n + " of 7 <meter min='0' max='7' value='" + n + "' aria-label='Face completeness'></meter> · " + agents + " agents</span>";
 }

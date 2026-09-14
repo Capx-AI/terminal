@@ -205,7 +205,7 @@ export function publicCompanyView(doc) {
     agent_mint: doc.agent_mint ?? null,
     launchpad_project_id: doc.launchpad_project_id ?? null,
     readiness: copyIfObject(doc.readiness),
-    face: doc.face ? { ...doc.face, plane: "claimed" } : null,
+    face: doc.face ? cappedFace(doc.face) : null,
     face_updated_at: doc.face_updated_at ?? null,
     artifact_visibility: vis,
     active_artifact_versions: sanitizeVersions(doc.active_artifact_versions, artifacts),
@@ -241,6 +241,14 @@ function numOrNull(n) {
 }
 
 /** Slim company record for market columns. No ledger, envelope, or artifact URLs. */
+/** The contract caps a diagram at 20 KB and the face at 512 KB; anything over is dropped before it reaches a page. */
+function cappedFace(face) {
+  if (JSON.stringify(face).length > 512 * 1024) return null;
+  const diagrams = {};
+  for (const [k, v] of Object.entries(face.diagrams || {})) diagrams[k] = typeof v === "string" && v.length <= 20 * 1024 ? v : null;
+  return { ...face, diagrams, plane: "claimed" };
+}
+
 export function marketSurface(view) {
   if (!view || typeof view !== "object") return null;
   const att = view.attestation && typeof view.attestation === "object" ? view.attestation : null;

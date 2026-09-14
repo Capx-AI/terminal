@@ -261,6 +261,8 @@ async function listen(handler) {
 }
 
 async function startTerminal(env) {
+  // Tests point the v2 source at the same mock host; production defaults to launchpadv2.capx.ai.
+  env = { LAUNCHPAD_V2_API: env.LAUNCHPAD_API ? env.LAUNCHPAD_API.replace(/\/$/, "") + "/api/v1/tokens" : undefined, ...env };
   const child = spawn(process.execPath, ["web/server.mjs"], {
     cwd: repoRoot,
     env: {

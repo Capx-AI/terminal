@@ -36,19 +36,31 @@ export function proxyTarget(method, raw) {
   return "https://" + match[1] + ".casa.capx.ai" + (match[2] === "site" ? "" : "/" + match[2]) + suffix + (query ? "?" + query : "");
 }
 
+const PROXY_MAX_BYTES = 5 * 1024 * 1024; // the Casa per-file cap
+const SAFE_TYPE = /^(text\/|image\/|font\/|application\/(javascript|json|xml|pdf|font-woff2?|x-font|manifest\+json))/i;
+
 export async function proxyCompany(target, response, fetchImpl = fetch) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 8000);
   try {
-    const upstream = await fetchImpl(target, { method: "GET", redirect: "error", signal: controller.signal });
+    let upstream = await fetchImpl(target, { method: "GET", redirect: "manual", signal: controller.signal });
+    // Follow one hop only when it stays on the same company host (a site that 302s / to /index.html).
+    if ([301, 302, 307, 308].includes(upstream.status)) {
+      const next = new URL(upstream.headers.get("location") || "", target);
+      if (next.origin !== new URL(target).origin) throw new Error("redirect off host");
+      upstream = await fetchImpl(next.href, { method: "GET", redirect: "manual", signal: controller.signal });
+    }
     if (!upstream.ok || !upstream.body) throw new Error("upstream unavailable");
+    const declared = (upstream.headers.get("content-type") || "").split(";")[0].trim();
+    let sent = 0;
+    const capped = new TransformStream({ transform(chunk, ctl) { sent += chunk.byteLength; if (sent > PROXY_MAX_BYTES) { ctl.error(new Error("too large")); return; } ctl.enqueue(chunk); } });
     response.writeHead(200, {
-      "content-type": upstream.headers.get("content-type") || "application/octet-stream",
+      "content-type": SAFE_TYPE.test(declared) ? upstream.headers.get("content-type") : "application/octet-stream",
       "cache-control": "public, max-age=60",
       "content-security-policy": "sandbox allow-scripts",
       "x-content-type-options": "nosniff",
     });
-    await pipeline(Readable.fromWeb(upstream.body), response, { signal: controller.signal });
+    await pipeline(Readable.fromWeb(upstream.body.pipeThrough(capped)), response, { signal: controller.signal });
   } catch {
     if (!response.headersSent) response.writeHead(404).end("not found");
     else response.destroy();
