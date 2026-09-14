@@ -1303,57 +1303,30 @@ function faceMissing(company) {
 }
 
 // This function is serialized into srcdoc. It has no access to the parent page.
-function diagramRuntime() {
-  var source = document.getElementById("source"), host = document.getElementById("diagram");
-  function failed() { host.replaceChildren(); source.hidden = false; document.getElementById("failure").hidden = false; }
-  function fit(svg) {
-    var zoom = 1, start = 0, initial = 1, box = svg.viewBox.baseVal, width = Math.max(280, box.width), height = box.height || 300;
-    function size() { svg.style.maxWidth = "none"; svg.style.width = width * zoom + "px"; svg.style.height = height * zoom + "px"; }
-    function distance(t) { return Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY); }
-    size();
-    document.addEventListener("touchstart", function (e) { if (e.touches.length === 2) { start = distance(e.touches); initial = zoom; } }, { passive: true });
-    document.addEventListener("touchmove", function (e) {
-      if (e.touches.length === 2 && start) { e.preventDefault(); zoom = Math.max(0.25, Math.min(4, initial * distance(e.touches) / start)); size(); }
-    }, { passive: false });
-  }
-  // Text is measured during render; a frame that is not laid out yet measures zero and draws empty boxes, so retry until the drawing has a real width.
-  // A hidden tab (opened in the background, or not yet foregrounded) measures text as zero: draw only while visible and
-  // redraw on the next visibility change when the result is degenerate.
-  var drawn = false;
-  function draw(attempt) {
-    if (document.visibilityState !== "visible") { document.addEventListener("visibilitychange", function once() { document.removeEventListener("visibilitychange", once); draw(attempt); }); return; }
-    mermaid.render("face-diagram-" + attempt, source.textContent).then(function (result) {
-      host.innerHTML = result.svg;
-      var svg = host.querySelector("svg");
-      if (!svg) return failed();
-      if (svg.viewBox.baseVal.width < 40) {
-        if (attempt < 6) return setTimeout(function () { draw(attempt + 1); }, 200 * (attempt + 1));
-        parent.postMessage({ face_diagram: "zero" }, "*"); // the parent remounts this frame when the tile is next visible
-        return;
-      }
-      drawn = true;
-      parent.postMessage({ face_diagram: "ok" }, "*");
-      fit(svg);
-    }).catch(failed);
-  }
-  try {
-    mermaid.initialize({ startOnLoad: false, securityLevel: 'strict', theme: 'dark', fontFamily: 'ui-sans-serif, system-ui, sans-serif', flowchart: { htmlLabels: false } });
-    // A dynamically created srcdoc frame has not laid out when its script runs, and Mermaid measures text against that empty layout. Force one layout pass first.
-    var probe = document.createElementNS("http://www.w3.org/2000/svg", "svg"), probeText = document.createElementNS("http://www.w3.org/2000/svg", "text");
-    probeText.textContent = "measure"; probe.appendChild(probeText); document.body.appendChild(probe); void probeText.getComputedTextLength(); probe.remove();
-    (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(function () { setTimeout(function () { draw(0); }, 0); }, function () { draw(0); });
-  } catch (err) { failed(); }
-}
-
-var mermaidSource = "";
-/* The vendored Mermaid is fetched once by the page and inlined into every frame: a sandboxed frame has an opaque origin,
-   so a script src back to this host may be refused by auth or cookie rules (seen behind Vercel deployment protection). */
+/* Mermaid renders in this document with securityLevel strict (labels sanitized by Mermaid's own DOMPurify pass). The
+   resulting SVG is shown inside a scriptless sandboxed frame. Rendering inside the frame measured text as zero in
+   hidden or throttled tabs and drew empty boxes, so measurement stays with the page that has a real layout. */
+var mermaidReady = null;
 function ensureMermaid() {
-  if (mermaidSource) return Promise.resolve(mermaidSource);
-  return fetch("/vendor/mermaid.min.js", { credentials: "same-origin" }).then(function (r) { if (!r.ok) throw new Error("mermaid " + r.status); return r.text(); })
-    .then(function (text) { mermaidSource = text.replace(/<\/script/gi, "<\\/script"); return mermaidSource; });
+  if (mermaidReady) return mermaidReady;
+  mermaidReady = new Promise(function (resolve, reject) {
+    if (window.mermaid) return resolve(window.mermaid);
+    var script = document.createElement("script");
+    script.src = "/vendor/mermaid.min.js";
+    script.onload = function () { window.mermaid.initialize({ startOnLoad: false, securityLevel: "strict", theme: "dark", fontFamily: "ui-sans-serif, system-ui, sans-serif", flowchart: { htmlLabels: false } }); resolve(window.mermaid); };
+    script.onerror = function () { reject(new Error("mermaid failed to load")); };
+    document.head.appendChild(script);
+  });
+  return mermaidReady;
 }
 
+/* A scriptless frame document around a rendered SVG string (or the source when rendering failed). */
+function diagramFrameDoc(svg, source) {
+  return '<!doctype html><html><head><meta name="viewport" content="width=device-width, initial-scale=1"><style>body{margin:12px;background:#08090a;color:#C5DC6B;font:14px system-ui;overflow:auto}pre{white-space:pre-wrap;overflow-wrap:anywhere;color:#b8c0b0}svg{display:block;max-width:none !important}</style></head><body>'
+    + (svg ? svg : '<p>diagram did not render</p><pre>' + F.esc(source) + '</pre>') + '</body></html>';
+}
+
+var diagramSeq = 0;
 function selectDiagram(key) {
   var stage = $("diagram-stage");
   stage.replaceChildren();
@@ -1363,37 +1336,22 @@ function selectDiagram(key) {
   });
   stage.setAttribute("aria-labelledby", "diagram-tab-" + key);
   if (!DIAGRAMS[key]) { stage.textContent = "No diagram published yet."; return; }
-  ensureMermaid().then(function () { whenShown(stage, function () { mountDiagram(key, stage); }); }, function () { stage.innerHTML = '<p class="face-line">diagram did not render</p><pre>' + F.esc(DIAGRAMS[key]) + '</pre>'; });
-}
-
-/* Text inside a frame measures as zero while the tab is hidden or the tile is off screen, so the frame is mounted only
-   when both are true, and remounted if it reports a zero-size drawing. */
-function whenShown(stage, mount) {
-  function ready() { return document.visibilityState === "visible"; }
-  function go() {
-    if (!ready()) { document.addEventListener("visibilitychange", function once() { document.removeEventListener("visibilitychange", once); go(); }); return; }
-    if (typeof IntersectionObserver !== "function") return mount();
-    var seen = new IntersectionObserver(function (entries) { if (entries.some(function (e) { return e.isIntersecting; })) { seen.disconnect(); mount(); } }, { rootMargin: "200px" });
-    seen.observe(stage);
-  }
-  go();
-}
-
-function mountDiagram(key, stage) {
-  if (stage.getAttribute("aria-labelledby") !== "diagram-tab-" + key) return; // the user moved on
-  stage.replaceChildren();
-  var frame = document.createElement("iframe");
-  window.addEventListener("message", function onReport(event) {
-    if (event.source !== frame.contentWindow || !event.data || !event.data.face_diagram) return;
-    window.removeEventListener("message", onReport);
-    if (event.data.face_diagram === "zero") setTimeout(function () { whenShown(stage, function () { mountDiagram(key, stage); }); }, 500);
-  });
-  frame.className = "diagram-frame"; frame.title = DIAGRAM_LABELS[key]; frame.setAttribute("sandbox", "allow-scripts");
-  frame.srcdoc = '<!doctype html><html><head><meta name="viewport" content="width=device-width, initial-scale=1"><style>body{margin:8px;background:#0d0e10;color:#f6f7f7;font:14px ui-sans-serif,system-ui,sans-serif}#diagram{overflow:auto}pre{white-space:pre-wrap;color:#b8c0b0}</style>'
-    + '<style>body{margin:12px;background:#08090a;color:#C5DC6B;font:14px system-ui;overflow:auto}pre{white-space:pre-wrap;overflow-wrap:anywhere}svg{display:block}</style></head><body>'
-    + '<p id="failure" hidden>diagram did not render</p><pre id="source" hidden>' + F.esc(DIAGRAMS[key]) + '</pre><div id="diagram"></div>'
-    + '<script>' + mermaidSource + '</script><script>(' + diagramRuntime.toString() + ')();</script></body></html>';
-  stage.appendChild(frame);
+  var mount = function (svg) {
+    if (stage.getAttribute("aria-labelledby") !== "diagram-tab-" + key) return; // the user moved on
+    var frame = document.createElement("iframe");
+    frame.className = "diagram-frame"; frame.title = DIAGRAM_LABELS[key]; frame.setAttribute("sandbox", "");
+    frame.srcdoc = diagramFrameDoc(svg, DIAGRAMS[key]);
+    stage.replaceChildren(frame);
+  };
+  ensureMermaid().then(function (mermaid) {
+    return mermaid.render("face-diagram-" + (diagramSeq++), DIAGRAMS[key]).then(function (result) {
+      var doc = new DOMParser().parseFromString(result.svg, "text/html"), svg = doc.querySelector("svg");
+      if (!svg) return mount(null);
+      var box = svg.viewBox && svg.viewBox.baseVal;
+      if (box && box.width > 0) { svg.setAttribute("width", Math.ceil(box.width)); svg.setAttribute("height", Math.ceil(box.height)); svg.style.maxWidth = "none"; }
+      mount(new XMLSerializer().serializeToString(svg));
+    });
+  }).catch(function () { mount(null); });
 }
 
 function paintFace(company, payload) {
