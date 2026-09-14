@@ -504,7 +504,7 @@ function paintPreview(kind, artifact, slug, canonical) {
     resetStageGate(false);
     return;
   }
-  frame.src = "/" + slug + "/" + (kind === "one_pager" ? "one-pager" : kind) + "/";
+  frame.src = artifact.url; // the Casa host itself: sites may use absolute asset paths that a subpath proxy cannot serve
   frame.hidden = false;
   if (empty) empty.hidden = true;
   if (kind !== "site") paintArtifactOpen(art.url);
@@ -1386,11 +1386,7 @@ function paintFace(company, payload) {
   });
   var slug = payload.company && payload.company.slug;
   var nav = [["", "Company"], ["architecture", "Architecture"], ["flow", "Flow"], ["data-model", "Data model"], ["roadmap", "Roadmap"], ["plan", "Plan"], ["agents", "Agents"], ["activity", "Activity"], ["attestation", "Attestation"]];
-  $("face-nav").innerHTML = slug ? nav.map(function (item) { return '<a class="back" href="/' + F.esc(slug) + (item[0] ? '/' + item[0] : '') + '">' + item[1] + '</a>'; }).join("") : '';
-  show("face-nav", !!slug); show("tile-attestation-summary", !!slug);
   var att = company.attestation || {};
-  $("attestation-link").textContent = (att.attested === true ? "attested" : "not attested") + (att.freshness ? " · " + att.freshness : "") + " · View attestation";
-  if (slug) $("attestation-link").href = "/" + slug + "/attestation";
   $("diagram-tabs").onclick = function (event) { var button = event.target.closest("button"); if (button) selectDiagram(button.getAttribute("data-diagram")); };
   $("diagram-tabs").onkeydown = function (event) {
     var index = keys.indexOf(event.target.getAttribute("data-diagram"));
@@ -1401,14 +1397,6 @@ function paintFace(company, payload) {
 }
 
 function applyFaceView() {
-  var view = location.pathname.split("/")[2] || "";
-  if (["architecture", "flow", "data-model"].indexOf(view) >= 0) view = "diagrams";
-  if (["diagrams", "roadmap", "plan", "agents", "activity", "attestation"].indexOf(view) < 0) view = "";
-  $("page").classList.toggle("face-focused", !!view);
-  $("tile-keys").classList.toggle("view-hidden", !!view);
-  document.querySelectorAll("#page > [data-view]").forEach(function (tile) {
-    var groups = tile.getAttribute("data-view").split(" ");
-    tile.classList.toggle("view-hidden", view ? groups.indexOf(view) < 0 : groups.indexOf("attestation") >= 0);
-    if (view && groups.indexOf(view) >= 0) tile.hidden = false;
-  });
+  // One page: every tile stays in the bento; the section routes resolve to the same page.
+  document.querySelectorAll("#page .view-hidden").forEach(function (tile) { tile.classList.remove("view-hidden"); });
 }

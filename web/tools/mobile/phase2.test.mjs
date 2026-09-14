@@ -16,7 +16,7 @@ const STAGE_MAX = 320;
 const HEIGHTS = {
   home: 3200,
   "token-only": 2600,
-  "company-without-token": 4500,
+  "company-without-token": 5200,
   register: 700,
 };
 

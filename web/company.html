@@ -75,24 +75,6 @@
 
 
 
-    <nav class="tile face-nav" id="face-nav" aria-label="Company sections"></nav>
-    <section class="tile face-tile" data-plane="claimed" data-view="brief" id="tile-brief">
-      <div class="th"><span class="label lit">Company brief</span><span class="label lit">company authored</span></div>
-      <div class="tb pad"><div id="face-readiness"></div><div id="face-brief"></div><div id="face-missing"></div></div>
-    </section>
-    <section class="tile face-tile" data-plane="claimed" data-view="diagrams" id="tile-diagrams" hidden>
-      <div class="th"><span class="label lit">Diagrams</span><span class="label lit">company authored</span></div>
-      <div class="tb pad"><div class="artifact-tabs" id="diagram-tabs" role="tablist" aria-label="Company diagrams"></div><div id="diagram-stage" role="tabpanel"></div></div>
-    </section>
-    <section class="tile face-tile" data-plane="claimed" data-view="roadmap" id="tile-roadmap" hidden>
-      <div class="th"><span class="label lit">Roadmap</span><span class="label lit">company authored</span></div><div class="tb pad" id="face-roadmap"></div>
-    </section>
-    <section class="tile face-tile" data-plane="claimed" data-view="plan" id="tile-plan" hidden>
-      <div class="th"><span class="label lit">Plan</span><span class="label lit">company authored</span></div><div class="tb pad" id="face-plan"></div>
-    </section>
-    <section class="tile face-tile" data-plane="claimed" data-view="agents" id="tile-agents" hidden>
-      <div class="th"><span class="label lit">Agents</span><span class="label lit">company authored</span></div><div class="tb pad" id="face-agents"></div>
-    </section>
 
     <section class="tile t-showcase" data-view="overview" id="tile-showcase">
       <div class="th"><span class="label lit">Collateral</span><span class="label lit">company authored</span></div>
@@ -113,7 +95,6 @@
       <a class="open-full artifact-open artifact-open-below" id="artifact-open-below" target="_blank" rel="noopener noreferrer" hidden>Open in new tab</a>
     </section>
 
-    <section class="tile face-nav" data-view="summary" id="tile-attestation-summary"><a class="pv" id="attestation-link"></a></section>
 
     <section class="tile t-price" data-view="overview market" id="tile-price">
       <div class="halfhead"><span class="label">Market</span><span class="label">Price</span></div>
@@ -150,6 +131,23 @@
       <div class="digest" id="c-digest"></div>
     </section>
 
+    <section class="tile face-tile" data-plane="claimed" id="tile-brief">
+      <div class="th"><span class="label lit">Company brief</span><span class="label lit">company authored</span></div>
+      <div class="tb pad"><div id="face-readiness"></div><div id="face-brief"></div><div id="face-missing"></div></div>
+    </section>
+    <section class="tile face-tile" data-plane="claimed" id="tile-diagrams">
+      <div class="th"><span class="label lit">Diagrams</span><span class="label lit">company authored</span></div>
+      <div class="tb pad"><div class="artifact-tabs" id="diagram-tabs" role="tablist" aria-label="Company diagrams"></div><div id="diagram-stage" role="tabpanel"></div></div>
+    </section>
+    <section class="tile face-tile" data-plane="claimed" id="tile-roadmap">
+      <div class="th"><span class="label lit">Roadmap</span><span class="label lit">company authored</span></div><div class="tb pad" id="face-roadmap"></div>
+    </section>
+    <section class="tile face-tile" data-plane="claimed" id="tile-plan">
+      <div class="th"><span class="label lit">Plan</span><span class="label lit">company authored</span></div><div class="tb pad" id="face-plan"></div>
+    </section>
+    <section class="tile face-tile" data-plane="claimed" id="tile-agents">
+      <div class="th"><span class="label lit">Agents</span><span class="label lit">company authored</span></div><div class="tb pad" id="face-agents"></div>
+    </section>
     <section class="tile t-pulse" data-view="activity" id="tile-pulse" hidden>
       <div class="pulsehead">
         <span class="pulsemeta"><span class="dot" id="pulse-dot"></span><span class="label lit" id="pulse-label">Work attested per day</span></span>

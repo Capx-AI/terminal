@@ -261,12 +261,15 @@
 }
 
 /* Company authored face, with the existing theme and full claimed contrast. */
-.bento > .face-tile,.bento > .face-nav{grid-column:1 / -1;color:var(--capx);min-width:0;}
-.face-tile .label,.face-tile .face-line,.face-tile li,.face-tile p{color:var(--capx);opacity:1;}
-.face-tile h3{font-size:16px;margin:14px 0 6px;}
+.bento > .face-tile{grid-column:1 / -1;min-width:0;}
+@media (min-width:881px){ .bento > #tile-brief,.bento > #tile-diagrams{grid-column:span 6;} .bento > #tile-roadmap,.bento > #tile-plan,.bento > #tile-agents{grid-column:span 4;} }
+.face-tile .tb{max-height:380px;overflow:auto;}
+.face-tile .face-line,.face-tile li,.face-tile p{color:var(--t300);font-size:13px;line-height:1.5;}
+.face-tile h3{font:500 10px/1.4 var(--mono);letter-spacing:.07em;text-transform:uppercase;color:var(--t500);margin:12px 0 4px;}
+.face-tile li b{color:var(--t100);font-weight:600;}
 .face-line{white-space:pre-wrap;min-height:1em;overflow-wrap:anywhere;}
 .face-nav{display:flex;flex-wrap:wrap;gap:8px;padding:12px 18px;}
-@media (max-width:700px){ .bento > .face-tile,.bento > .face-nav{order:5;} .diagram-frame{height:240px;} .face-nav{flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch; scroll-snap-type:x proximity; scrollbar-width:thin; padding:8px 12px;} .face-nav a{flex:none; scroll-snap-align:start;} }
+@media (max-width:700px){ .bento > .face-tile{order:5;} .diagram-frame{height:240px;} .face-nav{flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch; scroll-snap-type:x proximity; scrollbar-width:thin; padding:8px 12px;} .face-nav a{flex:none; scroll-snap-align:start;} }
 .face-nav a{min-height:24px;display:inline-flex;align-items:center;}
 .face-list{padding-left:22px;margin:10px 0;}
 .face-list li{padding:6px 0;overflow-wrap:anywhere;}
@@ -274,7 +277,7 @@
 .face-tile progress{width:100%;accent-color:var(--capx);}
 .face-tile meter{accent-color:var(--capx);vertical-align:middle;}
 #diagram-tabs{flex-wrap:wrap;margin-bottom:10px;}
-.diagram-frame{display:block;width:100%;height:360px;border:1px solid var(--line);overflow:auto;touch-action:pan-x pan-y pinch-zoom;}
+.diagram-frame{display:block;width:100%;height:300px;border:1px solid var(--line);overflow:auto;touch-action:pan-x pan-y pinch-zoom;}
 .view-hidden{display:none!important;}
 .face-focused > .tile[data-view]{grid-column:1 / -1;}
 .face-focused .scroll{max-height:none;}
