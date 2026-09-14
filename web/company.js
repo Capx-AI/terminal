@@ -1317,12 +1317,21 @@ function diagramRuntime() {
     }, { passive: false });
   }
   // Text is measured during render; a frame that is not laid out yet measures zero and draws empty boxes, so retry until the drawing has a real width.
+  // A hidden tab (opened in the background, or not yet foregrounded) measures text as zero: draw only while visible and
+  // redraw on the next visibility change when the result is degenerate.
+  var drawn = false;
   function draw(attempt) {
+    if (document.visibilityState !== "visible") { document.addEventListener("visibilitychange", function once() { document.removeEventListener("visibilitychange", once); draw(attempt); }); return; }
     mermaid.render("face-diagram-" + attempt, source.textContent).then(function (result) {
       host.innerHTML = result.svg;
       var svg = host.querySelector("svg");
       if (!svg) return failed();
-      if (svg.viewBox.baseVal.width < 40 && attempt < 6) return setTimeout(function () { draw(attempt + 1); }, 200 * (attempt + 1));
+      if (svg.viewBox.baseVal.width < 40) {
+        if (attempt < 6) return setTimeout(function () { draw(attempt + 1); }, 200 * (attempt + 1));
+        document.addEventListener("visibilitychange", function once() { document.removeEventListener("visibilitychange", once); draw(0); });
+        return;
+      }
+      drawn = true;
       fit(svg);
     }).catch(failed);
   }
