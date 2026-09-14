@@ -1328,10 +1328,11 @@ function diagramRuntime() {
       if (!svg) return failed();
       if (svg.viewBox.baseVal.width < 40) {
         if (attempt < 6) return setTimeout(function () { draw(attempt + 1); }, 200 * (attempt + 1));
-        document.addEventListener("visibilitychange", function once() { document.removeEventListener("visibilitychange", once); draw(0); });
+        parent.postMessage({ face_diagram: "zero" }, "*"); // the parent remounts this frame when the tile is next visible
         return;
       }
       drawn = true;
+      parent.postMessage({ face_diagram: "ok" }, "*");
       fit(svg);
     }).catch(failed);
   }
@@ -1362,13 +1363,31 @@ function selectDiagram(key) {
   });
   stage.setAttribute("aria-labelledby", "diagram-tab-" + key);
   if (!DIAGRAMS[key]) { stage.textContent = "No diagram published yet."; return; }
-  ensureMermaid().then(function () { mountDiagram(key, stage); }, function () { stage.innerHTML = '<p class="face-line">diagram did not render</p><pre>' + F.esc(DIAGRAMS[key]) + '</pre>'; });
+  ensureMermaid().then(function () { whenShown(stage, function () { mountDiagram(key, stage); }); }, function () { stage.innerHTML = '<p class="face-line">diagram did not render</p><pre>' + F.esc(DIAGRAMS[key]) + '</pre>'; });
+}
+
+/* Text inside a frame measures as zero while the tab is hidden or the tile is off screen, so the frame is mounted only
+   when both are true, and remounted if it reports a zero-size drawing. */
+function whenShown(stage, mount) {
+  function ready() { return document.visibilityState === "visible"; }
+  function go() {
+    if (!ready()) { document.addEventListener("visibilitychange", function once() { document.removeEventListener("visibilitychange", once); go(); }); return; }
+    if (typeof IntersectionObserver !== "function") return mount();
+    var seen = new IntersectionObserver(function (entries) { if (entries.some(function (e) { return e.isIntersecting; })) { seen.disconnect(); mount(); } }, { rootMargin: "200px" });
+    seen.observe(stage);
+  }
+  go();
 }
 
 function mountDiagram(key, stage) {
   if (stage.getAttribute("aria-labelledby") !== "diagram-tab-" + key) return; // the user moved on
   stage.replaceChildren();
   var frame = document.createElement("iframe");
+  window.addEventListener("message", function onReport(event) {
+    if (event.source !== frame.contentWindow || !event.data || !event.data.face_diagram) return;
+    window.removeEventListener("message", onReport);
+    if (event.data.face_diagram === "zero") setTimeout(function () { whenShown(stage, function () { mountDiagram(key, stage); }); }, 500);
+  });
   frame.className = "diagram-frame"; frame.title = DIAGRAM_LABELS[key]; frame.setAttribute("sandbox", "allow-scripts");
   frame.srcdoc = '<!doctype html><html><head><meta name="viewport" content="width=device-width, initial-scale=1"><style>body{margin:8px;background:#0d0e10;color:#f6f7f7;font:14px ui-sans-serif,system-ui,sans-serif}#diagram{overflow:auto}pre{white-space:pre-wrap;color:#b8c0b0}</style>'
     + '<style>body{margin:12px;background:#08090a;color:#C5DC6B;font:14px system-ui;overflow:auto}pre{white-space:pre-wrap;overflow-wrap:anywhere}svg{display:block}</style></head><body>'

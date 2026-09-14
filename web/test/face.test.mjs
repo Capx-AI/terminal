@@ -94,7 +94,7 @@ test("faces remain claimed and sidecar exposes readiness and agent count", () =>
 
 function faceClient() {
   const stage = { attrs: {}, replaceChildren() {}, setAttribute(k, v) { this.attrs[k] = v; }, getAttribute(k) { return this.attrs[k]; }, appendChild(frame) { this.frame = frame; } };
-  const context = { window: {}, $: () => stage, document: { querySelectorAll: () => [], createElement: () => ({ setAttribute(k, v) { this[k] = v; } }) } };
+  const context = { window: { addEventListener() {} }, $: () => stage, document: { visibilityState: 'visible', addEventListener() {}, querySelectorAll: () => [], createElement: () => ({ setAttribute(k, v) { this[k] = v; } }) } };
   vm.createContext(context);
   vm.runInContext(readFileSync(new URL('../fmt.js', import.meta.url), 'utf8'), context);
   context.F = context.window.CAPX_FMT;
