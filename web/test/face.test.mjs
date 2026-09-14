@@ -93,7 +93,7 @@ test("faces remain claimed and sidecar exposes readiness and agent count", () =>
 });
 
 function faceClient() {
-  const stage = { replaceChildren() {}, setAttribute() {}, appendChild(frame) { this.frame = frame; } };
+  const stage = { attrs: {}, replaceChildren() {}, setAttribute(k, v) { this.attrs[k] = v; }, getAttribute(k) { return this.attrs[k]; }, appendChild(frame) { this.frame = frame; } };
   const context = { window: {}, $: () => stage, document: { querySelectorAll: () => [], createElement: () => ({ setAttribute(k, v) { this[k] = v; } }) } };
   vm.createContext(context);
   vm.runInContext(readFileSync(new URL('../fmt.js', import.meta.url), 'utf8'), context);
@@ -103,14 +103,16 @@ function faceClient() {
   return { context, stage };
 }
 
-test("face text and diagram source cannot inject HTML into the parent or srcdoc", () => {
+test("face text and diagram source cannot inject HTML into the parent or srcdoc", async () => {
   const { context, stage } = faceClient();
   const attack = '</pre><script>parent.pwned=1</script><img src=x onerror=alert(1)>';
   const html = context.faceText('## Heading\n' + attack + '\n**literal**');
   assert.match(html, /<h3>Heading<\/h3>/); assert.doesNotMatch(html, /<script>|<img/); assert.match(html, /\*\*literal\*\*/);
-  context.DIAGRAMS = { architecture: attack }; context.selectDiagram('architecture');
+  context.DIAGRAMS = { architecture: attack }; context.mermaidSource = 'VENDORED_MERMAID'; context.selectDiagram('architecture');
+  await new Promise((resolve) => setTimeout(resolve, 0));
   assert.equal(stage.frame.sandbox, 'allow-scripts');
-  assert.match(stage.frame.srcdoc, /src="\/vendor\/mermaid.min.js"/);
+  assert.match(stage.frame.srcdoc, /<script>VENDORED_MERMAID<\/script>/);
+  assert.doesNotMatch(stage.frame.srcdoc, /src="\/vendor\/mermaid.min.js"/);
   assert.doesNotMatch(stage.frame.srcdoc, /<script>parent.pwned/);
   assert.match(stage.frame.srcdoc, /securityLevel: 'strict'/);
   assert.match(stage.frame.srcdoc, /diagram did not render/);

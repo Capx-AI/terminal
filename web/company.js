@@ -1335,6 +1335,15 @@ function diagramRuntime() {
   } catch (err) { failed(); }
 }
 
+var mermaidSource = "";
+/* The vendored Mermaid is fetched once by the page and inlined into every frame: a sandboxed frame has an opaque origin,
+   so a script src back to this host may be refused by auth or cookie rules (seen behind Vercel deployment protection). */
+function ensureMermaid() {
+  if (mermaidSource) return Promise.resolve(mermaidSource);
+  return fetch("/vendor/mermaid.min.js", { credentials: "same-origin" }).then(function (r) { if (!r.ok) throw new Error("mermaid " + r.status); return r.text(); })
+    .then(function (text) { mermaidSource = text.replace(/<\/script/gi, "<\\/script"); return mermaidSource; });
+}
+
 function selectDiagram(key) {
   var stage = $("diagram-stage");
   stage.replaceChildren();
@@ -1344,12 +1353,18 @@ function selectDiagram(key) {
   });
   stage.setAttribute("aria-labelledby", "diagram-tab-" + key);
   if (!DIAGRAMS[key]) { stage.textContent = "No diagram published yet."; return; }
+  ensureMermaid().then(function () { mountDiagram(key, stage); }, function () { stage.innerHTML = '<p class="face-line">diagram did not render</p><pre>' + F.esc(DIAGRAMS[key]) + '</pre>'; });
+}
+
+function mountDiagram(key, stage) {
+  if (stage.getAttribute("aria-labelledby") !== "diagram-tab-" + key) return; // the user moved on
+  stage.replaceChildren();
   var frame = document.createElement("iframe");
   frame.className = "diagram-frame"; frame.title = DIAGRAM_LABELS[key]; frame.setAttribute("sandbox", "allow-scripts");
   frame.srcdoc = '<!doctype html><html><head><meta name="viewport" content="width=device-width, initial-scale=1"><style>body{margin:8px;background:#0d0e10;color:#f6f7f7;font:14px ui-sans-serif,system-ui,sans-serif}#diagram{overflow:auto}pre{white-space:pre-wrap;color:#b8c0b0}</style>'
     + '<style>body{margin:12px;background:#08090a;color:#C5DC6B;font:14px system-ui;overflow:auto}pre{white-space:pre-wrap;overflow-wrap:anywhere}svg{display:block}</style></head><body>'
     + '<p id="failure" hidden>diagram did not render</p><pre id="source" hidden>' + F.esc(DIAGRAMS[key]) + '</pre><div id="diagram"></div>'
-    + '<script src="/vendor/mermaid.min.js"></script><script>(' + diagramRuntime.toString() + ')();</script></body></html>';
+    + '<script>' + mermaidSource + '</script><script>(' + diagramRuntime.toString() + ')();</script></body></html>';
   stage.appendChild(frame);
 }
 
