@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import { codexConfigured, fetchCloses, fetchSparklines, fetchCapxSolChart, fetchOhlcv, rangeForResolution, SOLANA_NETWORK_ID } from "./codex.mjs";
 import { buildHeatmap } from "./timegrid.mjs";
 import { isMint, joinDirectory, publicRow, launchpadV2Row, marketFromLaunchpad, sortMarketCap } from "./join.mjs";
-import { companyRoute, proxyTarget, proxyCompany, safePath } from "./routes.mjs";
+import { companyRoute, proxyTarget, proxyCompany, safePath, applySecurityHeaders, guardRequest, readCacheEntry, writeCacheEntry } from "./routes.mjs";
 import {
   codeFromBody,
   parseRegisterBody,
@@ -52,13 +52,36 @@ const casaCache = new Map();
 const CASA_TTL_MS = 300_000;
 const barsCache = new Map();
 const BARS_TTL_MS = 120_000;
+const CHART_CACHE_MAX = 256;
 let sparkCache = { at: 0, key: "", value: { error: null, byMint: {} } };
 const capxChartCache = new Map();
 let listCache = { at: 0, value: null, error: null };
 let companiesCache = { at: 0, value: null, error: null };
 const companySurfaceCache = new Map();
-const LIST_TTL_MS = 60_000;
+const companyMissCache = new Map();
+const COMPANY_MISS_TTL_MS = 180_000;
+const COMPANY_MISS_MAX = 512;
+const COMPANY_MISS_ERRORS = new Set(["NOT_FOUND", "PRIVATE", "NOT_READY", "TOKEN_NOT_LISTED"]);
+
+function envMs(name, fallback) {
+  const raw = process.env[name];
+  if (raw == null || raw === "") return fallback;
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n < 0 || n > 86_400_000) return fallback;
+  return n;
+}
+
+const LIST_TTL_MS = envMs("LIST_TTL_MS", 60_000);
 let capxCache = { at: 0, value: null, error: null };
+
+function cachedCompanyMiss(slug) {
+  return readCacheEntry(companyMissCache, slug, Date.now(), COMPANY_MISS_TTL_MS);
+}
+
+function rememberCompanyMiss(slug, status, body) {
+  if (!body || !COMPANY_MISS_ERRORS.has(body.error)) return;
+  writeCacheEntry(companyMissCache, slug, { status, body }, Date.now(), COMPANY_MISS_TTL_MS, COMPANY_MISS_MAX);
+}
 
 function sendJson(response, status, body, maxAge) {
   response.writeHead(status, {
@@ -71,6 +94,7 @@ function sendJson(response, status, body, maxAge) {
 function invalidateCompaniesSnapshot() {
   companiesCache = { at: 0, value: null, error: null };
   companySurfaceCache.clear();
+  companyMissCache.clear();
 }
 
 function readRequestBody(request, limit = 4096) {
@@ -491,15 +515,25 @@ async function loadBars(mint, heatmap) {
   const startMs = heatmap && heatmap.buckets && heatmap.buckets[0] ? heatmap.buckets[0].t : Date.now() - 180 * 86400000;
   const cacheKey = `${mint}:${spec.codexResolution}:${startMs}`;
   const now = Date.now();
-  const hit = barsCache.get(cacheKey);
-  if (hit && now - hit.at < BARS_TTL_MS) return hit.value;
+  const cached = readCacheEntry(barsCache, cacheKey, now, BARS_TTL_MS);
+  if (cached) return cached;
   const value = await fetchCloses(mint, {
     fromMs: startMs,
     toMs: now,
     resolution: spec.codexResolution || "1D",
   });
-  barsCache.set(cacheKey, { at: now, value });
+  writeCacheEntry(barsCache, cacheKey, value, now, BARS_TTL_MS, CHART_CACHE_MAX);
   return value;
+}
+
+// Vendor chart calls are allowed only for mints on the launchpad list.
+async function knownChartMint(mint) {
+  if (!isMint(mint)) return "invalid";
+  const dir = await loadDirectory();
+  const rows = sample ? (dir.value || []).concat(SAMPLE_ROWS) : (dir.value || []);
+  if (rows.some((row) => row && (row.mint === mint || row.agentMint === mint))) return "known";
+  if (dir.error) return "unavailable";
+  return "unknown";
 }
 
 async function loadSparks(rows) {
@@ -531,28 +565,38 @@ async function loadSparks(rows) {
 }
 
 async function loadMintChart(mint, resolution = "60") {
+  const gate = await knownChartMint(mint);
+  if (gate === "invalid") {
+    return { source: "codex", candles: [], points: [], error: "INVALID_MINT", resolution };
+  }
+  if (gate === "unavailable") {
+    return { source: "codex", candles: [], points: [], error: "CHART_UNAVAILABLE", resolution };
+  }
+  if (gate !== "known") {
+    return { source: "codex", candles: [], points: [], error: "TOKEN_NOT_LISTED", resolution };
+  }
   if (!codexConfigured()) {
     return { source: "codex", candles: [], points: [], error: "CODEX_API_KEY_MISSING", resolution };
   }
   const now = Date.now();
   const cacheKey = `ohlcv:${mint}:${resolution}`;
-  const hit = barsCache.get(cacheKey);
-  if (hit && now - hit.at < BARS_TTL_MS) return hit.value;
+  const cached = readCacheEntry(barsCache, cacheKey, now, BARS_TTL_MS);
+  if (cached) return cached;
   const range = rangeForResolution(resolution);
   const value = await fetchOhlcv(`${mint}:${SOLANA_NETWORK_ID}`, {
     ...range,
     resolution,
   });
-  barsCache.set(cacheKey, { at: now, value });
+  writeCacheEntry(barsCache, cacheKey, value, now, BARS_TTL_MS, CHART_CACHE_MAX);
   return value;
 }
 
 async function loadCapxDemo(resolution = "60") {
   const now = Date.now();
-  const hit = capxChartCache.get(resolution);
-  if (hit && now - hit.at < BARS_TTL_MS) return hit.value;
+  const cached = readCacheEntry(capxChartCache, resolution, now, BARS_TTL_MS);
+  if (cached) return cached;
   const value = await fetchCapxSolChart(resolution);
-  capxChartCache.set(resolution, { at: now, value });
+  writeCacheEntry(capxChartCache, resolution, value, now, BARS_TTL_MS, CHART_CACHE_MAX);
   return value;
 }
 
@@ -648,20 +692,35 @@ async function launchpadRows() {
 
 async function companyPayload(slug) {
   // A 32-character slug can also look like a mint: a company that owns the slug wins.
+  // Unknown ids are cached so a repeat does not refetch the market directory.
+  if (!isMint(slug) && !isValidSlug(slug)) {
+    return { status: 404, body: companyErrorResponse("NOT_FOUND").body };
+  }
+  const missed = cachedCompanyMiss(slug);
+  if (missed) return missed;
   if (isMint(slug) && !(await marketPayload()).rows.some((r) => r.company && r.company.slug === slug)) {
     const market = await marketPayload();
     const resolved = resolveCompanyIdentifier(slug, market.rows);
-    if (!resolved) return { status: 404, body: { error: "TOKEN_NOT_LISTED", message: "No public Launchpad row for this mint" } };
+    if (!resolved) {
+      const body = { error: "TOKEN_NOT_LISTED", message: "No public Launchpad row for this mint" };
+      rememberCompanyMiss(slug, 404, body);
+      return { status: 404, body };
+    }
     if (resolved.slug) return companyPayload(resolved.slug);
     const result = await tokenPayload(slug);
-    if (result.status !== 200) return result;
+    if (result.status !== 200) {
+      if (result.status === 404) rememberCompanyMiss(slug, result.status, result.body);
+      return result;
+    }
     const token = result.body.token;
     return { status: 200, body: { ...result.body, kind: "token_without_company", company: null,
       face: token.casa?.document?.face || null, market: marketFromLaunchpad(token),
       priceSeries: token.priceSeries, heatmap: token.heatmap } };
   }
   if (!isValidSlug(slug)) {
-    return { status: 404, body: companyErrorResponse("NOT_FOUND").body };
+    const body = companyErrorResponse("NOT_FOUND").body;
+    rememberCompanyMiss(slug, 404, body);
+    return { status: 404, body };
   }
   const casa = await loadCompanyBySlug(slug);
   let doc = casa.document;
@@ -670,16 +729,19 @@ async function companyPayload(slug) {
   }
   if (!doc) {
     const fail = companyErrorResponse(casa.error || "NOT_FOUND");
+    if (fail.status === 404) rememberCompanyMiss(slug, fail.status, fail.body);
     return { status: fail.status, body: fail.body };
   }
   const gated = companyGateError(doc);
   if (gated) {
     const fail = companyErrorResponse(gated);
+    if (fail.status === 404) rememberCompanyMiss(slug, fail.status, fail.body);
     return { status: fail.status, body: fail.body };
   }
   const view = publicCompanyView(doc);
   if (!view) {
     const fail = companyErrorResponse("NOT_FOUND");
+    rememberCompanyMiss(slug, fail.status, fail.body);
     return { status: fail.status, body: fail.body };
   }
   if (process.env.PROBE_ARTIFACTS !== "0") {
@@ -766,9 +828,10 @@ async function tokenPayload(mint) {
   };
 }
 
-const server = createServer(async (request, response) => {
-  if (!safePath(request.url || "/")) { response.writeHead(400).end("bad path"); return; }
-  const url = new URL(request.url ?? "/", `http://127.0.0.1:${port}`);
+async function handleRequest(request, response) {
+  const rawUrl = request.url || "/";
+  if (rawUrl.startsWith("//") || !safePath(rawUrl)) { response.writeHead(400).end("bad path"); return; }
+  const url = new URL(rawUrl, `http://127.0.0.1:${port}`);
   if (url.pathname.includes("..")) {
     response.writeHead(400).end("bad path");
     return;
@@ -821,16 +884,34 @@ const server = createServer(async (request, response) => {
 
   const mintChart = url.pathname.match(/^\/api\/chart\/([^/]+)$/);
   if (request.method === "GET" && mintChart && mintChart[1] !== "demo") {
-    const mint = decodeURIComponent(mintChart[1]);
+    let mint;
+    try {
+      mint = decodeURIComponent(mintChart[1]);
+    } catch {
+      sendJson(response, 400, { error: "INVALID_MINT", message: "Mint must end in capx" }, "no-store");
+      return;
+    }
     const resolution = url.searchParams.get("resolution") || "60";
     const allowed = new Set(["15", "60", "240", "1D"]);
     const res = allowed.has(resolution) ? resolution : "60";
     if (!isMint(mint)) {
-      sendJson(response, 400, { error: "INVALID_MINT", message: "Mint must end in capx" }, 5);
+      sendJson(response, 400, { error: "INVALID_MINT", message: "Mint must end in capx" }, "no-store");
       return;
     }
     try {
       const series = await loadMintChart(mint, res);
+      if (series.error === "INVALID_MINT") {
+        sendJson(response, 400, { error: "INVALID_MINT", message: "Mint must end in capx" }, "no-store");
+        return;
+      }
+      if (series.error === "TOKEN_NOT_LISTED") {
+        sendJson(response, 404, { error: "TOKEN_NOT_LISTED", message: "No public Launchpad row for this mint" }, "no-store");
+        return;
+      }
+      if (series.error === "CHART_UNAVAILABLE") {
+        sendJson(response, 503, { error: "CHART_UNAVAILABLE", message: "Token list is unavailable" }, "no-store");
+        return;
+      }
       sendJson(response, 200, series, 60);
     } catch (err) {
       sendJson(response, 500, { error: "CHART_FAILED", message: String(err.message || err) }, 5);
@@ -899,7 +980,16 @@ const server = createServer(async (request, response) => {
   } catch {
     response.writeHead(404).end("not found");
   }
+}
+
+process.on("unhandledRejection", (reason) => {
+  console.error("unhandled rejection", reason && reason.stack ? reason.stack : reason);
 });
+
+const server = createServer((request, response) => guardRequest(response, async () => {
+  applySecurityHeaders(response);
+  await handleRequest(request, response);
+}));
 
 const host = process.env.HOST ?? "127.0.0.1";
 server.listen(port, host, () => {

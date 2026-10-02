@@ -6,12 +6,64 @@ import { pipeline } from "node:stream/promises";
 const RESERVED = new Set(["api", "register", "health", "t", "c", "vendor", "brand", "tools", "test"]);
 const VIEWS = new Set(["architecture", "flow", "data-model", "roadmap", "plan", "agents", "activity", "attestation"]);
 
-// Validate before URL parsing, which otherwise normalizes away traversal.
+// Validate before URL parsing, which otherwise normalizes away traversal
+// and accepts a scheme-relative target ("//host") as a different origin.
 export function safePath(raw) {
   try {
+    if (typeof raw !== "string" || !raw.startsWith("/") || raw.startsWith("//")) return false;
     const path = decodeURIComponent(raw.split("?")[0]);
-    return path.startsWith("/") && !/[\\%\x00-\x20\x7f?#]/.test(path) && !path.includes("..");
+    if (!path.startsWith("/") || path.startsWith("//") || path.includes("..")) return false;
+    return !/[\\%\x00-\x20\x7f?#]/.test(path);
   } catch { return false; }
+}
+
+export const SECURITY_HEADERS = Object.freeze({
+  "X-Frame-Options": "DENY",
+  "X-Content-Type-Options": "nosniff",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+});
+
+export function applySecurityHeaders(response) {
+  for (const [name, value] of Object.entries(SECURITY_HEADERS)) response.setHeader(name, value);
+}
+
+// The http server does not await async listeners; a rejection would crash the process.
+export async function guardRequest(response, handler, log = console.error) {
+  try {
+    await handler();
+  } catch (err) {
+    log("request failed", err && err.stack ? err.stack : err);
+    if (response.headersSent) {
+      response.destroy();
+      return;
+    }
+    try {
+      response.writeHead(500, { "content-type": "text/plain; charset=utf-8" });
+      response.end("internal error");
+    } catch { /* socket already closed */ }
+  }
+}
+
+export function readCacheEntry(map, key, now, ttlMs) {
+  const hit = map.get(key);
+  if (!hit) return undefined;
+  if (!(now - hit.at < ttlMs)) {
+    map.delete(key);
+    return undefined;
+  }
+  map.delete(key);
+  map.set(key, hit);
+  return hit.value;
+}
+
+export function writeCacheEntry(map, key, value, now, ttlMs, max) {
+  for (const [k, hit] of [...map]) {
+    if (!hit || !(now - hit.at < ttlMs)) map.delete(k);
+  }
+  if (map.has(key)) map.delete(key);
+  map.set(key, { at: now, value });
+  const limit = Number.isFinite(max) && max >= 1 ? Math.floor(max) : 1;
+  while (map.size > limit) map.delete(map.keys().next().value);
 }
 
 export function companyRoute(path) {
