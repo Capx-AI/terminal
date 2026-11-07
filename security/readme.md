@@ -5,3 +5,5 @@
 - 2026-11-07: Prepared pinned managed-rule groups, measured API/all-viewer rate ceilings and origin authentication. No application code or custody change. See the workspace security-audit-2026-11-06/R2-TERMINAL-RELEASE.md for staged activation, evidence and rollback. Source templates contain no credential.
 
 - 2026-11-07: Policies activated: CloudFront Deployed, Vercel origin rule version 1, all 20 direct/public checks pass with redirects inspected explicitly. Generated URLs retain Vercel Authentication; stable origin denies missing/wrong credential. Managed signatures block on both viewer hosts. Static HEAD canary produced two proven 429 responses and was removed; normal traffic remains healthy. Ten-minute observation underway.
+
+- 2026-11-07: Final verification complete: 31/31 samples over 639.7 seconds, eight monitored alarms OK, maximum CloudFront 5xxErrorRate zero over 20 reported metric buckets. Six WAF blocks reconcile to four managed-rule and two isolated rate probes; temporary rule removed. No application deploy.

@@ -203,3 +203,5 @@ node web/e2e.mjs
 - 2026-11-07: Prepared Terminal CloudFront WAF and distribution-origin authentication templates in security/, with measured rate ceilings, pinned managed groups, secret-store boundary and rollback. Workspace release record: security-audit-2026-11-06/R2-TERMINAL-RELEASE.md. No application deployment.
 
 - 2026-11-07: Terminal perimeter deployed from bbf4a11: CloudFront origin credential, Vercel gate, pinned selective AWS WAF blocking and viewer-IP budgets. Twenty route/origin checks and isolated HEAD rate canary pass; generated URLs already had Vercel Authentication. Observation and aggregate metric checks continue; no app deploy.
+
+- 2026-11-07: Terminal perimeter verification complete: 31/31 observation samples over 639.7 seconds, eight alarms OK, zero CloudFront 5xx over 20 reported metric buckets. All six WAF blocks match controlled managed/rate probes. Configuration bbf4a11 remains active; no application deployment.
