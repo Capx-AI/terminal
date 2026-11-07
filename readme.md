@@ -201,3 +201,5 @@ node web/e2e.mjs
   deployment and restore the env only if rolling back before the cutover.
 
 - 2026-11-07: Prepared Terminal CloudFront WAF and distribution-origin authentication templates in security/, with measured rate ceilings, pinned managed groups, secret-store boundary and rollback. Workspace release record: security-audit-2026-11-06/R2-TERMINAL-RELEASE.md. No application deployment.
+
+- 2026-11-07: Terminal perimeter deployed from bbf4a11: CloudFront origin credential, Vercel gate, pinned selective AWS WAF blocking and viewer-IP budgets. Twenty route/origin checks and isolated HEAD rate canary pass; generated URLs already had Vercel Authentication. Observation and aggregate metric checks continue; no app deploy.
