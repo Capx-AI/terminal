@@ -1,0 +1,82 @@
+{
+  "firewallEnabled": true,
+  "crs": {
+    "sd": {
+      "active": false,
+      "action": "log"
+    },
+    "ma": {
+      "active": false,
+      "action": "log"
+    },
+    "lfi": {
+      "active": false,
+      "action": "log"
+    },
+    "rfi": {
+      "active": false,
+      "action": "log"
+    },
+    "rce": {
+      "active": false,
+      "action": "log"
+    },
+    "php": {
+      "active": false,
+      "action": "log"
+    },
+    "gen": {
+      "active": false,
+      "action": "log"
+    },
+    "xss": {
+      "active": false,
+      "action": "log"
+    },
+    "sqli": {
+      "active": false,
+      "action": "log"
+    },
+    "sf": {
+      "active": false,
+      "action": "log"
+    },
+    "java": {
+      "active": false,
+      "action": "log"
+    }
+  },
+  "ips": [],
+  "rules": [
+    {
+      "name": "Require Terminal CloudFront origin credential",
+      "active": true,
+      "conditionGroup": [
+        {
+          "conditions": [
+            {
+              "type": "header",
+              "key": "${ORIGIN_HEADER_NAME}",
+              "op": "nex"
+            }
+          ]
+        },
+        {
+          "conditions": [
+            {
+              "type": "header",
+              "key": "${ORIGIN_HEADER_NAME}",
+              "op": "neq",
+              "value": "${ORIGIN_HEADER_VALUE}"
+            }
+          ]
+        }
+      ],
+      "action": {
+        "mitigate": {
+          "action": "deny"
+        }
+      }
+    }
+  ]
+}

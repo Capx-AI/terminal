@@ -1,0 +1,134 @@
+{
+  "Name": "capx-terminal-edge",
+  "Scope": "CLOUDFRONT",
+  "Description": "Capx Terminal viewer protection, 2026-11-07",
+  "DefaultAction": {
+    "Allow": {}
+  },
+  "Rules": [
+    {
+      "Name": "terminal-known-bad-inputs",
+      "Priority": 0,
+      "Statement": {
+        "ManagedRuleGroupStatement": {
+          "VendorName": "AWS",
+          "Name": "AWSManagedRulesKnownBadInputsRuleSet",
+          "Version": "Version_1.26"
+        }
+      },
+      "OverrideAction": {
+        "None": {}
+      },
+      "VisibilityConfig": {
+        "SampledRequestsEnabled": false,
+        "CloudWatchMetricsEnabled": true,
+        "MetricName": "terminal-known-bad-inputs"
+      }
+    },
+    {
+      "Name": "terminal-common-rules",
+      "Priority": 1,
+      "Statement": {
+        "ManagedRuleGroupStatement": {
+          "VendorName": "AWS",
+          "Name": "AWSManagedRulesCommonRuleSet",
+          "Version": "Version_1.23",
+          "RuleActionOverrides": [
+            {
+              "Name": "NoUserAgent_HEADER",
+              "ActionToUse": {
+                "Count": {}
+              }
+            }
+          ]
+        }
+      },
+      "OverrideAction": {
+        "None": {}
+      },
+      "VisibilityConfig": {
+        "SampledRequestsEnabled": false,
+        "CloudWatchMetricsEnabled": true,
+        "MetricName": "terminal-common-rules"
+      }
+    },
+    {
+      "Name": "terminal-api-per-ip",
+      "Priority": 10,
+      "Statement": {
+        "RateBasedStatement": {
+          "Limit": 3000,
+          "EvaluationWindowSec": 300,
+          "AggregateKeyType": "IP",
+          "ScopeDownStatement": {
+            "ByteMatchStatement": {
+              "SearchString": "L2FwaS8=",
+              "FieldToMatch": {
+                "UriPath": {}
+              },
+              "TextTransformations": [
+                {
+                  "Priority": 0,
+                  "Type": "URL_DECODE"
+                }
+              ],
+              "PositionalConstraint": "STARTS_WITH"
+            }
+          }
+        }
+      },
+      "Action": {
+        "Block": {
+          "CustomResponse": {
+            "ResponseCode": 429,
+            "ResponseHeaders": [
+              {
+                "Name": "Retry-After",
+                "Value": "60"
+              }
+            ]
+          }
+        }
+      },
+      "VisibilityConfig": {
+        "SampledRequestsEnabled": false,
+        "CloudWatchMetricsEnabled": true,
+        "MetricName": "terminal-api-per-ip"
+      }
+    },
+    {
+      "Name": "terminal-all-per-ip",
+      "Priority": 20,
+      "Statement": {
+        "RateBasedStatement": {
+          "Limit": 20000,
+          "EvaluationWindowSec": 300,
+          "AggregateKeyType": "IP"
+        }
+      },
+      "Action": {
+        "Block": {
+          "CustomResponse": {
+            "ResponseCode": 429,
+            "ResponseHeaders": [
+              {
+                "Name": "Retry-After",
+                "Value": "60"
+              }
+            ]
+          }
+        }
+      },
+      "VisibilityConfig": {
+        "SampledRequestsEnabled": false,
+        "CloudWatchMetricsEnabled": true,
+        "MetricName": "terminal-all-per-ip"
+      }
+    }
+  ],
+  "VisibilityConfig": {
+    "SampledRequestsEnabled": false,
+    "CloudWatchMetricsEnabled": true,
+    "MetricName": "capx-terminal-edge"
+  }
+}

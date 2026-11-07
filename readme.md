@@ -199,3 +199,5 @@ node web/e2e.mjs
   `launchpadApi https://launchpad.capx.ai`, `/api/market` carries the JUPITER
   quote and six tokens. Rollback: `vercel rollback` to the previous production
   deployment and restore the env only if rolling back before the cutover.
+
+- 2026-11-07: Prepared Terminal CloudFront WAF and distribution-origin authentication templates in security/, with measured rate ceilings, pinned managed groups, secret-store boundary and rollback. Workspace release record: security-audit-2026-11-06/R2-TERMINAL-RELEASE.md. No application deployment.
